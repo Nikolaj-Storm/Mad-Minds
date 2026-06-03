@@ -126,10 +126,10 @@ When a metric, target, or convention differs by brand, the brand-specific value 
 
 ## Where everything lives — the Marketing Hub on Google Drive
 
-The shared hub is the root folder **"OnlineMinds Marketing Hub"**. All inputs are read from it and all deliverables are written back to it, so colleagues can build on each other's work. Never leave a finished deliverable only inside a private Cowork session.
+The shared hub is the root folder **"Mad Minds"**. All inputs are read from it and all deliverables are written back to it, so colleagues can build on each other's work. Never leave a finished deliverable only inside a private Cowork session.
 
 ```
-OnlineMinds Marketing Hub/
+Mad Minds/
 ├── 00_START_HERE/            ← README, conventions, onboarding
 ├── 01_Knowledge_Base/        ← brand voice, playbooks, ICP/personas, past campaigns, glossary
 │   └── brand/<brand>/        ← per-brand voice + brand-specific overrides

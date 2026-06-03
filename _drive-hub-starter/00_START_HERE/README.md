@@ -1,4 +1,6 @@
-# OnlineMinds Marketing Hub
+# Mad Minds
+
+The OnlineMinds Marketing department's shared workspace.
 
 This Drive folder is the shared workspace for the marketing department. Each person runs their own Claude Cowork session against it via the `onlineminds-marketing` plugin. Sessions are private; the files here are shared.
 
