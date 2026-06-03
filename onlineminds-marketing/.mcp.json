@@ -1,0 +1,35 @@
+{
+  "_comment": "Plugin MCP wiring. Google-family connectors (Drive, Google Ads, Meta Ads, GA4, Search Console, Tag Manager) are NOT pre-wired here \u2014 they are enabled by each marketer through Claude desktop's native Connectors UI (Customize \u2192 Connectors). The /setup-marketing skill walks them through it. Listed below are only vendor-native MCPs the plugin pre-wires.",
+  "mcpServers": {
+    "ahrefs": {
+      "type": "http",
+      "url": "https://api.ahrefs.com/mcp/mcp",
+      "_comment": "Already in use at OnlineMinds. SEO keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO). Vendor-native MCP \u2014 not on Anthropic's catalog. Authorize via Ahrefs API key on first use."
+    },
+    "similarweb": {
+      "type": "http",
+      "url": "https://mcp.similarweb.com",
+      "_comment": "Competitive traffic analysis and market benchmarking. Vendor-native MCP."
+    },
+    "notion": {
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp",
+      "_comment": "Optional. Briefs, playbooks, campaign docs if any live in Notion. Vendor-native MCP."
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp",
+      "_comment": "Already in use. Pull product/usage data for portfolio sites where relevant. Vendor-native MCP."
+    },
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com",
+      "_comment": "Already in use. Inspect deployments / the plecto-sync style cron jobs that feed data into the hub. Vendor-native MCP."
+    },
+    "slack": {
+      "type": "http",
+      "url": "https://mcp.slack.com/mcp",
+      "_comment": "Optional. Share finished reports and briefs with the team. Vendor-native MCP. Remove if OnlineMinds does not use Slack."
+    }
+  }
+}

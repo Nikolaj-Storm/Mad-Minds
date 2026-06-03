@@ -1,0 +1,36 @@
+{
+  "name": "claude-ads",
+  "version": "1.7.0",
+  "description": "Multi-host paid advertising audit & optimization skill conforming to the Agent Skills open standard. Verified on Claude Code; experimental on Codex CLI, Cursor, Windsurf, Gemini CLI, Goose. 250+ checks across Google, Meta, YouTube, LinkedIn, TikTok, Microsoft, Apple & Amazon Ads with weighted scoring, parallel agents, 12 industry templates, AI creative generation, PPC math, A/B test design, PDF reports, attribution + server-side tracking deep dives, and a 41-test pytest eval harness.",
+  "author": {
+    "name": "AgriciDaniel",
+    "url": "https://github.com/AgriciDaniel"
+  },
+  "homepage": "https://agricidaniel.com/blog/claude-code-ad-agency",
+  "repository": "https://github.com/AI-Marketing-Hub/claude-ads",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "advertising-audit",
+    "paid-advertising",
+    "google-ads",
+    "meta-ads",
+    "linkedin-ads",
+    "tiktok-ads",
+    "microsoft-ads",
+    "apple-ads",
+    "amazon-ads",
+    "youtube-ads",
+    "attribution",
+    "server-side-tracking",
+    "retail-media",
+    "ppc",
+    "ad-optimization",
+    "creative-generation",
+    "claude-code-skill",
+    "codex-cli",
+    "cursor",
+    "multi-host"
+  ],
+  "skills": ["./ads/", "./skills/"]
+}

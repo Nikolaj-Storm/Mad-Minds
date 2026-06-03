@@ -1,0 +1,58 @@
+{
+  "name": "ai-marketing-hub-claude-ads",
+  "owner": {
+    "name": "AgriciDaniel"
+  },
+  "metadata": {
+    "description": "Multi-host paid advertising audit, optimization, and AI creative generation conforming to the Agent Skills open standard.",
+    "version": "1.7.0"
+  },
+  "plugins": [
+    {
+      "name": "claude-ads",
+      "source": "./",
+      "description": "Multi-host paid advertising audit & optimization skill conforming to the Agent Skills open standard. Verified on Claude Code; experimental on Codex CLI, Cursor, Windsurf, Gemini CLI, Goose. 250+ checks across Google, Meta, YouTube, LinkedIn, TikTok, Microsoft, Apple & Amazon Ads. 22 sub-skills, 10 parallel agents, 12 industry templates, attribution and server-side tracking deep dives, AI creative generation, PPC math, A/B test design, PDF reports, 41-test pytest eval harness.",
+      "version": "1.7.0",
+      "author": {
+        "name": "AgriciDaniel"
+      },
+      "homepage": "https://agricidaniel.com/blog/claude-code-ad-agency",
+      "repository": "https://github.com/AI-Marketing-Hub/claude-ads",
+      "license": "MIT",
+      "category": "marketing",
+      "tags": [
+        "agent-skills",
+        "advertising",
+        "audit",
+        "google-ads",
+        "meta-ads",
+        "linkedin-ads",
+        "tiktok-ads",
+        "microsoft-ads",
+        "apple-ads",
+        "amazon-ads",
+        "youtube-ads",
+        "attribution",
+        "server-side-tracking",
+        "retail-media",
+        "ppc",
+        "optimization",
+        "creative-generation",
+        "multi-host"
+      ],
+      "keywords": [
+        "agent-skills",
+        "advertising-audit",
+        "paid-advertising",
+        "amazon-ads",
+        "attribution",
+        "server-side-tracking",
+        "retail-media",
+        "claude-code-skill",
+        "codex-cli",
+        "cursor",
+        "multi-host"
+      ]
+    }
+  ]
+}
