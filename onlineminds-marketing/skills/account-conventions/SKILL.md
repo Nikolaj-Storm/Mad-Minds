@@ -38,7 +38,8 @@ Marketers describe what they want in normal English. They are NOT expected to kn
 - Treat any request matching a skill's purpose as an invocation, even without the slash command. "How is Rentumo's Google Ads doing?" → run `/ads google` (and probably `/monthly-paid-review rentumo` for the OnlineMinds-formatted version). The user doesn't need to know which one.
 - When multiple skills apply, **chain them**. "Analyze Rentumo's Google and Meta and suggest a rebalance" → `/ads google` + `/ads meta` + `/ads budget`, then synthesize. Tell the user the plan in one short sentence before running: "Running the Google audit, the Meta audit, and the cross-platform budget review — back in a moment."
 - When a request implies both **analysis and action**, do analysis first, then ask before any write. "Find wasted spend on Rentumo and apply the fixes" → `/wasted-spend-audit` for analysis → present findings → "Apply the top N? (a) and (b) are Tier 2; (c) raises a budget so it's Tier 1 — needs the typed phrase." Then `/ad-actions` with the spend-gate.
-- When the user is ambiguous, **propose a route** instead of asking for permission. "Look at Rentumo." → "I'll run a quick monthly paid review and a competitor scan — say stop if you want something different." Default to action.
+- When a **light request** is ambiguous, **propose a route** instead of asking for permission. "Look at Rentumo." → "I'll run a quick monthly paid review and a competitor scan — say stop if you want something different." Default to action.
+- When a **big request** is ambiguous (see the size threshold in the next section), ASK clarifying questions FIRST — don't guess your way through it.
 - When two plugins overlap (e.g. both `onlineminds-marketing` and `claude-ads` have paid-review capability), pick by **what the user seems to actually want**: a quick OnlineMinds-formatted monthly review → `/monthly-paid-review`; a deep multi-platform audit with Health Score and PDF → `/ads audit` + `/ads report`.
 - When a request needs a value that's `PLEASE FILL` in `account-conventions-live` (see below), stop and ask — don't substitute a guess.
 - For any write action (Google Ads, Meta Ads, Google Tag Manager), the Tier 1 / Tier 2 spend-gate rules later in this file are mandatory and non-overridable. Routing intent into a write does not bypass the gate.
@@ -46,6 +47,50 @@ Marketers describe what they want in normal English. They are NOT expected to kn
 **Showing your work:** narrate the routing in one short sentence as you go ("running the audit", "pulling data", "writing the draft to your folder"). Don't expose tool internals or skill names like "I'm now invoking `monthly-paid-review.SKILL.md`". Keep it normal English.
 
 **Slash commands still work** for marketers who prefer the explicit form — never refuse a slash command, never tell a user to use one. Both styles are supported equally.
+
+## Ask before doing big things
+
+The default bias is action — but for substantial tasks, **ask 2–5 clarifying questions FIRST**. Asking takes 30 seconds. Running the wrong audit takes 5–10 minutes, burns tokens, and produces a deliverable nobody wanted. Always cheaper to clarify than to redo.
+
+### What counts as "big" — clarify before running
+
+- **Multi-platform or multi-brand audits.** `/ads audit`, monthly paid review across all brands, full SEO+GEO across multiple markets.
+- **Strategic deliverables.** Campaign plans, content briefs, content calendars, growth experiments. Getting the direction wrong wastes the actual work that follows.
+- **Anything that will be published to a shared team folder.** Future people read these as the source of truth.
+- **Live ad-account actions and tracking changes.** The Tier 1/Tier 2 spend-gate is in addition to clarification, not instead of. Clarify the intent first, then run the gate at execution time.
+- **Creating new infrastructure.** New brand folders, new sections in `account-conventions-live`, new people folders. Hard to undo cleanly.
+- **Long agent chains** (3+ skills run sequentially). Tokens add up; bad chains compound.
+
+### What counts as "small" — propose and run
+
+- A single read-only query ("show me Rentumo's spend last week").
+- Saving a draft to the user's own personal folder.
+- Routing to one specific skill the user clearly named or implied.
+- A quick lookup, calculation, or factual answer.
+- Mid-task continuation when the next step is obvious from prior context.
+
+### How to ask
+
+Use `AskUserQuestion` with **2–4 concrete multiple-choice options** rather than open-ended "what do you want?" prompts. The goal is fast convergence, not negotiation.
+
+Typical clarifying-question dimensions for a big task:
+
+- **Scope** — single brand vs portfolio? Single market vs all? Specific channel(s) vs everything?
+- **Time horizon** — last week, last month, last quarter, year-to-date, vs prior period?
+- **Depth** — quick summary vs deep audit with PDF? Read-only or willing to act on findings?
+- **Deliverable** — personal-folder draft, or publish to the team immediately? Format: Google Doc, Markdown, PDF, slide deck?
+- **Audience** — for you, for the team standup, for the leadership review, for an external client?
+- **Comparison baseline** — vs target, vs prior period, vs competitor, vs all of the above?
+
+Skip dimensions whose answer is obvious from the request or already documented in `account-conventions` / `account-conventions-live`. Don't ask 5 questions when 2 are enough; don't ask 2 when the request was specific enough to need none.
+
+### After the user answers
+
+Run the task — don't re-confirm, don't ask "are you sure?". Narrate the chosen route in one short sentence ("Running the full Google + Meta audit for Rentumo, last 30 days, against your target ROAS, saving to your reports folder"), then go.
+
+### Special case: clarifying vs the response header
+
+If you ask clarifying questions BEFORE running, the response-format header (Objectives / Tools used / Want to go deeper) appears with the FINAL deliverable, not with the clarifying questions. Clarifying questions are a separate exchange — keep them tight and free of the header.
 
 > This is the shared source of truth for the OnlineMinds marketing department. Other skills reference it. The structural rules (routing, spend-gate, naming, Drive map) live in this file. The **brand-specific values** (account IDs, KPI targets, currency, conversion definitions, brand voice defaults) live in a separate Drive doc: `Mad Minds/01_Knowledge_Base/account-conventions-live` — that doc is editable by any `@onlineminds.io` marketer, so values can be set without a code change.
 
