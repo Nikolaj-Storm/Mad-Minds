@@ -58,6 +58,7 @@ Connector order and one-line purpose:
 - **Google Analytics (GA4)** — full-funnel session/conversion data behind the ads. Account: the Google account with GA4 access.
 - **Google Search Console** — organic clicks, impressions, positions for SEO/GEO work. Account: GSC-verified Google account.
 - **Google Tag Manager** — read tag/trigger config; fix tracking gaps. Account: GTM-admin Google account.
+- **Google Merchant Center** — product feed health, attribute edits, promotions, Shopping/PMax product-level performance. Only relevant for brands running feed-based campaigns; ask the marketer "does this brand run Shopping or PMax with a product feed?" before walking through Merchant Center auth. Account: the Google account with Merchant Center admin access for the brand's MC ID.
 - **Ahrefs** — keyword research, backlinks, site audits, Brand Radar (AI mentions). API key already provisioned for the org; this is a token connect.
 - **SimilarWeb** — competitive traffic and market benchmarking. API key.
 

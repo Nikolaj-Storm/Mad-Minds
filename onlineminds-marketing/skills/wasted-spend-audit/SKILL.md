@@ -1,6 +1,6 @@
 ---
 name: wasted-spend-audit
-description: Find wasted ad spend across Google Ads and Meta Ads for an OnlineMinds brand and produce an uploadable exclusion/negative list plus a savings estimate. Reads account-conventions for KPI thresholds and Drive paths. Use when asked to cut wasted spend, find underperforming keywords/audiences/placements, clean up an account, or reduce CPA.
+description: Find wasted ad spend across Google Ads, Meta Ads, and (for feed-based brands) Google Merchant Center for an OnlineMinds brand. Surfaces underperforming keywords, audiences, placements, AND product-level spend in Shopping/PMax (products spending without converting, low-impression products burning budget, disapproved-but-active SKUs). Produces an uploadable exclusion/negative list, a per-product action list for the feed where applicable, and a savings estimate. Reads account-conventions for KPI thresholds and Drive paths. Use when asked to cut wasted spend, find underperforming keywords/audiences/placements/products, clean up an account, or reduce CPA.
 argument-hint: "<brand> [lookback, e.g. last 90 days]"
 ---
 

@@ -23,7 +23,7 @@ Both plugins are now active in every Cowork session — no per-project setup.
 3. Type: **`/setup-marketing`**
 
 That command walks you through:
-- Authorizing each connector you need (Google Drive, Google Ads, Meta Ads, GA4, Search Console, Google Tag Manager, Ahrefs, SimilarWeb) — one at a time, with the exact clicks
+- Authorizing each connector you need (Google Drive, Google Ads, Meta Ads, GA4, Search Console, Google Tag Manager, Google Merchant Center if your brand runs Shopping/PMax, Ahrefs, SimilarWeb) — one at a time, with the exact clicks
 - Confirming Drive access to the shared **Mad Minds** Hub
 - Asking your first name so it knows your personal folder (`Mad Minds/07_People/<your-name>/`)
 - A capabilities tour — every command you can run

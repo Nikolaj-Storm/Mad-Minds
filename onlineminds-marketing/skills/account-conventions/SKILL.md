@@ -214,6 +214,7 @@ Each brand's voice, tone, banned/preferred terms, and positioning live in `01_Kn
 | Web analytics | GA4 | Read-only sessions, conversions, funnels. |
 | Organic search | Google Search Console | Clicks, impressions, positions per query/page. |
 | Tracking config | Google Tag Manager | **Write-capable.** Diagnose tracking gaps; create/edit tags, triggers, variables; publish container versions. Changes that affect conversion counts are Tier 1 in the spend-gate (bad tracking = fake spend signals). |
+| Product feeds | Google Merchant Center | **Write-capable.** Read feed health and product-level performance; edit attributes, supplemental feeds, promotions. Powers Google Shopping, PMax product groups, YouTube Shopping. Only needed for brands running feed-based campaigns (ecom/marketplace); skip for service brands. Tier 2 for most edits; Tier 1 when enabling new spending or publishing live promotions. |
 | SEO + AI mentions | Ahrefs | Keyword research, backlinks, site audit, Brand Radar. |
 | Competitive | SimilarWeb | Traffic estimates, market benchmarking. |
 | Optional | Notion, Slack, Supabase, Vercel | See `CONNECTORS.md`. |

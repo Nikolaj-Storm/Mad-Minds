@@ -1,6 +1,6 @@
 ---
 name: monthly-paid-review
-description: Produce OnlineMinds' monthly paid-media performance review for a brand across Google Ads and Meta Ads. Reads house KPIs and the Drive folder map from account-conventions, pulls last month's spend/conversions/ROAS from the ad-platform connectors (or cleaned data in the hub), compares to prior month and target, and writes a finished, templated report into the Marketing Hub. Use when asked for a monthly paid review, paid-media report, monthly ads summary, or "how did paid do last month" for any brand.
+description: Produce OnlineMinds' monthly paid-media performance review for a brand across Google Ads, Meta Ads, and (where applicable) Google Merchant Center for Shopping/PMax feed health. Reads house KPIs and the Drive folder map from account-conventions, pulls last month's spend/conversions/ROAS from the ad-platform connectors (or cleaned data in the hub), surfaces product-feed issues that may have dragged performance (disapprovals, missing GTINs, price mismatches) for feed-based brands, compares to prior month and target, and writes a finished, templated report into the Marketing Hub. Use when asked for a monthly paid review, paid-media report, monthly ads summary, or "how did paid do last month" for any brand.
 argument-hint: "<brand> [month, e.g. 2026-05]"
 ---
 

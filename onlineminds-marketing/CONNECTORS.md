@@ -16,6 +16,7 @@ These come from Anthropic's built-in connector catalog. The plugin does **not** 
 | Web analytics | Google Analytics (GA4) | Read-only sessions, conversions, funnel data. |
 | Organic search | Google Search Console | Clicks, impressions, positions per query/page. |
 | Tracking config | Google Tag Manager | **Write-capable.** Read tags/triggers/variables, create/edit, publish container versions. Conversion-tracking changes are Tier 1 (bad tracking = fake spend signals). |
+| Product feeds | Google Merchant Center | **Write-capable.** Read product feed health, disapprovals, price/title/image issues; edit product attributes and supplemental feeds; manage promotions and feed schedules. Powers Google Shopping, Performance Max product groups, YouTube Shopping, and Display feed-based ads. Brand only needs this if it runs Shopping/PMax with a feed (typical for ecom/marketplace brands; irrelevant for service or lead-gen brands). Tier 2 for most attribute edits; Tier 1 when enabling new spending campaigns from feed changes or pushing live a promotion. |
 
 ### B. Vendor-native MCPs — pre-wired in the plugin's `.mcp.json`
 These don't live in Anthropic's catalog (yet); the plugin points directly at the vendor's hosted MCP. Each marketer authorizes once (API key or vendor OAuth) on first use.
@@ -34,6 +35,7 @@ The `/setup-marketing` skill walks each marketer through both lists in order:
 1. Google Drive (mandatory — needed to reach Mad Minds)
 2. Google Ads, Meta Ads (mandatory for paid-media skills)
 3. GA4, Search Console, GTM (recommended)
+4. Google Merchant Center (recommended for brands running Shopping/PMax with product feeds — skip if brand has no product catalog)
 4. Ahrefs, SimilarWeb (recommended for SEO + competitive skills)
 5. Notion, Slack, Supabase, Vercel (optional)
 
