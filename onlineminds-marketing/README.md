@@ -1,6 +1,6 @@
 # OnlineMinds Marketing Plugin
 
-Shared skills and report routines for the OnlineMinds marketing department (Rentumo, Adsumo, Printumo, Bidumo). Forked from Anthropic's official `marketing` knowledge-work plugin.
+Shared skills and report routines for the OnlineMinds marketing department (Rentumo, Adsumo, Printumo, Bidumo, Monetumo, Photumo, Jacob Lund Art). Forked from Anthropic's official `marketing` knowledge-work plugin.
 
 Every skill reads inputs from and writes outputs to the shared **Mad Minds** Google Drive Hub, so each marketer's private Cowork session produces deliverables the whole team can see and build on.
 

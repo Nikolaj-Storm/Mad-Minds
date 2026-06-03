@@ -67,12 +67,15 @@ This pattern means new marketers get prompted in real time for whatever's missin
 
 OnlineMinds ApS operates a portfolio of brands. Always confirm which brand a task targets before starting. If the user names a brand, use it. If ambiguous, ask which brand.
 
-| Brand | What it is | Primary markets | Primary paid channels |
-|---|---|---|---|
-| **Rentumo** | [FILL IN] | [FILL IN] | [FILL IN] |
-| **Adsumo** | [FILL IN] | [FILL IN] | [FILL IN] |
-| **Printumo** | [FILL IN] | [FILL IN] | [FILL IN] |
-| **Bidumo** | [FILL IN] | [FILL IN] | [FILL IN] |
+| Brand | Slug | What it is | Primary markets | Primary paid channels |
+|---|---|---|---|---|
+| **Rentumo** | `rentumo` | [FILL IN] | [FILL IN] | [FILL IN] |
+| **Adsumo** | `adsumo` | [FILL IN] | [FILL IN] | [FILL IN] |
+| **Printumo** | `printumo` | [FILL IN] | [FILL IN] | [FILL IN] |
+| **Bidumo** | `bidumo` | [FILL IN] | [FILL IN] | [FILL IN] |
+| **Monetumo** | `monetumo` | [FILL IN] | [FILL IN] | [FILL IN] |
+| **Photumo** | `photumo` | [FILL IN] | [FILL IN] | [FILL IN] |
+| **Jacob Lund Art (JLA)** | `jla` | [FILL IN] | [FILL IN] | [FILL IN] |
 
 When a metric, target, or convention differs by brand, the brand-specific value lives in that brand's folder under `01_Knowledge_Base/brand/<brand>/`. This file holds the defaults.
 
@@ -119,7 +122,7 @@ If the user opens a brand-new line of work that doesn't fit (e.g. a new content 
 Every artifact is named: `YYYY-MM-DD_<brand>_<type>[_<detail>].<ext>`
 
 - Date-prefixed and zero-padded so files sort chronologically and never collide.
-- Brand tag always present (lowercase): `rentumo`, `adsumo`, `printumo`, `bidumo`. Use `portfolio` for cross-brand work.
+- Brand tag always present (lowercase): `rentumo`, `adsumo`, `printumo`, `bidumo`, `monetumo`, `photumo`, `jla`. Use `portfolio` for cross-brand work.
 - Type is a short slug: `monthly-paid-review`, `wasted-spend`, `content-brief`, `seo-geo-audit`, `campaign-plan`, `competitor-scan`.
 
 Examples:

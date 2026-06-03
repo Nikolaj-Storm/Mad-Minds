@@ -19,7 +19,7 @@ You have access to my Google Drive. Build a shared workspace exactly as specifie
 
 2. Inside it, create these folders and subfolders:
    - `00_START_HERE`
-   - `01_Knowledge_Base` with subfolders: `brand/rentumo`, `brand/adsumo`, `brand/printumo`, `brand/bidumo`, `playbooks`, `ICP-and-personas`, `past-campaigns`
+   - `01_Knowledge_Base` with subfolders: `brand/rentumo`, `brand/adsumo`, `brand/printumo`, `brand/bidumo`, `brand/monetumo`, `brand/photumo`, `brand/jla`, `playbooks`, `ICP-and-personas`, `past-campaigns`
    - `02_Brand_Assets` with subfolders: `logos`, `fonts`, `imagery`, `templates`
    - `03_Data` with subfolders: `raw_exports`, `cleaned`, `connectors-cache`
    - `04_Reports` with subfolders: `_templates`, `weekly`, `monthly`, `quarterly`, `ad-hoc`
@@ -32,12 +32,12 @@ You have access to my Google Drive. Build a shared workspace exactly as specifie
    Title: Mad Minds
    Body:
    This Drive folder is the shared workspace for the marketing department. Each person runs their own Claude Cowork session against it via the onlineminds-marketing plugin. Sessions are private; the files here are shared.
-   How it works: Skills read from 03_Data and write finished work to 04_Reports or 05_Plans_and_Strategy. Drafts and WIP go to your personal folder under 07_People. Naming: YYYY-MM-DD_<brand>_<type>[_<detail>] — date-prefixed, brand-tagged, lowercase. Brands: rentumo, adsumo, printumo, bidumo (use portfolio for cross-brand). Never put API keys or secrets in any file here.
+   How it works: Skills read from 03_Data and write finished work to 04_Reports or 05_Plans_and_Strategy. Drafts and WIP go to your personal folder under 07_People. Naming: YYYY-MM-DD_<brand>_<type>[_<detail>] — date-prefixed, brand-tagged, lowercase. Brands: rentumo, adsumo, printumo, bidumo, monetumo, photumo, jla (Jacob Lund Art). Use portfolio for cross-brand. Never put API keys or secrets in any file here.
    First-time setup for a marketer: install the onlineminds-marketing plugin, connect this Hub folder, authorize your own Google Ads + Meta Ads, then try /monthly-paid-review rentumo.
 
 4. In `00_START_HERE`, create a Google Doc named **naming-conventions** with this content:
    Format: YYYY-MM-DD_<brand>_<type>[_<detail>].<ext>
-   Brand: rentumo | adsumo | printumo | bidumo | portfolio
+   Brand: rentumo | adsumo | printumo | bidumo | monetumo | photumo | jla | portfolio
    Type slug: monthly-paid-review | wasted-spend | seo-geo-audit | content-brief | campaign-plan | competitor-scan
    Examples: 2026-06-01_rentumo_monthly-paid-review ; 2026-06-01_portfolio_competitor-scan_nl
 

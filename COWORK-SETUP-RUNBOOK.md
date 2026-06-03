@@ -26,14 +26,14 @@ You have access to my Google Drive. Build a shared workspace. Create real folder
 1. Create a root folder: **Mad Minds**
 2. Inside it create these folders (and the listed subfolders):
    - `00_START_HERE`
-   - `01_Knowledge_Base` → `brand/rentumo`, `brand/adsumo`, `brand/printumo`, `brand/bidumo`, `playbooks`, `ICP-and-personas`, `past-campaigns`
+   - `01_Knowledge_Base` → `brand/rentumo`, `brand/adsumo`, `brand/printumo`, `brand/bidumo`, `brand/monetumo`, `brand/photumo`, `brand/jla`, `playbooks`, `ICP-and-personas`, `past-campaigns`
    - `02_Brand_Assets` → `logos`, `fonts`, `imagery`, `templates`
    - `03_Data` → `raw_exports`, `cleaned`, `connectors-cache`
    - `04_Reports` → `_templates`, `weekly`, `monthly`, `quarterly`, `ad-hoc`
    - `05_Plans_and_Strategy` → `campaign-briefs`, `content-calendars`, `growth-experiments`
    - `06_Automation_Outputs` → `logs`, `scheduled`
    - `07_People` → one subfolder per marketer (lowercase first names): nikolaj, silas, frederik, caroline, nilas (ask me before finalizing this list)
-3. In `00_START_HERE`, create a Google Doc **README** stating: this is the shared marketing workspace; each person runs their own Cowork against it via the onlineminds-marketing plugin; sessions are private but files are shared; skills read from 03_Data and write finished work to 04_Reports / 05_Plans_and_Strategy; drafts go to your personal folder under 07_People; naming is YYYY-MM-DD_<brand>_<type>; brands are rentumo, adsumo, printumo, bidumo (portfolio for cross-brand); never put API keys or secrets in any file.
+3. In `00_START_HERE`, create a Google Doc **README** stating: this is the shared marketing workspace; each person runs their own Cowork against it via the onlineminds-marketing plugin; sessions are private but files are shared; skills read from 03_Data and write finished work to 04_Reports / 05_Plans_and_Strategy; drafts go to your personal folder under 07_People; naming is YYYY-MM-DD_<brand>_<type>; brands are rentumo, adsumo, printumo, bidumo, monetumo, photumo, jla (portfolio for cross-brand); never put API keys or secrets in any file.
 4. In `00_START_HERE`, create a Google Doc **naming-conventions** with the format YYYY-MM-DD_<brand>_<type>[_<detail>] and examples.
 5. In `07_People`, create a Google Doc **README**: one subfolder per marketer; skills save here by default; say "publish to the team" to copy a finished file into the shared folders; everyone with an `@onlineminds.io` account has Editor on the entire Hub (Drive version history is the safety net if something is overwritten by accident).
 6. In `04_Reports/_templates`, create a Google Doc **monthly-paid-review-template** with: a header line (brand / month / data source / date range / currency / attribution); Executive summary; a KPI dashboard table (Metric | This month | Prior month | MoM change | Target | Status) with rows Spend, Conversions, CPA, ROAS, Conversion rate; per-channel tables for Google Ads and Meta Ads; What worked (1-3); What needs fixing (1-3); Recommendations table (Action | Why | Impact | Effort | Priority); Next month focus (1-3).

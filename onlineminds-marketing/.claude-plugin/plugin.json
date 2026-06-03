@@ -1,7 +1,7 @@
 {
   "name": "onlineminds-marketing",
-  "version": "0.4.4",
-  "description": "OnlineMinds marketing department plugin. Shared skills, ad-platform connectors, and report routines for the Rentumo, Adsumo, Printumo, and Bidumo brands. Every skill reads from and writes to the shared Marketing Hub on Google Drive.",
+  "version": "0.4.5",
+  "description": "OnlineMinds marketing department plugin. Shared skills, ad-platform connectors, and report routines for the Rentumo, Adsumo, Printumo, Bidumo, Monetumo, Photumo, and Jacob Lund Art (JLA) brands. Every skill reads from and writes to the shared Marketing Hub on Google Drive.",
   "author": {
     "name": "OnlineMinds ApS",
     "email": "marketing@onlineminds.io"

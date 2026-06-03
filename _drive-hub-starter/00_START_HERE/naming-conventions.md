@@ -3,7 +3,7 @@
 `YYYY-MM-DD_<brand>_<type>[_<detail>].<ext>`
 
 - Date: zero-padded ISO, the artifact's run/effective date.
-- Brand: rentumo | adsumo | printumo | bidumo | portfolio
+- Brand: rentumo | adsumo | printumo | bidumo | monetumo | photumo | jla | portfolio
 - Type slug: monthly-paid-review | wasted-spend | seo-geo-audit | content-brief | campaign-plan | competitor-scan
 - Detail: optional, e.g. a market (`nl`, `uk`) or topic slug.
 

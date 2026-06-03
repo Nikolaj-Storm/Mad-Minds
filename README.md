@@ -4,7 +4,7 @@ A Claude plugin marketplace for the OnlineMinds marketing department. Paste this
 
 | Plugin | What it does |
 |---|---|
-| **`onlineminds-marketing`** | In-house skills for the OnlineMinds brands (Rentumo, Adsumo, Printumo, Bidumo). Reads/writes the Mad Minds Google Drive Hub. Includes `/ad-actions` — the **only** skill that touches live ad accounts, behind a non-overridable Tier 1 / Tier 2 typed-phrase spend-gate. |
+| **`onlineminds-marketing`** | In-house skills for the OnlineMinds brands (Rentumo, Adsumo, Printumo, Bidumo, Monetumo, Photumo, Jacob Lund Art). Reads/writes the Mad Minds Google Drive Hub. Includes `/ad-actions` — the **only** skill that touches live ad accounts, behind a non-overridable Tier 1 / Tier 2 typed-phrase spend-gate. |
 | **`claude-ads`** | Vendored copy of [AgriciDaniel/claude-ads](https://github.com/AgriciDaniel/claude-ads) (MIT). 250+ paid-advertising audit checks across Google, Meta, YouTube, LinkedIn, TikTok, Microsoft, Apple, Amazon. Health Score 0-100. Industry templates. PDF reports. **Analysis-only.** |
 
 ## Install (for marketers)

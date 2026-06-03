@@ -5,7 +5,7 @@ This Drive folder is the shared workspace for the marketing department. Each per
 ## How it works
 - **Skills read from and write to this Hub.** Inputs come from `03_Data/`; finished work lands in `04_Reports/` or `05_Plans_and_Strategy/`.
 - **Naming:** `YYYY-MM-DD_<brand>_<type>[_<detail>].<ext>` — date-prefixed, brand-tagged, lowercase.
-- **Brands:** rentumo, adsumo, printumo, bidumo (use `portfolio` for cross-brand work).
+- **Brands:** rentumo, adsumo, printumo, bidumo, monetumo, photumo, jla (Jacob Lund Art). Use `portfolio` for cross-brand work.
 - **Don't** leave finished deliverables only inside a private Cowork session, and **never** put API keys or secrets in any file here.
 
 ## Folders

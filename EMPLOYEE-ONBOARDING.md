@@ -116,7 +116,7 @@ Claude always tells you how to undo a change. To make sure nothing gets changed 
 
 Common pattern: **`/ads audit` to find issues** → **`/ad-actions` to apply the fixes** (the spend-gate enforces safety). Or: **`/monthly-paid-review` for the routine report**, then ask Claude to compare findings with `/ads google` for deeper diagnosis on whichever channel underperformed.
 
-Brands: `rentumo`, `adsumo`, `printumo`, `bidumo`. Use `portfolio` for cross-brand work.
+Brands: `rentumo`, `adsumo`, `printumo`, `bidumo`, `monetumo`, `photumo`, `jla` (Jacob Lund Art). Use `portfolio` for cross-brand work.
 
 ## Living docs (in Mad Minds itself)
 Open `Mad Minds/00_START_HERE/` for:
