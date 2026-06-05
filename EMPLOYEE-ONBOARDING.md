@@ -1,132 +1,175 @@
-# Mad Minds — Employee Onboarding (~10 min, once)
+# Mad Minds — Marketer Onboarding (~15 min, once)
 
-Welcome. You're setting up your own marketing assistant inside Claude Cowork. After this you'll be able to analyze ad/SEO/analytics data, act on it (with safety gates on anything that spends money), and read/write reports directly in the shared **Mad Minds** Google Drive Hub. Everything lives in Drive — there's no local folder to maintain.
+Welcome. You're setting up your own marketing assistant inside Claude Cowork. After this you'll be able to analyze ad/SEO/analytics data, act on it (with safety gates on anything that spends money), and read/write reports directly in the shared **Mad Minds** Google Drive Hub.
 
-This is one-time. Future sessions just need you to open Cowork.
+This is a one-time setup. Future sessions just need you to open Cowork and ask.
+
+> **Note on Composio:** it's per-user, not org-level. There's no centralized setup that has to happen first. You sign up for your own free Composio account; each colleague signs up for theirs. Treat it like your Google or Facebook login.
+
+---
 
 ## Step 1 — Install Claude desktop
-If you don't have it: https://claude.ai/download. Sign in with your `@onlineminds.io` account.
+
+Skip this step if you already have Claude desktop installed and are signed in with your account.
+
+> If you are not signed up using `@onlineminds.io` there may be some different steps later on.
+
+Download: <https://claude.ai/download>
 
 ## Step 2 — Install the Mad Minds plugins
-1. In Claude desktop, click your profile (bottom-left) → **Customize**
-2. **Plugins** tab → **+ Add marketplace** → **From repository**
-3. Paste: `https://github.com/Nikolaj-Storm/Mad-Minds`
-4. Two plugins appear — **install both**:
-   - **`onlineminds-marketing`** — your shared brain, Drive Hub routing, write-capable ad actions with the spend-gate, monthly review / wasted-spend / SEO-GEO / content-brief skills.
-   - **`claude-ads`** — open-source paid-advertising audit toolkit (MIT, by AgriciDaniel). 250+ checks across Google, Meta, YouTube, LinkedIn, TikTok, Microsoft, Apple, Amazon Ads. Health Score 0-100. Industry templates. PDF reports.
 
-Both plugins are now active in every Cowork session — no per-project setup.
+1. In Claude desktop, click **Customize** (top right) → **Browse Plugins** tab → **Plugins** → **Personal** → **Add marketplace** → **Add from a repository** → paste this URL:
+   ```
+   https://github.com/Nikolaj-Storm/Mad-Minds
+   ```
+2. After a couple seconds, two plugins appear → click **+** to install both:
+   - **`onlineminds-marketing`** — OnlineMinds-specific skills, Google Drive Hub routing, the spend-gate that protects live ad accounts
+   - **`claude-ads`** — open-source paid-advertising audit toolkit, 250+ checks across 8 platforms, Health Score, PDF reports
 
-## Step 3 — Open Cowork and run the guided setup
-1. Open Cowork (the desktop app)
-2. Start a new session — no need to create a project or pick a workspace folder. Everything goes through the Google Drive connector to the shared Mad Minds hub.
-3. Type: **`/setup-marketing`**
+Both plugins are now active in every Cowork session. No per-project setup is required — but you'll want a dedicated project for organisation. That's the next step.
 
-That command walks you through:
-- Authorizing each connector you need (Google Drive, Google Ads, Meta Ads, GA4, Search Console, Google Tag Manager, Google Merchant Center if your brand runs Shopping/PMax, Ahrefs, SimilarWeb) — one at a time, with the exact clicks
-- Confirming Drive access to the shared **Mad Minds** Hub
-- Asking your first name so it knows your personal folder (`Mad Minds/07_People/<your-name>/`)
-- A capabilities tour — every command you can run
-- One small live test so you leave having seen it work
+## Step 3 — Create your dedicated Mad Minds project in Cowork (~2 min)
 
-## Step 4 — Try a real command
-After onboarding, try one of these:
-- `/monthly-paid-review rentumo` — pulls last month's Google + Meta paid data, computes KPIs, drafts the report to your folder
-- `/competitor-scan rentumo dk` — head-to-head comparison in the Danish market
-- `/seo-geo-audit printumo` — SEO + AI-citability audit
+A dedicated project keeps Mad Minds work isolated from other Cowork work and lets the project's `CLAUDE.md` charter auto-load whenever you open a session here.
 
-## How saving works (everything lives in Drive)
-- Your drafts and works-in-progress save to **your personal folder** `Mad Minds/07_People/<name>/` by default. Claude writes them directly through the Drive connector — nothing lives on your laptop.
-- When something's finished and useful to the team, say **"publish this to the team"** — Claude copies the final version into the shared folder (e.g. `04_Reports/monthly/`). Your working copy stays in your folder.
-- Every session starts by reading the latest state from Drive. There's no "sync" step — Claude pulls fresh.
-- The whole team has Editor access to Mad Minds. If you accidentally overwrite something, Drive's per-file version history is the safety net (File → Version history in any Google Doc).
+**In Cowork:**
 
-## How taking actions works (the safety gates)
-You can pause campaigns, change budgets/bids, add negative keywords, create ads on Google + Meta, and edit Google Tag Manager — Claude acts as you (using your authorizations), so you can only touch accounts you already have access to.
+1. Open Cowork (the desktop app — separate from regular Claude chat).
+2. Click **+ New project** (or the equivalent "create project" button in your Cowork UI).
+3. Use this information to set it up:
 
-**Spend changes require a typed confirmation phrase.** If you ask Claude to do something that would increase spend (raise a budget, raise a bid, enable a campaign, launch a new ad, or change tracking that affects conversion counts), Claude shows you a sentence like:
+   | Field | Value |
+   |---|---|
+   | **Project name** | `Mad Minds` |
+   | **Workspace folder** | Any empty folder on your machine. Recommended: create `~/Documents/Mad Minds` and pick that. The folder doesn't need to mirror the Drive Hub — Claude reads/writes the real Mad Minds Hub through the Google Drive connector (next step), not through this local folder. |
+   | **Description (optional)** | OnlineMinds marketing workspace. Connected to the Mad Minds Drive Hub. Skills: onlineminds-marketing + claude-ads. |
+   | **Drive Hub URL (for reference)** | <https://drive.google.com/drive/folders/1aLu66XMaCKptC3GEYql20tHsbzDUCCpN> |
+
+4. Save the project. From now on, opening Mad Minds in Cowork drops you into this dedicated session every time.
+
+> **Why a local workspace folder if Mad Minds lives in Drive?** Cowork's project model expects a local folder as its workspace. That folder is just a container for the Cowork session — you don't need to drag Mad Minds content into it. All real reads and writes go through the Google Drive connector you authorize next.
+
+## Step 4 — Connect Google Drive (~1 min)
+
+This one lives in the **native** Connectors panel (the top-level one, not under a specific plugin):
+
+1. Customize → **Connectors** (the top-level item, NOT under a specific plugin)
+2. Find **Google Drive** → **Connect** → sign in with your `@onlineminds.io` account
+
+Result: Claude can now read and write the shared Mad Minds Drive Hub on your behalf.
+
+## Step 5 — Connect the ad/analytics MCPs via Composio (~5 min)
+
+These live in the **per-plugin** Connectors panel — separately from Drive:
+
+1. Customize → **Onlineminds-marketing → Connectors** (left sidebar, under the plugin name)
+2. Click **Connect** on each connector you need. For each, a browser tab opens for Composio's OAuth flow.
+
+**What is Composio?** A free third-party service that handles the OAuth handshake for Google Ads, Meta Ads, GA4, Search Console, Google Tag Manager, and Merchant Center. It removes the need for any developer-token application or technical setup — you just sign in to the actual platform (Google or Facebook) through Composio's flow.
+
+On your first Connect click, you'll be asked to sign in to Composio (30 sec, free). After that, every subsequent Connect just shows the platform's OAuth screen.
+
+**Connect in this order:**
+
+- **Google Ads** — sign in with the Google account that has access to your brand's Google Ads (via the OnlineMinds Manager / MCC)
+- **Meta Ads** — sign in with the Facebook account that has Business Manager access
+- **Google Analytics (GA4)** — Google account with GA4 viewer access
+- **Google Search Console** — Google account with GSC verified for the relevant domains
+- **Google Tag Manager** — GTM-admin Google account
+- **Google Merchant Center** — only if your brand runs Shopping or Performance Max with a product feed
+- **Ahrefs** — paste the org API key (ask Nikolaj if you don't have it)
+- **Similarweb** — paste the org API key
+
+Skip Notion / Slack / Supabase / Vercel unless you actually use them.
+
+## Step 6 — Open your Mad Minds project and run `/setup-marketing` (~3 min)
+
+1. In Cowork, open the **Mad Minds** project you created in Step 3.
+2. Start a new session inside the project.
+3. Type: `/setup-marketing`
+
+That command will:
+- Show a dropdown of existing personal-folder names — pick yours, or pick "Other" to type your first name (a new folder + standard subfolders gets auto-created if you're new)
+- Verify each connector by attempting a small read — tells you exactly what's broken if anything is
+- Walk you through the capabilities tour
+- End with a small live test so you leave having seen it work
+
+## Step 7 — Try a real query (~1 min)
+
+Anything in plain English. Examples:
+
+- "Show me Rentumo's spend last week on Google Ads"
+- "Do a quick audit on Printumo's paid performance"
+- "How is Jacob Lund Art's organic search trending in DK?"
+- Or use slash commands if you prefer: `/monthly-paid-review rentumo`
+
+If Claude doesn't know a specific value (like your brand's Google Ads account ID), it'll ask you in chat. Answer once and Claude writes it into the shared `account-conventions-live` doc in Drive — next time, no prompt.
+
+---
+
+## How saving works
+
+- Drafts go to **your personal folder** `Mad Minds/07_People/<your-name>/` automatically. Inside it Claude routes to subfolders by type: `reports/` for analyses, `plans/` for briefs, `data/` for CSVs, `notes/` for scratch, `archive/` for old work.
+- When something's finished and useful to the team, say **"publish this to the team"** — Claude copies the final version into the shared folder (`04_Reports/`, `05_Plans_and_Strategy/`, etc.) with the house naming convention. Your working draft stays in your personal folder.
+- Every session reads fresh from Drive. No sync, no local files.
+
+## How taking actions works — the safety gate
+
+You can pause campaigns, change budgets, change bids, add negative keywords, create ads on Google + Meta, and edit Google Tag Manager. Claude acts as you, so you can only touch accounts you already have access to.
+
+**Spend changes require a typed confirmation phrase.** If you ask for anything that would raise spend (budget up, bid up, enable a campaign, launch an ad, change tracking on a conversion event), Claude shows you a sentence like:
 
 > I wish to increase the ad spending on rentumo.ie by $500
 
-You **type that exact sentence back word-for-word** as your next message. Nothing happens until you do. A "yes" or "go ahead" won't trigger it — this is on purpose, so spend is never changed by accident or by a misread instruction.
+You **type that exact sentence back word-for-word** as your next message. Nothing happens until you do. A "yes" or "approve" won't trigger it.
 
-Lower-risk changes (pausing, adding negatives, lowering a budget) just need a normal "yes."
+Lower-risk changes (pausing, adding negatives, lowering a budget) need a normal "yes."
 
-Claude always tells you how to undo a change. To make sure nothing gets changed at all in a session, say **"read-only"** at the start.
+To make a session analysis-only, say **"read-only"** at the start.
 
-## Capabilities at a glance
+---
 
-### From `onlineminds-marketing` (OnlineMinds-specific, Drive-integrated)
+## Capabilities cheat sheet
 
-**Analyze** — read live data, save to your Drive folder
-- `/monthly-paid-review <brand>` · `/wasted-spend-audit <brand>` · `/seo-geo-audit <brand> <market>` · `/competitor-scan <brand> <market>`
+### `onlineminds-marketing` — Mad Minds–integrated, write-capable
 
-**Plan** — turn an idea into a brief
-- `/content-brief <brand> <type> <topic>` · `/campaign-plan <brand> <goal>`
+- `/monthly-paid-review <brand>` — monthly Google + Meta paid report (+ Merchant Center feed health if relevant)
+- `/wasted-spend-audit <brand>` — find wasted ad spend, get an uploadable exclusion list
+- `/seo-geo-audit <brand> <market>` — SEO + AI-citability audit
+- `/competitor-scan <brand> <market>` — competitor comparison
+- `/content-brief <brand> <type> <topic>` — brand-voice content brief
+- `/campaign-plan <brand> <goal>` — full campaign brief
+- `/ad-actions <brand> <change>` — the only skill that changes live ad accounts. Spend-gate enforced
+- `/report-builder` — assemble inputs into a stakeholder-ready report
+- `/setup-marketing` — re-run setup anytime
 
-**Act** — change live ad accounts (with safety gates)
-- `/ad-actions <brand> <change>` — only place that touches money. Tier 1 changes require a typed accept-phrase.
+### `claude-ads` — deep analysis, industry templates, PDF reports
 
-**Document** — assemble a deliverable
-- `/report-builder`
+- `/ads audit` — full multi-platform audit, scored 0–100
+- `/ads google` · `/ads meta` · `/ads youtube` · `/ads linkedin` · `/ads tiktok` · `/ads microsoft` · `/ads apple` · `/ads amazon` — single-platform deep dives
+- `/ads creative` · `/ads landing` · `/ads budget` · `/ads attribution` · `/ads tracking` · `/ads competitor` — cross-cutting audits
+- `/ads plan <type>` — strategic plan by industry
+- `/ads math` · `/ads test` — PPC calculator + A/B test design
+- `/ads dna` · `/ads create` · `/ads generate` · `/ads photoshoot` — creative generation
+- `/ads report` — generate PDF audit report
 
-**Re-run setup anytime**
-- `/setup-marketing` — re-verifies your connectors and shows the capabilities tour again
+### Slash commands optional
 
-### From `claude-ads` (deep analysis, industry benchmarks, PDF reports)
+You don't have to use them. Plain English works: "audit rentumo's ads", "find wasted spend on adsumo", "compare bidumo to competitors in the Dutch market", etc. Claude picks the right skill and chains them when needed.
 
-**Full multi-platform audit**
-- `/ads audit` — 6 parallel agents run 250+ checks across Google, Meta, YouTube, LinkedIn, TikTok, Microsoft, Apple, Amazon. Returns a Health Score 0-100, prioritized action plan.
-- `/ads report` — turn the audit into a client-ready PDF.
+---
 
-**Single-platform deep dives**
-- `/ads google` · `/ads meta` · `/ads youtube` · `/ads linkedin` · `/ads tiktok` · `/ads microsoft` · `/ads apple` · `/ads amazon`
+## Brands
 
-**Cross-cutting**
-- `/ads creative` — creative quality + fatigue across platforms
-- `/ads landing` — landing page assessment
-- `/ads budget` — budget allocation review
-- `/ads attribution` — cross-platform attribution audit
-- `/ads tracking` — server-side tracking pipeline audit (sGTM, CAPI, dedup)
-- `/ads competitor` — competitor ad intelligence
+`rentumo`, `adsumo`, `printumo`, `bidumo`, `monetumo`, `photumo`, `jla` (Jacob Lund Art). Use `portfolio` for cross-brand work.
 
-**Planning / math**
-- `/ads plan <type>` — strategic plan (`saas`, `ecommerce`, `local-service`, `b2b-enterprise`, `info-products`, `mobile-app`, `real-estate`, `healthcare`, `finance`, `agency`, `generic`)
-- `/ads math` — PPC financial calculator (CPA, ROAS, break-even, LTV:CAC)
-- `/ads test` — A/B test design (hypothesis, sample size, duration)
+## Living docs in Drive
 
-**Creative generation**
-- `/ads dna <url>` — extract brand DNA from a site
-- `/ads create` — campaign concepts and copy briefs
-- `/ads generate` — AI ad image generation
-- `/ads photoshoot` — product photography in 5 styles
+Open `Mad Minds/00_START_HERE/` for: README, naming-conventions, Connector-Setup-Guide, Skills-Index.
 
-### When to use which
+## When things break
 
-| You want to… | Use |
-|---|---|
-| Run the monthly OnlineMinds paid review and save it to Mad Minds | `/monthly-paid-review` |
-| Get a deep, scored audit with PDF deliverable for a stakeholder meeting | `/ads audit` + `/ads report` |
-| Plan a new campaign for a brand using OnlineMinds brand voice | `/campaign-plan` |
-| Plan a new campaign using an industry template (saas, ecom, etc.) | `/ads plan` |
-| **Apply** a change (pause, budget, bid, create) on a live account | `/ad-actions` — always |
-| Find wasted spend with an uploadable negative-keyword CSV | `/wasted-spend-audit` |
-| Get a deep creative-fatigue audit across all platforms | `/ads creative` |
-| Calculate CPA / ROAS / LTV:CAC quickly | `/ads math` |
-
-Common pattern: **`/ads audit` to find issues** → **`/ad-actions` to apply the fixes** (the spend-gate enforces safety). Or: **`/monthly-paid-review` for the routine report**, then ask Claude to compare findings with `/ads google` for deeper diagnosis on whichever channel underperformed.
-
-Brands: `rentumo`, `adsumo`, `printumo`, `bidumo`, `monetumo`, `photumo`, `jla` (Jacob Lund Art). Use `portfolio` for cross-brand work.
-
-## Living docs (in Mad Minds itself)
-Open `Mad Minds/00_START_HERE/` for:
-- **README** — what Mad Minds is, naming, the publish workflow
-- **Connector-Setup-Guide** — the step-by-step for each connector (rerun source for `/setup-marketing`)
-- **Skills-Index** — every routine with a short description
-- **Capabilities-Overview** — the bigger picture of what the system can and can't do
-- **naming-conventions** — file naming rules
-
-## Notes
-- Cowork uses more tokens than regular Claude chat — use Cowork for finished deliverables and live data work; use regular chat for quick questions
-- Never paste API keys or secrets into any Hub file or chat message
-- If something breaks during onboarding, screenshot the error and ping Nikolaj
+- **A connector won't connect** → screenshot the error and ping Nikolaj
+- **Claude says "I need <X>" and pauses** → answer the question; Claude writes the value into `account-conventions-live` in Drive so nobody else gets asked
+- **Tier 1 spend-gate doesn't ask for the typed phrase** → STOP, ping Nikolaj
+- **Cowork feels expensive** → it uses more tokens than regular Claude chat. Use Cowork for live data + finished deliverables; use regular Claude for quick questions
