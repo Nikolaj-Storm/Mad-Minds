@@ -1,35 +1,65 @@
 {
-  "_comment": "Plugin MCP wiring. Google-family connectors (Drive, Google Ads, Meta Ads, GA4, Search Console, Tag Manager) are NOT pre-wired here \u2014 they are enabled by each marketer through Claude desktop's native Connectors UI (Customize \u2192 Connectors). The /setup-marketing skill walks them through it. Listed below are only vendor-native MCPs the plugin pre-wires.",
+  "_comment": "Plugin MCP wiring. Google-family + Meta connectors are pre-wired via Composio's hosted MCPs (free Composio account required at composio.dev; each marketer authorizes the platform on first use). Google Drive is NOT pre-wired here \u2014 it lives in Claude desktop's native Connectors catalog (Customize \u2192 Connectors \u2192 Google Drive). The /setup-marketing skill walks through both groups in order.",
   "mcpServers": {
+    "google-ads": {
+      "type": "http",
+      "url": "https://mcp.composio.dev/googleads/mcp",
+      "_comment": "Google Ads via Composio. WRITE-CAPABLE: GAQL reads + Mutate Campaigns/budgets/bids/negatives/create ads. Per-user OAuth on first use. No Google Ads developer-token application needed (Composio provisions). Alternative: Pipeboard (also hosted, also token-free) \u2014 swap if Composio is missing a specific action."
+    },
+    "meta-ads": {
+      "type": "http",
+      "url": "https://mcp.composio.dev/metaads/mcp",
+      "_comment": "Meta Ads via Composio. WRITE-CAPABLE: create/update/pause campaigns, budgets, ads/creatives. Facebook + Instagram. Per-user OAuth on first use."
+    },
+    "google-analytics": {
+      "type": "http",
+      "url": "https://mcp.composio.dev/googleanalytics/mcp",
+      "_comment": "GA4 sessions, conversions, funnel data. Read-only. Per-user OAuth."
+    },
+    "google-search-console": {
+      "type": "http",
+      "url": "https://mcp.composio.dev/googlesearchconsole/mcp",
+      "_comment": "Organic clicks/impressions/positions per query and page. Read-only. Per-user OAuth."
+    },
+    "google-tag-manager": {
+      "type": "http",
+      "url": "https://mcp.composio.dev/googletagmanager/mcp",
+      "_comment": "WRITE-CAPABLE: read containers/tags/triggers, create/edit, publish versions. Conversion-tracking changes count as Tier 1 in the spend-gate. Per-user OAuth."
+    },
+    "google-merchant-center": {
+      "type": "http",
+      "url": "https://mcp.composio.dev/googlemerchantcenter/mcp",
+      "_comment": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed (ecom/marketplace). Tier 2 for most edits; Tier 1 when enabling new spending campaigns from feed changes. Per-user OAuth. NOTE: URL is the Composio pattern \u2014 verify against your Composio account before rollout; if missing, the closest alternative is the official Google Content API."
+    },
     "ahrefs": {
       "type": "http",
       "url": "https://api.ahrefs.com/mcp/mcp",
-      "_comment": "Already in use at OnlineMinds. SEO keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO). Vendor-native MCP \u2014 not on Anthropic's catalog. Authorize via Ahrefs API key on first use."
+      "_comment": "SEO keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO). Vendor-native MCP \u2014 not on Composio. Org API key."
     },
     "similarweb": {
       "type": "http",
       "url": "https://mcp.similarweb.com",
-      "_comment": "Competitive traffic analysis and market benchmarking. Vendor-native MCP."
+      "_comment": "Competitive traffic, market benchmarking. Vendor-native MCP. Org API key."
     },
     "notion": {
       "type": "http",
       "url": "https://mcp.notion.com/mcp",
-      "_comment": "Optional. Briefs, playbooks, campaign docs if any live in Notion. Vendor-native MCP."
+      "_comment": "Optional. Briefs, playbooks in Notion. Vendor-native MCP."
     },
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp",
-      "_comment": "Already in use. Pull product/usage data for portfolio sites where relevant. Vendor-native MCP."
+      "_comment": "Already in use. Portfolio-site product/usage data. Vendor-native MCP."
     },
     "vercel": {
       "type": "http",
       "url": "https://mcp.vercel.com",
-      "_comment": "Already in use. Inspect deployments / the plecto-sync style cron jobs that feed data into the hub. Vendor-native MCP."
+      "_comment": "Already in use. Inspect deployments / scheduled data-pull jobs. Vendor-native MCP."
     },
     "slack": {
       "type": "http",
       "url": "https://mcp.slack.com/mcp",
-      "_comment": "Optional. Share finished reports and briefs with the team. Vendor-native MCP. Remove if OnlineMinds does not use Slack."
+      "_comment": "Optional. Share finished reports as messages. Vendor-native MCP."
     }
   }
 }

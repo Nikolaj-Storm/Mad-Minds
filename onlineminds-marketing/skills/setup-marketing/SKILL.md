@@ -51,8 +51,14 @@ For each connector below, in order, do this loop:
 3. If connected: confirm "✓ Connected" and move on.
 4. If not connected: tell them exactly where to click — `Customize → Connectors → <name> → Connect` — and what Google/Meta/etc. account to use. Wait for them to say "done" before re-testing.
 
+Connector locations in Claude desktop:
+- **Google Drive** lives in the **top-level Connectors** panel (Customize → Connectors).
+- **Everything else** lives in the **plugin-specific Connectors** panel (Customize → Onlineminds-marketing → Connectors). They appear with a **Connect** button — clicking it opens Composio's OAuth flow on first use. The marketer signs in with their own Google/Meta accounts; nothing else to paste.
+
+> First-time Composio note: the Composio-hosted connectors require a free Composio account at composio.dev. If a marketer hits a "sign in to Composio" prompt on first use, that's expected — sign up once, then continue. Composio handles the per-platform OAuth from there.
+
 Connector order and one-line purpose:
-- **Google Drive** — reach Mad Minds (the shared Hub). Account: `@onlineminds.io` (any).
+- **Google Drive** (native catalog) — reach Mad Minds (the shared Hub). Account: `@onlineminds.io` (any).
 - **Google Ads** — pull campaign performance, pause/enable, change budgets and bids, add negatives, create campaigns/ads. Account: the Google account with access to the OnlineMinds brand Google Ads accounts.
 - **Meta Ads** — same as above for Facebook/Instagram. Account: the Facebook account with access.
 - **Google Analytics (GA4)** — full-funnel session/conversion data behind the ads. Account: the Google account with GA4 access.
