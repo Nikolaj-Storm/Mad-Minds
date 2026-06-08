@@ -1,40 +1,20 @@
 {
-  "_comment": "Plugin MCP wiring. Google-family + Meta connectors are pre-wired via Composio's hosted MCPs (free Composio account required at composio.dev; each marketer authorizes the platform on first use). Google Drive is NOT pre-wired here \u2014 it lives in Claude desktop's native Connectors catalog (Customize \u2192 Connectors \u2192 Google Drive). The /setup-marketing skill walks through both groups in order.",
+  "_comment": "Plugin MCP wiring. The write-capable ad platforms (Google Ads + Meta Ads) use Pipeboard's hosted MCP servers, which speak Claude's native remote-MCP OAuth flow: the marketer clicks Connect, signs in with their own Google/Meta account, and Pipeboard brokers the platform OAuth WITHOUT ever seeing the credentials and WITHOUT any Google Ads developer-token application. This is true per-user auth, which is what the spend-gate relies on. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). Composio's hosted MCP endpoints authenticate with an x-api-key header, so they cannot be authorized from the Connect button - that mismatch caused the dynamic-client-registration failures. GA4 / Search Console / Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md); GSC data is already reachable through the Ahrefs MCP.",
   "mcpServers": {
     "google-ads": {
       "type": "http",
-      "url": "https://mcp.composio.dev/googleads/mcp",
-      "_comment": "Google Ads via Composio. WRITE-CAPABLE: GAQL reads + Mutate Campaigns/budgets/bids/negatives/create ads. Per-user OAuth on first use. No Google Ads developer-token application needed (Composio provisions). Alternative: Pipeboard (also hosted, also token-free) \u2014 swap if Composio is missing a specific action."
+      "url": "https://google-ads.mcp.pipeboard.co/",
+      "_comment": "Pipeboard Google Ads MCP. WRITE-CAPABLE: reads + create/update/pause campaigns, budgets, bids, negatives, ads. Per-user OAuth on first Connect (no developer token; Pipeboard provisions under its own GCP project and never stores the user's Google credentials). Requires a free Pipeboard account at pipeboard.co on first connect. Tier 1/2 spend-gate applies via the /ad-actions skill. Docs: https://pipeboard.co/guides/google-ads-mcp"
     },
     "meta-ads": {
       "type": "http",
-      "url": "https://mcp.composio.dev/metaads/mcp",
-      "_comment": "Meta Ads via Composio. WRITE-CAPABLE: create/update/pause campaigns, budgets, ads/creatives. Facebook + Instagram. Per-user OAuth on first use."
-    },
-    "google-analytics": {
-      "type": "http",
-      "url": "https://mcp.composio.dev/googleanalytics/mcp",
-      "_comment": "GA4 sessions, conversions, funnel data. Read-only. Per-user OAuth."
-    },
-    "google-search-console": {
-      "type": "http",
-      "url": "https://mcp.composio.dev/googlesearchconsole/mcp",
-      "_comment": "Organic clicks/impressions/positions per query and page. Read-only. Per-user OAuth."
-    },
-    "google-tag-manager": {
-      "type": "http",
-      "url": "https://mcp.composio.dev/googletagmanager/mcp",
-      "_comment": "WRITE-CAPABLE: read containers/tags/triggers, create/edit, publish versions. Conversion-tracking changes count as Tier 1 in the spend-gate. Per-user OAuth."
-    },
-    "google-merchant-center": {
-      "type": "http",
-      "url": "https://mcp.composio.dev/googlemerchantcenter/mcp",
-      "_comment": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed (ecom/marketplace). Tier 2 for most edits; Tier 1 when enabling new spending campaigns from feed changes. Per-user OAuth. NOTE: URL is the Composio pattern \u2014 verify against your Composio account before rollout; if missing, the closest alternative is the official Google Content API."
+      "url": "https://meta-ads.mcp.pipeboard.co/",
+      "_comment": "Pipeboard Meta Ads MCP. WRITE-CAPABLE: create/update/pause campaigns, budgets, ads/creatives across Facebook + Instagram. Per-user OAuth on first Connect (no Meta developer app needed). Requires the same free Pipeboard account. Docs: https://pipeboard.co/guides/meta-ads-mcp"
     },
     "ahrefs": {
       "type": "http",
       "url": "https://api.ahrefs.com/mcp/mcp",
-      "_comment": "SEO keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO). Vendor-native MCP \u2014 not on Composio. Org API key."
+      "_comment": "SEO keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO) AND Google Search Console data (gsc-* tools) - so GSC organic clicks/impressions/positions are reachable here without a separate GSC connector. Vendor-native MCP. Org API key."
     },
     "similarweb": {
       "type": "http",
@@ -60,6 +40,33 @@
       "type": "http",
       "url": "https://mcp.slack.com/mcp",
       "_comment": "Optional. Share finished reports as messages. Vendor-native MCP."
+    },
+    "google-search-console": {
+      "type": "http",
+      "url": "https://onlineminds-gsc-mcp.fly.dev/mcp",
+      "_comment": "Self-hosted GSC (gsc-mcp/, FastMCP Google OAuth-proxy). Per-user: marketers click Connect and sign in with Google, nothing to paste. Read-only (webmasters.readonly). Persistent (Fly volume) -> sign in once."
+    }
+  },
+  "_pending_connectors": {
+    "_comment": "NOT wired yet - do NOT ship guessed URLs. Each needs a verified OAuth MCP endpoint (one a marketer can authorize from Claude desktop's Connect button) chosen and tested before team rollout. Candidates are listed for evaluation; once a URL is confirmed working in Claude desktop, move the entry up into mcpServers. See CONNECTORS.md section 'Pending connectors' for the decision log.",
+    "google-analytics": {
+      "status": "needs-verified-oauth-mcp",
+      "purpose": "GA4 sessions, conversions, funnel data (read-only).",
+      "candidates": [
+        "Cogny managed GA4 MCP (cogny.com)",
+        "Stape hosted GA4 MCP (stape.io)",
+        "self-hosted google-analytics-mcp with Advanced-settings OAuth client ID"
+      ]
+    },
+    "google-tag-manager": {
+      "status": "needs-verified-oauth-mcp",
+      "purpose": "WRITE-CAPABLE: read containers/tags/triggers, create/edit, publish versions. Conversion-tracking changes are Tier 1 in the spend-gate.",
+      "note": "No verified Connect-button OAuth MCP confirmed yet. Until one is wired, Tier-1 GTM tracking edits via /ad-actions are unavailable. Block team rollout of GTM writes until verified."
+    },
+    "google-merchant-center": {
+      "status": "needs-verified-oauth-mcp",
+      "purpose": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed.",
+      "note": "Candidate fallback: the official Google Content API via a self-hosted MCP with Advanced-settings OAuth client ID."
     }
   }
 }

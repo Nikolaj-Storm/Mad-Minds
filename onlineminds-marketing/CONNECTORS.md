@@ -3,22 +3,28 @@
 ## How tool references work
 Skills describe workflows by capability (paid ads, SEO, analytics, tracking), not by vendor. Each marketer authorizes their own accounts on first use — there is no shared credential.
 
+## Why not Composio (the thing we changed)
+The earlier wiring pointed every Google/Meta connector at guessed Composio URLs (`https://mcp.composio.dev/<toolkit>/mcp`). That cannot work from Claude desktop, for two reasons:
+
+1. **Those URLs were invented.** Real Composio MCP endpoints are generated per-server in the Composio dashboard (`https://apollo.composio.dev/v3/mcp/<UUID>` or `https://backend.composio.dev/v3/mcp/<SERVER_ID>?user_id=<USER_ID>`), not derived from a toolkit name.
+2. **Composio authenticates with an `x-api-key` header, but Claude desktop's Connect button only does OAuth** — its connector UI has no field for an API key or custom header (anthropics/claude-ai-mcp #112). So even a correct Composio URL can't be authorized from the Connect button a marketer uses.
+
+The symptom was the error `Couldn't register with <connector>'s sign-in service … add an OAuth Client ID` — a failed OAuth dynamic-client-registration against an endpoint that doesn't support it.
+
+The fix: use connectors that natively speak Claude's remote-MCP OAuth flow, so the marketer clicks **Connect**, signs in with their own Google/Meta account, and is done — true per-user auth, which is what the spend-gate depends on.
+
 ## Two kinds of connectors
 
 ### A. Plugin-pre-wired MCPs (`.mcp.json`)
-These load automatically when the `onlineminds-marketing` plugin installs. Each one shows up under **Customize → Onlineminds-marketing → Connectors** in Claude desktop with a **Connect** button. Marketer clicks Connect, runs through the OAuth flow on first use, then it works in every Cowork session.
+These load automatically when the `onlineminds-marketing` plugin installs. Each shows up under **Customize → Onlineminds-marketing → Connectors** with a **Connect** button. The marketer clicks Connect, runs the OAuth flow once, then it works in every Cowork session.
 
-| Capability | Server (in .mcp.json) | Auth model | Notes |
+| Capability | Server (in `.mcp.json`) | Auth model | Notes |
 |---|---|---|---|
-| Google Ads | Composio Google Ads | Per-user OAuth via Composio | **Write-capable.** GAQL reads + Mutate Campaigns / budget / bid / negatives / create ads. Token-free (Composio provisions the dev token). Tier 1/2 spend-gate applies. |
-| Meta Ads | Composio Meta Ads | Per-user OAuth via Composio | **Write-capable.** Create/update/pause campaigns, budgets, ads/creatives. Facebook + Instagram. |
-| GA4 | Composio Google Analytics | Per-user OAuth | Read-only sessions, conversions, funnel data. |
-| Google Search Console | Composio GSC | Per-user OAuth | Organic clicks/impressions/positions per query/page. |
-| Google Tag Manager | Composio GTM | Per-user OAuth | **Write-capable.** Read/edit tags/triggers/variables, publish containers. Conversion-tracking changes are Tier 1 (bad tracking = fake spend signals). |
-| Google Merchant Center | Composio Merchant Center | Per-user OAuth | **Write-capable.** Feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed. Tier 2 for most edits; Tier 1 when enabling new spend or publishing promotions. ⚠️ Verify URL against your Composio account; if missing, swap to the official Google Content API. |
-| Ahrefs | Vendor MCP (`api.ahrefs.com`) | Org API key | SEO keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO). |
-| SimilarWeb | Vendor MCP (`mcp.similarweb.com`) | Org API key | Competitive traffic, market benchmarking. |
-| Notion | Vendor MCP | Per-user OAuth | Optional. Briefs/playbooks if you keep them in Notion. |
+| Google Ads | **Pipeboard** (`google-ads.mcp.pipeboard.co`) | Per-user OAuth via Connect button | **Write-capable.** Reads + create/update/pause campaigns, budgets, bids, negatives, ads. No Google Ads developer-token application — Pipeboard provisions under its own GCP project and never sees the user's credentials. Tier 1/2 spend-gate applies. Free Pipeboard account needed on first connect. |
+| Meta Ads | **Pipeboard** (`meta-ads.mcp.pipeboard.co`) | Per-user OAuth via Connect button | **Write-capable.** Create/update/pause campaigns, budgets, ads/creatives. Facebook + Instagram. No Meta developer app needed. Same Pipeboard account. |
+| SEO + GEO + **Search Console** | Ahrefs (`api.ahrefs.com`) | Org API key | Keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO). **Also exposes Google Search Console** organic clicks/impressions/positions via its `gsc-*` tools — so GSC needs no separate connector today. |
+| Competitive traffic | SimilarWeb (`mcp.similarweb.com`) | Org API key | Market benchmarking. |
+| Notion | Vendor MCP | Per-user OAuth | Optional. Briefs/playbooks. |
 | Supabase | Vendor MCP | Per-user / org | Already in use. Portfolio-site data. |
 | Vercel | Vendor MCP | Per-user / org | Already in use. Deployment + scheduled-job inspection. |
 | Slack | Vendor MCP | Per-user OAuth | Optional. Share finished reports. |
@@ -30,25 +36,34 @@ Claude desktop's built-in **Customize → Connectors** (the top-level one, not t
 |---|---|---|
 | Mad Minds Drive Hub | Google Drive | Read/write the shared Hub. Sign in with `@onlineminds.io`. |
 
-> Why not also put Google Ads/Meta/GA4/GSC/GTM/Merchant Center in this catalog? Because on individual Pro/Max seats they aren't in the built-in catalog. Pre-wiring them via `.mcp.json` (group A above) is how we deliver them to every marketer with zero config on their end.
+## Pending connectors (not yet wired — block on these before team rollout)
+These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not ship guessed URLs for them.** Each needs a verified OAuth MCP endpoint — one a marketer can authorize from the Connect button — chosen and tested before it goes to the team.
+
+| Capability | Status | Plan |
+|---|---|---|
+| GA4 (Google Analytics) | Needs a verified OAuth MCP | Evaluate a managed GA4 MCP with built-in OAuth (candidates: Cogny, Stape) or self-host `google-analytics-mcp` and register an OAuth client ID in the connector's Advanced settings. Read-only. |
+| Google Search Console | **Self-host ready** (deploy, then wire) | Direct per-user GSC connector via the **corrected, vendored** server at `gsc-mcp/` (FastMCP Google **OAuth-proxy**; from damupi/mcp-gsc-oauth with 3 tested-and-fixed defects — see `gsc-mcp/NOTICE.md`) on Fly.io. Maintainer hosts it once and holds the Google secret server-side; marketers just click **Connect → sign in with Google**, nothing to paste. Per-user, read-only, only their own properties. Steps in `GSC-SELF-HOST-RUNBOOK.md`. (Ahrefs `gsc-*` tools remain a fallback.) |
+| Google Tag Manager | Needs a verified OAuth MCP | **Tier-1 tracking edits depend on this.** No Connect-button OAuth MCP confirmed yet; until one is wired and tested, GTM writes via `/ad-actions` stay unavailable. Do not roll out GTM writes until verified. |
+| Google Merchant Center | Needs a verified OAuth MCP | Feed brands only. Fallback: official Google Content API via a self-hosted MCP with an Advanced-settings OAuth client ID. |
+
+> Why not put these in the native Claude desktop catalog instead? On individual Pro/Max seats they aren't in the built-in catalog. The Connect-button MCP approach above is how we deliver per-user connectors with no per-marketer dashboard work.
 
 ## Onboarding flow
-The `/setup-marketing` skill walks through both lists in order:
+The `/setup-marketing` skill walks through the lists in order:
 1. **Native:** Google Drive (mandatory — needed for Mad Minds)
-2. **Plugin-prewired (Composio):** Google Ads + Meta Ads (mandatory for paid skills) → GA4, Search Console, Tag Manager (recommended) → Merchant Center (only for Shopping/PMax brands)
-3. **Plugin-prewired (vendor):** Ahrefs, SimilarWeb (recommended for SEO + competitive)
+2. **Plugin-prewired (Pipeboard):** Google Ads + Meta Ads (mandatory for paid skills) — one Pipeboard sign-in covers both
+3. **Plugin-prewired (vendor):** Ahrefs (SEO + GSC), SimilarWeb (competitive)
 4. **Optional:** Notion, Slack, Supabase, Vercel
+5. **Self-host (deploy then connect):** Google Search Console — see `GSC-SELF-HOST-RUNBOOK.md`
+6. **Pending (skip for now):** GA4, GTM, Merchant Center — only once a verified URL is wired
 
-## Composio account requirement
-The Composio-hosted MCPs in group A require a **Composio account** (free at composio.dev). Sign up once at the org level; each marketer authorizes their own Google/Meta accounts through Composio's OAuth flow on first use. No developer-token application required (Composio provisions Google Ads, etc.).
+## Pipeboard account requirement
+The Google Ads + Meta Ads connectors are brokered by **Pipeboard** (free plan at pipeboard.co). On the first Connect, the marketer signs in to Pipeboard once, then completes the normal Google/Meta OAuth screen. Pipeboard provisions the platform developer access under its own project and never stores the marketer's credentials. Per-user from end to end.
 
-If Composio is ever missing a specific action OnlineMinds needs, swap the URL to:
-- **Google Ads:** Pipeboard (`pipeboard.co`) — also hosted, also token-free
-- **Meta Ads:** Adspirer (`adspirer.com`)
-- **Merchant Center:** Google Content API directly
+If Pipeboard is ever missing a specific action OnlineMinds needs, alternatives that also support per-user OAuth from Claude's Connect button can be evaluated — but verify the URL works in Claude desktop before swapping it into `.mcp.json`.
 
 ## Per-user auth
 Every connector uses per-user OAuth (or per-user API key). Claude acts as the authenticated marketer — it can only touch ad accounts, GA4 properties, GTM containers, etc. that person already has access to in real life. There is no shared service account.
 
 ## Write safety
-All write actions (Google Ads, Meta Ads, Google Tag Manager, Merchant Center) are gated by the rules in `account-conventions`. Spend-increasing actions and tracking changes that affect conversion counts (Tier 1) require the user to type a verbatim accept-phrase (e.g. `I wish to increase the ad spending on rentumo.ie by $500`); the gate is non-overridable. Non-spend writes (Tier 2) require explicit confirmation. Every change shows its reversal and is logged to `06_Automation_Outputs/logs/`. Pair with platform-level spend caps for a hard backstop. No machine-to-machine auto-execution.
+All write actions (Google Ads, Meta Ads, and — once wired — Google Tag Manager, Merchant Center) are gated by the rules in `account-conventions`. Spend-increasing actions and tracking changes that affect conversion counts (Tier 1) require the user to type a verbatim accept-phrase (e.g. `I wish to increase the ad spending on rentumo.ie by $500`); the gate is non-overridable. Non-spend writes (Tier 2) require explicit confirmation. Every change shows its reversal and is logged to `06_Automation_Outputs/logs/`. Pair with platform-level spend caps for a hard backstop. No machine-to-machine auto-execution.

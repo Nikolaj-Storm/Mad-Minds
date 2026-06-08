@@ -1,6 +1,6 @@
 ---
 name: setup-marketing
-description: First-session onboarding for a new marketer in the Mad Minds project. Walks them through authorizing every required connector (Google Drive, Google Ads, Meta Ads, GA4, Search Console, Google Tag Manager, Ahrefs, SimilarWeb), verifies Drive access to Mad Minds, asks their first name and confirms their personal folder, and ends with a capabilities overview of every skill they can run. Triggered automatically by CLAUDE.md on first session, or manually as /setup-marketing whenever a marketer wants to re-verify their setup. Use whenever a marketer is new, says "hi" / "what can you do" / "I just installed this", or asks to check their connectors.
+description: First-session onboarding for a new marketer in the Mad Minds project. Walks them through authorizing every required connector (Google Drive, Google Ads + Meta Ads via Pipeboard, Ahrefs incl. Search Console data, SimilarWeb), verifies Drive access to Mad Minds, asks their first name and confirms their personal folder, and ends with a capabilities overview of every skill they can run. Triggered automatically by CLAUDE.md on first session, or manually as /setup-marketing whenever a marketer wants to re-verify their setup. Use whenever a marketer is new, says "hi" / "what can you do" / "I just installed this", or asks to check their connectors.
 argument-hint: "(no args — runs interactively)"
 ---
 
@@ -53,22 +53,20 @@ For each connector below, in order, do this loop:
 
 Connector locations in Claude desktop:
 - **Google Drive** lives in the **top-level Connectors** panel (Customize → Connectors).
-- **Everything else** lives in the **plugin-specific Connectors** panel (Customize → Onlineminds-marketing → Connectors). They appear with a **Connect** button — clicking it opens Composio's OAuth flow on first use. The marketer signs in with their own Google/Meta accounts; nothing else to paste.
+- **Everything else** lives in the **plugin-specific Connectors** panel (Customize → Onlineminds-marketing → Connectors). They appear with a **Connect** button — clicking it runs the connector's own OAuth flow. The marketer signs in with their own Google/Meta account; nothing to paste.
 
-> First-time Composio note: the Composio-hosted connectors require a free Composio account at composio.dev. If a marketer hits a "sign in to Composio" prompt on first use, that's expected — sign up once, then continue. Composio handles the per-platform OAuth from there.
+> First-time Pipeboard note: the Google Ads + Meta Ads connectors are brokered by Pipeboard (free account at pipeboard.co). On the first Connect, the marketer signs in to Pipeboard once, then sees the normal Google/Meta sign-in screen. That's expected — sign up once, then continue. Pipeboard never sees or stores their Google/Meta password.
 
 Connector order and one-line purpose:
 - **Google Drive** (native catalog) — reach Mad Minds (the shared Hub). Account: `@onlineminds.io` (any).
-- **Google Ads** — pull campaign performance, pause/enable, change budgets and bids, add negatives, create campaigns/ads. Account: the Google account with access to the OnlineMinds brand Google Ads accounts.
-- **Meta Ads** — same as above for Facebook/Instagram. Account: the Facebook account with access.
-- **Google Analytics (GA4)** — full-funnel session/conversion data behind the ads. Account: the Google account with GA4 access.
-- **Google Search Console** — organic clicks, impressions, positions for SEO/GEO work. Account: GSC-verified Google account.
-- **Google Tag Manager** — read tag/trigger config; fix tracking gaps. Account: GTM-admin Google account.
-- **Google Merchant Center** — product feed health, attribute edits, promotions, Shopping/PMax product-level performance. Only relevant for brands running feed-based campaigns; ask the marketer "does this brand run Shopping or PMax with a product feed?" before walking through Merchant Center auth. Account: the Google account with Merchant Center admin access for the brand's MC ID.
-- **Ahrefs** — keyword research, backlinks, site audits, Brand Radar (AI mentions). API key already provisioned for the org; this is a token connect.
+- **Google Ads** (Pipeboard) — pull campaign performance, pause/enable, change budgets and bids, add negatives, create campaigns/ads. Account: the Google account with access to the OnlineMinds brand Google Ads accounts.
+- **Meta Ads** (Pipeboard) — same as above for Facebook/Instagram. Account: the Facebook account with access. (One Pipeboard sign-in covers both Google Ads and Meta Ads.)
+- **Ahrefs** — keyword research, backlinks, site audits, Brand Radar (AI mentions), **and Google Search Console** organic data (clicks/impressions/positions) via its `gsc-*` tools. API key already provisioned for the org; this is a token connect.
 - **SimilarWeb** — competitive traffic and market benchmarking. API key.
 
 Skip Notion / Slack / Supabase / Vercel unless the marketer says they want them — those are optional.
+
+Not yet available (do NOT walk the marketer through these — they aren't wired): **GA4**, **Google Tag Manager**, **Google Merchant Center**. Each is waiting on a verified Connect-button OAuth MCP (see CONNECTORS.md § Pending connectors). If a marketer asks for GA4 funnel data, tell them it's coming; for organic search, use Ahrefs/GSC. GTM tracking edits and Merchant Center feed work are unavailable until those connectors are wired and tested.
 
 If a connector fails to connect twice in a row, note it in the summary and continue. Do not block the whole onboarding on one connector.
 

@@ -1,0 +1,13 @@
+# Pinned for the deployed Google Search Console MCP.
+# fastmcp MUST stay <3: this server uses the 2.x API (FastMCP(description=...),
+# @mcp.tool(metadata=...)), which FastMCP 3.x removed. Verified working on 2.14.7.
+fastmcp>=2.12,<3
+google-api-python-client>=2.0.0
+google-auth>=2.0.0
+google-auth-oauthlib>=1.0.0
+google-auth-httplib2>=0.2.0
+# Persistent OAuth client/token storage (DiskStore on a Fly volume) so marketers
+# sign in once and survive restarts/redeploys. py-key-value-aio ships with fastmcp,
+# pinned explicitly here so the disk backend is guaranteed present.
+py-key-value-aio>=0.3.0
+diskcache>=5.6.0
