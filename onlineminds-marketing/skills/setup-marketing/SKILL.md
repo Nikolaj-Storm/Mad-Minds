@@ -45,30 +45,30 @@ The marketer's personal workspace lives at `Mad Minds/07_People/<lowercase-first
    - Also update `01_Knowledge_Base/account-conventions-live` section 6 (Team Roster) by appending the new name to the list (preserve the existing names; just add a comma-separated entry).
 
 ### Step 3 — Walk through every required connector
+
+**How the plugin connectors authenticate (read this first).** Google Ads, Meta Ads, and Google Search Console are **provided by the plugin** — they are already installed. The marketer must NOT use the Connectors panel for them: the "Install" button errors with "a server with this URL already exists", and "Add custom connector" is also wrong. Instead, each authenticates **in-session via a sign-in link**: when you try to use a connector that isn't authorized yet, an `authenticate` tool is available for it (e.g. `mcp__plugin_onlineminds-marketing_google-search-console__authenticate`). Call that tool; it returns a sign-in URL. Give the URL to the marketer, have them open it and sign in with the right account, and the connector's real tools become available automatically. The ONLY connector that uses the Connectors panel is Google Drive (native catalog).
+
 For each connector below, in order, do this loop:
-1. State what the connector is for in one sentence (what the marketer gets from it).
-2. Test whether it's connected by attempting a trivial read (e.g. list one Google Ads account, list one Drive folder). Do NOT show raw API output to the user.
-3. If connected: confirm "✓ Connected" and move on.
-4. If not connected: tell them exactly where to click — `Customize → Connectors → <name> → Connect` — and what Google/Meta/etc. account to use. Wait for them to say "done" before re-testing.
+1. State what the connector is for in one sentence.
+2. Test whether it's authorized by attempting a trivial read (e.g. list sites, list one Google Ads account, list one Drive folder). Do NOT show raw API output.
+3. If it works: confirm "✓ Connected" and move on.
+4. If it's not authorized: call that connector's `authenticate` tool, paste the returned sign-in link to the marketer, tell them which account to use, and wait for them to confirm before re-testing. (For Google Drive only: send them to Customize → Connectors → Google Drive → Connect.) If the redirect page shows a connection error, ask them to paste the full address-bar URL and call the matching `complete_authentication` tool with it.
 
-Connector locations in Claude desktop:
-- **Google Drive** lives in the **top-level Connectors** panel (Customize → Connectors).
-- **Everything else** lives in the **plugin-specific Connectors** panel (Customize → Onlineminds-marketing → Connectors). They appear with a **Connect** button — clicking it runs the connector's own OAuth flow. The marketer signs in with their own Google/Meta account; nothing to paste.
-
-> First-time Pipeboard note: the Google Ads + Meta Ads connectors are brokered by Pipeboard (free account at pipeboard.co). On the first Connect, the marketer signs in to Pipeboard once, then sees the normal Google/Meta sign-in screen. That's expected — sign up once, then continue. Pipeboard never sees or stores their Google/Meta password.
+> First-time Pipeboard note: Google Ads + Meta Ads are brokered by Pipeboard (free). The first sign-in link sends them to Pipeboard once, then to the normal Google/Meta sign-in. Pipeboard never sees or stores their password.
 
 Connector order and one-line purpose:
-- **Google Drive** (native catalog) — reach Mad Minds (the shared Hub). Account: `@onlineminds.io` (any).
-- **Google Ads** (Pipeboard) — pull campaign performance, pause/enable, change budgets and bids, add negatives, create campaigns/ads. Account: the Google account with access to the OnlineMinds brand Google Ads accounts.
-- **Meta Ads** (Pipeboard) — same as above for Facebook/Instagram. Account: the Facebook account with access. (One Pipeboard sign-in covers both Google Ads and Meta Ads.)
-- **Ahrefs** — keyword research, backlinks, site audits, Brand Radar (AI mentions), **and Google Search Console** organic data (clicks/impressions/positions) via its `gsc-*` tools. API key already provisioned for the org; this is a token connect.
-- **SimilarWeb** — competitive traffic and market benchmarking. API key.
+- **Google Drive** (native catalog — the only panel connect) — reach Mad Minds (the shared Hub). Account: `@onlineminds.io`.
+- **Google Search Console** (plugin; sign-in link) — organic clicks/impressions/positions per query and page. Direct Google sign-in; they see only their own verified properties. Read-only.
+- **Google Ads** (plugin via Pipeboard; sign-in link) — pull performance, pause/enable, change budgets/bids, add negatives, create campaigns/ads. Account: the Google account with access to the brand's Google Ads.
+- **Meta Ads** (plugin via Pipeboard; sign-in link) — same for Facebook/Instagram. One Pipeboard sign-in covers both Google Ads and Meta Ads.
+- **Ahrefs** — keyword research, backlinks, site audits, Brand Radar. Org API key (configured centrally; no marketer action).
+- **SimilarWeb** — competitive traffic and market benchmarking. Org API key (configured centrally).
 
-Skip Notion / Slack / Supabase / Vercel unless the marketer says they want them — those are optional.
+Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional.
 
-Not yet available (do NOT walk the marketer through these — they aren't wired): **GA4**, **Google Tag Manager**, **Google Merchant Center**. Each is waiting on a verified Connect-button OAuth MCP (see CONNECTORS.md § Pending connectors). If a marketer asks for GA4 funnel data, tell them it's coming; for organic search, use Ahrefs/GSC. GTM tracking edits and Merchant Center feed work are unavailable until those connectors are wired and tested.
+Not yet available (do NOT walk the marketer through these — they aren't wired): **GA4**, **Google Tag Manager**, **Google Merchant Center**. If a marketer asks for GA4 funnel data, tell them it's coming; for organic search use Google Search Console (or Ahrefs). GTM and Merchant Center are unavailable until wired.
 
-If a connector fails to connect twice in a row, note it in the summary and continue. Do not block the whole onboarding on one connector.
+If a connector fails to authorize twice in a row, note it in the summary and continue. Do not block the whole onboarding on one connector.
 
 ### Step 4 — Show their personal folder
 Tell them: "Your personal folder is `Mad Minds/07_People/<name>/`. Drafts and works-in-progress save here by default. When something's finished and useful to the team, say 'publish to the team' and the skill copies it into the right shared folder." Give them the direct link to their folder if you can construct it from the folder ID.
