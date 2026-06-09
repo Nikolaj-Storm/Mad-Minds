@@ -1,16 +1,6 @@
 {
   "_comment": "Plugin MCP wiring. The write-capable ad platforms (Google Ads + Meta Ads) use Pipeboard's hosted MCP servers, which speak Claude's native remote-MCP OAuth flow: the marketer clicks Connect, signs in with their own Google/Meta account, and Pipeboard brokers the platform OAuth WITHOUT ever seeing the credentials and WITHOUT any Google Ads developer-token application. This is true per-user auth, which is what the spend-gate relies on. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). Composio's hosted MCP endpoints authenticate with an x-api-key header, so they cannot be authorized from the Connect button - that mismatch caused the dynamic-client-registration failures. GA4 / Search Console / Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md); GSC data is already reachable through the Ahrefs MCP.",
   "mcpServers": {
-    "google-ads": {
-      "type": "http",
-      "url": "https://google-ads.mcp.pipeboard.co/",
-      "_comment": "Pipeboard Google Ads MCP. WRITE-CAPABLE: reads + create/update/pause campaigns, budgets, bids, negatives, ads. Per-user OAuth on first Connect (no developer token; Pipeboard provisions under its own GCP project and never stores the user's Google credentials). Requires a free Pipeboard account at pipeboard.co on first connect. Tier 1/2 spend-gate applies via the /ad-actions skill. Docs: https://pipeboard.co/guides/google-ads-mcp"
-    },
-    "meta-ads": {
-      "type": "http",
-      "url": "https://meta-ads.mcp.pipeboard.co/",
-      "_comment": "Pipeboard Meta Ads MCP. WRITE-CAPABLE: create/update/pause campaigns, budgets, ads/creatives across Facebook + Instagram. Per-user OAuth on first Connect (no Meta developer app needed). Requires the same free Pipeboard account. Docs: https://pipeboard.co/guides/meta-ads-mcp"
-    },
     "ahrefs": {
       "type": "http",
       "url": "https://api.ahrefs.com/mcp/mcp",
@@ -67,6 +57,23 @@
       "status": "needs-verified-oauth-mcp",
       "purpose": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed.",
       "note": "Candidate fallback: the official Google Content API via a self-hosted MCP with Advanced-settings OAuth client ID."
+    },
+    "meta-ads": {
+      "status": "use Meta's official MCP (free beta) \u2014 needs the per-Business URL Meta provisions",
+      "purpose": "Facebook + Instagram ad reporting AND campaign management (read+write, 29 tools). Auth = Meta Business OAuth (NOT Google) so the Workspace block does not apply.",
+      "how_to_get_url": "A Meta Business admin opens facebook.com/business/help/1456422242197840 -> Connect to AI tool -> authorize ad-account + campaign scopes -> copy the exact MCP URL Meta provisions (looks like https://mcp.meta.com/ads/<business-id>). Paste that exact URL; do not hand-construct it.",
+      "multi_company": "One Meta Business Manager => one URL serves everyone (each marketer still signs in per-user and only sees accounts they can access). Multiple Business Managers => one connector entry per BM, named meta-ads-<company>, each with that BM's URL.",
+      "final_config_template": {
+        "type": "http",
+        "url": "https://mcp.meta.com/ads/REPLACE-WITH-EXACT-URL-FROM-META",
+        "_comment": "Meta official MCP. Per-user Meta Business OAuth. Free during beta (long-term pricing unannounced). Writes route through /ad-actions spend-gate. Move into mcpServers once the real URL is filled in."
+      }
+    },
+    "google-ads": {
+      "status": "BLOCKED on an org decision \u2014 no self-serve path",
+      "purpose": "Google Ads reporting + campaign management.",
+      "why_blocked": "Every option needs either your own developer token (self-host/Google official MCP) OR a Google Workspace allowlist for a third-party app (Pipeboard etc.). Neither is grantable by a non-admin. Google has no free first-party hosted MCP like Meta.",
+      "interim": "Use the claude-ads audit toolkit on exported Google Ads data. Revisit when a Workspace allowlist or MCC developer token becomes available."
     }
   }
 }

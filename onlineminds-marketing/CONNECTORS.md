@@ -20,9 +20,8 @@ These load automatically when the `onlineminds-marketing` plugin installs. Each 
 
 | Capability | Server (in `.mcp.json`) | Auth model | Notes |
 |---|---|---|---|
-| Google Ads | **Pipeboard** (`google-ads.mcp.pipeboard.co`) | Per-user OAuth via Connect button | **Write-capable.** Reads + create/update/pause campaigns, budgets, bids, negatives, ads. No Google Ads developer-token application — Pipeboard provisions under its own GCP project and never sees the user's credentials. Tier 1/2 spend-gate applies. Free Pipeboard account needed on first connect. |
-| Meta Ads | **Pipeboard** (`meta-ads.mcp.pipeboard.co`) | Per-user OAuth via Connect button | **Write-capable.** Create/update/pause campaigns, budgets, ads/creatives. Facebook + Instagram. No Meta developer app needed. Same Pipeboard account. |
-| SEO + GEO + **Search Console** | Ahrefs (`api.ahrefs.com`) | Org API key | Keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO). **Also exposes Google Search Console** organic clicks/impressions/positions via its `gsc-*` tools — so GSC needs no separate connector today. |
+| **Google Search Console** | Self-hosted `gsc-mcp/` on Fly (`onlineminds-gsc-mcp.fly.dev`) | Per-user Google OAuth (sign-in link) | **Live.** Organic clicks/impressions/positions, URL inspection, sitemaps. Read-only. Each marketer signs in with their own Google account (Internal app, auto-trusted by Workspace). Persistent — sign in once. |
+| SEO + GEO | Ahrefs (`api.ahrefs.com`) | Org API key | Keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO). Also exposes GSC `gsc-*` tools as a fallback. |
 | Competitive traffic | SimilarWeb (`mcp.similarweb.com`) | Org API key | Market benchmarking. |
 | Notion | Vendor MCP | Per-user OAuth | Optional. Briefs/playbooks. |
 | Supabase | Vendor MCP | Per-user / org | Already in use. Portfolio-site data. |
