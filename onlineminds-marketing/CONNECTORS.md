@@ -48,12 +48,16 @@ These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not
 
 ## Onboarding flow
 The `/setup-marketing` skill walks through the lists in order:
+**Live today (what setup walks through):**
 1. **Native:** Google Drive (mandatory — needed for Mad Minds)
 2. **Self-hosted (live):** Google Search Console — per-user Google sign-in link, no panel install
-3. **Meta's official MCP:** Meta Ads — per-Business-Manager URL, Meta Business (Facebook) sign-in (see below)
-4. **Plugin-prewired (vendor):** SimilarWeb (competitive)
-5. **Optional:** Notion, Slack, Supabase, Vercel
-6. **Not available yet:** Google Ads (blocked on org approval), GA4 / GTM / Merchant Center (not wired)
+3. **Plugin-prewired (vendor):** SimilarWeb (competitive)
+4. **Optional:** Notion, Slack, Supabase, Vercel
+
+**Coming (NOT part of setup yet):**
+- **Meta Ads** — Meta's official MCP, per-Business-Manager URL + Meta Business sign-in (see below). Awaiting the URL(s).
+- **Google Ads** — blocked on an org approval (dev token or Workspace allowlist).
+- **GA4 / Google Tag Manager / Merchant Center** — not wired.
 
 ## Meta Ads — official MCP, per company
 Meta Ads uses **Meta's own official MCP** (free beta), authenticated via **Meta Business OAuth (Facebook)** — not Google, so the Workspace third-party-app block doesn't apply. A Business admin authorizes at Meta's "Connect to AI tool" page and copies the unique MCP URL Meta provisions for that Business account. Because OnlineMinds runs **multiple Business Managers**, each company provisions its own URL and is wired as its own connector (`meta-ads-<company>`). Per-user: each marketer signs in with their own Meta account and only sees ad accounts they can access.

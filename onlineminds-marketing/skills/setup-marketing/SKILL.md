@@ -54,15 +54,17 @@ For each connector below, in order, do this loop:
 3. If it works: confirm "✓ Connected" and move on.
 4. If it's not authorized: call that connector's `authenticate` tool, paste the returned sign-in link to the marketer, tell them which account to use, and wait for them to confirm before re-testing. (For Google Drive only: send them to Customize → Connectors → Google Drive → Connect.) If the redirect page shows a connection error, ask them to paste the full address-bar URL and call the matching `complete_authentication` tool with it.
 
-Connector order and one-line purpose:
+Connector order and one-line purpose (these are the ONLY ones live today):
 - **Google Drive** (native catalog — the only panel connect) — reach Mad Minds (the shared Hub). Account: `@onlineminds.io`.
 - **Google Search Console** (plugin; sign-in link) — organic clicks/impressions/positions per query and page. Direct Google sign-in; they see only their own verified properties. Read-only.
-- **Meta Ads** (Meta's official MCP; sign-in link) — Facebook/Instagram reporting + campaign management (read+write). Auth is **Meta Business OAuth** (Facebook, not Google). If the connector is wired (a `meta-ads*` server exists), authorize it via its sign-in link and have them pick the Meta Business account for their brands. If it is NOT yet wired, tell them Meta is being set up and skip it. Writes go through `/ad-actions`.
-- **SimilarWeb** — competitive traffic and market benchmarking. Org API key (configured centrally).
+- **SimilarWeb** — competitive traffic and market benchmarking. Org API key (configured centrally; no marketer action).
 
 Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional.
 
-Not available yet (do NOT walk the marketer through these): **Google Ads** — blocked on an org approval (developer token or Workspace allowlist); for now run `claude-ads` audits on exported Google Ads data. **GA4**, **Google Tag Manager**, **Google Merchant Center** — not wired. If asked, say they're coming; for organic search use Google Search Console.
+Not available yet (do NOT walk the marketer through these; if asked, say they're coming):
+- **Meta Ads** — will use Meta's official MCP (Meta Business sign-in); the per-Business URL isn't wired yet. (If a `meta-ads*` server appears in `.mcp.json` later, authorize it via its sign-in link.)
+- **Google Ads** — blocked on an org approval (developer token or Workspace allowlist). For now run `claude-ads` audits on exported Google Ads data.
+- **GA4**, **Google Tag Manager**, **Google Merchant Center** — not wired. For organic search, use Google Search Console.
 
 If a connector fails to authorize twice in a row, note it in the summary and continue. Do not block the whole onboarding on one connector.
 
