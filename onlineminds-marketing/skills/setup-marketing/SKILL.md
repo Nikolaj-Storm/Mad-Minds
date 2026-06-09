@@ -62,6 +62,22 @@ Not available yet (don't walk through; if asked, say they're coming): **Meta Ads
 
 If a connector fails to authorize twice in a row, note it in the summary and continue. Do not block the whole onboarding on one connector.
 
+
+### Step 3b — Record their access profile (notes about their spaces + connections)
+As the connectors come online, capture what this person can actually reach, and save it so the system knows their access in future sessions and doesn't have to re-check each time.
+
+Gather (from the connectors that connected):
+- **Google Search Console** — call `list_sites`; record each property URL and its permission level (e.g. siteFullUser vs siteUnverifiedUser).
+- **Google Ads** — call `list_accounts`; record the account IDs, and where `account-conventions-live` maps an ID to a brand, note the brand too.
+- **Google Drive** — their personal folder, plus any shared Hub folders they can open.
+- Which connectors are connected vs. still missing.
+
+Then WRITE it to two places:
+1. **Their personal folder** — create/overwrite a doc `07_People/<name>/notes/access-profile` containing: today's date, connectors connected, GSC properties (+ permission level), Google Ads account IDs (+ mapped brands), and anything they told you about which brands they own. This is the per-person source of truth for their access.
+2. **The Team Roster** in `01_Knowledge_Base/account-conventions-live` (section 6) — append/refresh a one-line summary next to their name, e.g. `nikolaj — GSC: rentumo.* (7) + usenti.com; Google Ads: 9289934893, 2484018099`.
+
+To the marketer, confirm in plain language only — never dump raw IDs/JSON: e.g. "You've got Search Console access to 8 properties and 2 Google Ads accounts — I've noted that in your profile so I won't have to ask again." Re-running `/setup-marketing` refreshes this profile.
+
 ### Step 4 — Show their personal folder
 Tell them: "Your personal folder is `Mad Minds/07_People/<name>/`. Drafts and works-in-progress save here by default. When something's finished and useful to the team, say 'publish to the team' and the skill copies it into the right shared folder." Give them the direct link to their folder if you can construct it from the folder ID.
 
@@ -136,3 +152,4 @@ Then ask if they want to run a real task right now, or stop here.
 - Don't proceed past Step 3 until at least Google Drive is connected (otherwise the rest of the system is useless).
 - If the user explicitly says "skip the setup, I know what I'm doing", confirm what they want to skip and jump straight to whatever task they name. But never skip naming the user — `07_People/<name>/` resolution requires it.
 - Save a short log of this onboarding to `Mad Minds/06_Automation_Outputs/logs/` so the maintainer can see who's onboarded and which connectors failed for who.
+- Always write the access profile (Step 3b) — the per-person `07_People/<name>/notes/access-profile` doc plus the Team Roster summary line. Other skills read `account-conventions` first, so recording each person's reachable properties/accounts/brands there lets the whole system route correctly and skip re-checking access.
