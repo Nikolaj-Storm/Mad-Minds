@@ -25,7 +25,7 @@ See [`EMPLOYEE-ONBOARDING.md`](./EMPLOYEE-ONBOARDING.md) for the full walkthroug
 .claude-plugin/marketplace.json   ← lists both plugins
 onlineminds-marketing/            ← in-house plugin
   .claude-plugin/plugin.json
-  .mcp.json                       ← vendor-native MCPs (SimilarWeb, etc.)
+  .mcp.json                       ← vendor-native MCPs (Notion, Supabase, etc.)
   skills/                         ← 9 skills incl. /ad-actions, /setup-marketing
 claude-ads/                       ← vendored upstream plugin (MIT)
   .claude-plugin/plugin.json

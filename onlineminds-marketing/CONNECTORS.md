@@ -21,7 +21,7 @@ These load automatically when the `onlineminds-marketing` plugin installs. Each 
 | Capability | Server (in `.mcp.json`) | Auth model | Notes |
 |---|---|---|---|
 | **Google Search Console** | Self-hosted `gsc-mcp/` on Fly (`onlineminds-gsc-mcp.fly.dev`) | Per-user Google OAuth (sign-in link) | **Live.** Organic clicks/impressions/positions, URL inspection, sitemaps. Read-only. Each marketer signs in with their own Google account (Internal app, auto-trusted by Workspace). Persistent — sign in once. |
-| Competitive traffic | SimilarWeb (`mcp.similarweb.com`) | Org API key | Market benchmarking. |
+| **Google Ads** | Self-hosted `gads-mcp/` on Fly (`onlineminds-gads-mcp.fly.dev`) | Per-user Google OAuth (sign-in link) | **Live.** Campaign reporting + management (read+write). Shared developer token is a server secret; each marketer signs in with their own Google account and sees only accounts they can access. Writes simulate (READONLY_MODE) until flipped; gated by `/ad-actions`. |
 | Notion | Vendor MCP | Per-user OAuth | Optional. Briefs/playbooks. |
 | Supabase | Vendor MCP | Per-user / org | Already in use. Portfolio-site data. |
 | Vercel | Vendor MCP | Per-user / org | Already in use. Deployment + scheduled-job inspection. |
@@ -40,7 +40,6 @@ These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not
 | Capability | Status | Plan |
 |---|---|---|
 | GA4 (Google Analytics) | Needs a verified OAuth MCP | Evaluate a managed GA4 MCP with built-in OAuth (candidates: Cogny, Stape) or self-host `google-analytics-mcp` and register an OAuth client ID in the connector's Advanced settings. Read-only. |
-| Google Search Console | **Self-host ready** (deploy, then wire) | Direct per-user GSC connector via the **corrected, vendored** server at `gsc-mcp/` (FastMCP Google **OAuth-proxy**; from damupi/mcp-gsc-oauth with 3 tested-and-fixed defects — see `gsc-mcp/NOTICE.md`) on Fly.io. Maintainer hosts it once and holds the Google secret server-side; marketers just click **Connect → sign in with Google**, nothing to paste. Per-user, read-only, only their own properties. Steps in `GSC-SELF-HOST-RUNBOOK.md`. |
 | Google Tag Manager | Needs a verified OAuth MCP | **Tier-1 tracking edits depend on this.** No Connect-button OAuth MCP confirmed yet; until one is wired and tested, GTM writes via `/ad-actions` stay unavailable. Do not roll out GTM writes until verified. |
 | Google Merchant Center | Needs a verified OAuth MCP | Feed brands only. Fallback: official Google Content API via a self-hosted MCP with an Advanced-settings OAuth client ID. |
 
@@ -50,20 +49,16 @@ These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not
 The `/setup-marketing` skill walks through the lists in order:
 **Live today (what setup walks through):**
 1. **Native:** Google Drive (mandatory — needed for Mad Minds)
-2. **Self-hosted (live):** Google Search Console — per-user Google sign-in link, no panel install
-3. **Plugin-prewired (vendor):** SimilarWeb (competitive)
+2. **Self-hosted (live):** Google Search Console — per-user Google sign-in link
+3. **Self-hosted (live):** Google Ads — per-user Google sign-in link
 4. **Optional:** Notion, Slack, Supabase, Vercel
 
 **Coming (NOT part of setup yet):**
 - **Meta Ads** — Meta's official MCP, per-Business-Manager URL + Meta Business sign-in (see below). Awaiting the URL(s).
-- **Google Ads** — blocked on an org approval (dev token or Workspace allowlist).
 - **GA4 / Google Tag Manager / Merchant Center** — not wired.
 
 ## Meta Ads — official MCP, per company
 Meta Ads uses **Meta's own official MCP** (free beta), authenticated via **Meta Business OAuth (Facebook)** — not Google, so the Workspace third-party-app block doesn't apply. A Business admin authorizes at Meta's "Connect to AI tool" page and copies the unique MCP URL Meta provisions for that Business account. Because OnlineMinds runs **multiple Business Managers**, each company provisions its own URL and is wired as its own connector (`meta-ads-<company>`). Per-user: each marketer signs in with their own Meta account and only sees ad accounts they can access.
-
-## Google Ads — parked (no self-serve path)
-Every Google Ads option needs either a developer token (self-host / Google's official MCP) **or** a Google Workspace allowlist for a third-party app. Neither is grantable without an admin, so Google Ads stays disconnected. Interim: run `claude-ads` audits on exported Google Ads data.
 
 ## Per-user auth
 Every connector uses per-user OAuth (or per-user API key). Claude acts as the authenticated marketer — it can only touch ad accounts, GA4 properties, GTM containers, etc. that person already has access to in real life. There is no shared service account.

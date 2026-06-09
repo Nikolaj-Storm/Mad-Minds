@@ -67,7 +67,7 @@ Then add each brand's voice into the `brand-voice` docs in the Hub.
 1. **The repo** is at https://github.com/Nikolaj-Storm/Mad-Minds (private). Add each marketer as **Read** on the repo (Settings → Collaborators) so they can install the plugin.
 2. **Plugin install path (each marketer, one-time):** Customize → Plugins → + Add marketplace → From repository → paste the URL above → Install.
 3. **Connector model.** This plugin does NOT bundle Google-family connectors. Each marketer authorizes them through **Claude desktop's native Connectors UI** (Customize → Connectors) — Google Drive, Google Ads, Meta Ads, GA4, Search Console, Google Tag Manager. Each one is a normal OAuth on their own account. The plugin's `/setup-marketing` skill walks them through this on first session.
-4. **Pre-wired vendor MCPs** in `onlineminds-marketing/.mcp.json` (SimilarWeb, Notion, Supabase, Vercel, Slack) load automatically when the plugin installs. Each marketer authorizes those on first use (API key for SimilarWeb, vendor OAuth for the rest).
+4. **Pre-wired vendor MCPs** in `onlineminds-marketing/.mcp.json` (Notion, Supabase, Vercel, Slack) load automatically when the plugin installs. Each marketer authorizes those on first use (vendor OAuth).
 
 ---
 

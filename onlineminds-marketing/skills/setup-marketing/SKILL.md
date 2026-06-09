@@ -1,6 +1,6 @@
 ---
 name: setup-marketing
-description: First-session onboarding for a new marketer in the Mad Minds project. Walks them through authorizing every required connector (Google Drive, Google Search Console, Meta Ads, SimilarWeb), verifies Drive access to Mad Minds, asks their first name and confirms their personal folder, and ends with a capabilities overview of every skill they can run. Triggered automatically by CLAUDE.md on first session, or manually as /setup-marketing whenever a marketer wants to re-verify their setup. Use whenever a marketer is new, says "hi" / "what can you do" / "I just installed this", or asks to check their connectors.
+description: First-session onboarding for a new marketer in the Mad Minds project. Walks them through authorizing every required connector (Google Drive, Google Search Console, Google Ads), verifies Drive access to Mad Minds, asks their first name and confirms their personal folder, and ends with a capabilities overview of every skill they can run. Triggered automatically by CLAUDE.md on first session, or manually as /setup-marketing whenever a marketer wants to re-verify their setup. Use whenever a marketer is new, says "hi" / "what can you do" / "I just installed this", or asks to check their connectors.
 argument-hint: "(no args — runs interactively)"
 ---
 
@@ -57,13 +57,12 @@ For each connector below, in order, do this loop:
 Connector order and one-line purpose (these are the ONLY ones live today):
 - **Google Drive** (native catalog — the only panel connect) — reach Mad Minds (the shared Hub). Account: `@onlineminds.io`.
 - **Google Search Console** (plugin; sign-in link) — organic clicks/impressions/positions per query and page. Direct Google sign-in; they see only their own verified properties. Read-only.
-- **SimilarWeb** — competitive traffic and market benchmarking. Org API key (configured centrally; no marketer action).
+- **Google Ads** (plugin; sign-in link) — campaign reporting + management (read+write). Per-user Google sign-in; each marketer sees only accounts they can access. Writes simulate (READONLY_MODE) until enabled and route through `/ad-actions`.
 
 Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional.
 
 Not available yet (do NOT walk the marketer through these; if asked, say they're coming):
 - **Meta Ads** — will use Meta's official MCP (Meta Business sign-in); the per-Business URL isn't wired yet. (If a `meta-ads*` server appears in `.mcp.json` later, authorize it via its sign-in link.)
-- **Google Ads** — blocked on an org approval (developer token or Workspace allowlist). For now run `claude-ads` audits on exported Google Ads data.
 - **GA4**, **Google Tag Manager**, **Google Merchant Center** — not wired. For organic search, use Google Search Console.
 
 If a connector fails to authorize twice in a row, note it in the summary and continue. Do not block the whole onboarding on one connector.
@@ -123,7 +122,6 @@ Show them this — verbatim layout, headings exactly as shown:
 ### Step 6 — Smoke test
 Offer to run one of:
 - `/account-conventions` (read-only, fastest — just loads the shared brain so they can see it works)
-- `/competitor-scan <one of their brands> <market>` (read-only, uses SimilarWeb so it tests that connector)
 - "Show me last 7 days performance for `<brand>` on Google Ads" (tests Google Ads read)
 
 Let them pick. Run it, narrate as you go ("pulling the data… writing a draft to your folder… done").
@@ -139,7 +137,7 @@ Then ask if they want to run a real task right now, or stop here.
 
 ## Style and constraints
 - One question or one connector per turn. Never dump the whole connector list in one message.
-- Never show raw connector JSON or error stacks. Translate failures into one sentence: "Google Ads isn't connected yet — click Customize → Connectors → Google Ads → Connect, then say done."
+- Never show raw connector JSON or error stacks. Translate failures into one sentence: "Google Ads isn't connected yet — I'll give you a Google sign-in link; open it, sign in, then say done."
 - Don't proceed past Step 3 until at least Google Drive is connected (otherwise the rest of the system is useless).
 - If the user explicitly says "skip the setup, I know what I'm doing", confirm what they want to skip and jump straight to whatever task they name. But never skip naming the user — `07_People/<name>/` resolution requires it.
 - Save a short log of this onboarding to `Mad Minds/06_Automation_Outputs/logs/` so the maintainer can see who's onboarded and which connectors failed for who.
