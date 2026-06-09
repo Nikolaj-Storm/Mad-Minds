@@ -44,26 +44,21 @@ The marketer's personal workspace lives at `Mad Minds/07_People/<lowercase-first
    - Tell the user the folder is built and give them the direct Drive link to their new folder.
    - Also update `01_Knowledge_Base/account-conventions-live` section 6 (Team Roster) by appending the new name to the list (preserve the existing names; just add a comma-separated entry).
 
-### Step 3 — Walk through every required connector
+### Step 3 — Connect the tools (Customize → Connectors)
 
-**How the plugin connectors authenticate (read this first).** Google Ads, Meta Ads, and Google Search Console are **provided by the plugin** — they are already installed. The marketer must NOT use the Connectors panel for them: the "Install" button errors with "a server with this URL already exists", and "Add custom connector" is also wrong. Instead, each authenticates **in-session via a sign-in link**: when you try to use a connector that isn't authorized yet, an `authenticate` tool is available for it (e.g. `mcp__plugin_onlineminds-marketing_google-search-console__authenticate`). Call that tool; it returns a sign-in URL. Give the URL to the marketer, have them open it and sign in with the right account, and the connector's real tools become available automatically. The ONLY connector that uses the Connectors panel is Google Drive (native catalog).
+All connecting happens in **Customize → Connectors** (the top-level panel). Google Drive is in Claude's built-in catalog; **Google Search Console and Google Ads are added as *custom connectors*** (paste a URL). The custom-connector path uses Claude's hosted sign-in, which is the reliable one.
 
-For each connector below, in order, do this loop:
-1. State what the connector is for in one sentence.
-2. Test whether it's authorized by attempting a trivial read (e.g. list sites, list one Google Ads account, list one Drive folder). Do NOT show raw API output.
-3. If it works: confirm "✓ Connected" and move on.
-4. If it's not authorized: call that connector's `authenticate` tool, paste the returned sign-in link to the marketer, tell them which account to use, and wait for them to confirm before re-testing. (For Google Drive only: send them to Customize → Connectors → Google Drive → Connect.) If the redirect page shows a connection error, ask them to paste the full address-bar URL and call the matching `complete_authentication` tool with it.
+> IMPORTANT: Do NOT authenticate Google Search Console or Google Ads through an in-session sign-in link (a `localhost` URL). Claude desktop's plugin/in-session OAuth listener is unreliable — it fails with "no flow in progress" and the tools never register. Always use the **Add custom connector** path below. (There is no `authenticate` tool to call for these now — they aren't plugin servers anymore.)
 
-Connector order and one-line purpose (these are the ONLY ones live today):
-- **Google Drive** (native catalog — the only panel connect) — reach Mad Minds (the shared Hub). Account: `@onlineminds.io`.
-- **Google Search Console** (plugin; sign-in link) — organic clicks/impressions/positions per query and page. Direct Google sign-in; they see only their own verified properties. Read-only.
-- **Google Ads** (plugin; sign-in link) — campaign reporting + management (read+write). Per-user Google sign-in; each marketer sees only accounts they can access. Writes simulate (READONLY_MODE) until enabled and route through `/ad-actions`.
+For each connector: say what it's for in one sentence, test it with a trivial read, and if it isn't connected give the exact steps and wait for "done" before re-testing. If one won't connect after two tries, note it and move on — don't block onboarding.
 
-Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional.
+- **Google Drive** (built-in catalog) — the Mad Minds Hub. Steps: Customize → Connectors → **Google Drive → Connect** → sign in with `@onlineminds.io`.
+- **Google Search Console** (custom connector) — organic clicks/impressions/positions; read-only; they see only their own verified properties. Steps: Customize → Connectors → **Add custom connector** → URL `https://onlineminds-gsc-mcp.fly.dev/mcp` → leave Advanced settings empty → **Add** → **Connect** → sign in with the Google account that has their Search Console. (After connecting, a new session may be needed for the tools to appear.)
+- **Google Ads** (custom connector) — campaign reporting + management (read+write); per-user; they see only accounts they can access; writes simulate (READONLY_MODE) until enabled and route through `/ad-actions`. Steps: Customize → Connectors → **Add custom connector** → URL `https://onlineminds-gads-mcp.fly.dev/mcp` → leave Advanced settings empty → **Add** → **Connect** → sign in with the Google account that has their Google Ads.
 
-Not available yet (do NOT walk the marketer through these; if asked, say they're coming):
-- **Meta Ads** — will use Meta's official MCP (Meta Business sign-in); the per-Business URL isn't wired yet. (If a `meta-ads*` server appears in `.mcp.json` later, authorize it via its sign-in link.)
-- **GA4**, **Google Tag Manager**, **Google Merchant Center** — not wired. For organic search, use Google Search Console.
+Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional plugin connectors.
+
+Not available yet (don't walk through; if asked, say they're coming): **Meta Ads** (Meta's official MCP, per-Business URL — not wired yet), **GA4**, **Google Tag Manager**, **Google Merchant Center**. For organic search, use Google Search Console.
 
 If a connector fails to authorize twice in a row, note it in the summary and continue. Do not block the whole onboarding on one connector.
 
@@ -137,7 +132,7 @@ Then ask if they want to run a real task right now, or stop here.
 
 ## Style and constraints
 - One question or one connector per turn. Never dump the whole connector list in one message.
-- Never show raw connector JSON or error stacks. Translate failures into one sentence: "Google Ads isn't connected yet — I'll give you a Google sign-in link; open it, sign in, then say done."
+- Never show raw connector JSON or error stacks. Translate failures into one sentence: "Google Ads isn't connected yet — add it via Customize → Connectors → Add custom connector with the URL https://onlineminds-gads-mcp.fly.dev/mcp, connect, then say done."
 - Don't proceed past Step 3 until at least Google Drive is connected (otherwise the rest of the system is useless).
 - If the user explicitly says "skip the setup, I know what I'm doing", confirm what they want to skip and jump straight to whatever task they name. But never skip naming the user — `07_People/<name>/` resolution requires it.
 - Save a short log of this onboarding to `Mad Minds/06_Automation_Outputs/logs/` so the maintainer can see who's onboarded and which connectors failed for who.

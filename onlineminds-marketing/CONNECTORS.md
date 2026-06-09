@@ -20,8 +20,6 @@ These load automatically when the `onlineminds-marketing` plugin installs. Each 
 
 | Capability | Server (in `.mcp.json`) | Auth model | Notes |
 |---|---|---|---|
-| **Google Search Console** | Self-hosted `gsc-mcp/` on Fly (`onlineminds-gsc-mcp.fly.dev`) | Per-user Google OAuth (sign-in link) | **Live.** Organic clicks/impressions/positions, URL inspection, sitemaps. Read-only. Each marketer signs in with their own Google account (Internal app, auto-trusted by Workspace). Persistent — sign in once. |
-| **Google Ads** | Self-hosted `gads-mcp/` on Fly (`onlineminds-gads-mcp.fly.dev`) | Per-user Google OAuth (sign-in link) | **Live.** Campaign reporting + management (read+write). Shared developer token is a server secret; each marketer signs in with their own Google account and sees only accounts they can access. Writes simulate (READONLY_MODE) until flipped; gated by `/ad-actions`. |
 | Notion | Vendor MCP | Per-user OAuth | Optional. Briefs/playbooks. |
 | Supabase | Vendor MCP | Per-user / org | Already in use. Portfolio-site data. |
 | Vercel | Vendor MCP | Per-user / org | Already in use. Deployment + scheduled-job inspection. |
@@ -33,6 +31,16 @@ Claude desktop's built-in **Customize → Connectors** (the top-level one, not t
 | Capability | Connector | Notes |
 |---|---|---|
 | Mad Minds Drive Hub | Google Drive | Read/write the shared Hub. Sign in with `@onlineminds.io`. |
+
+### C. Self-hosted connectors added as CUSTOM CONNECTORS (the working path)
+Google Search Console and Google Ads are self-hosted (`gsc-mcp/`, `gads-mcp/` on Fly.io), per-user Google OAuth, persistent (sign in once). They are **deliberately NOT in `.mcp.json`** and **not** authenticated through the plugin/in-session flow — that flow is broken in Claude desktop (the localhost OAuth callback listener doesn't run → "no flow in progress"; and the panel errors with "a server with this URL already exists"). Each marketer instead adds them as a **custom connector**, which uses Claude's hosted callback (`claude.ai/api/mcp/auth_callback`) and works.
+
+| Capability | Add as custom connector — URL | Notes |
+|---|---|---|
+| Google Search Console | `https://onlineminds-gsc-mcp.fly.dev/mcp` | Read-only organic search data. Sign in with the Google account that owns the properties. |
+| Google Ads | `https://onlineminds-gads-mcp.fly.dev/mcp` | Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. Shared developer token is a server secret. |
+
+Steps (per marketer, once each): **Customize → Connectors → Add custom connector** → paste the URL → leave Advanced settings empty (the servers support DCR, so no Client ID/Secret) → **Add** → **Connect** → sign in with Google. A new session may be needed for the tools to appear. Per-user — each marketer only sees accounts/properties they already have.
 
 ## Pending connectors (not yet wired — block on these before team rollout)
 These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not ship guessed URLs for them.** Each needs a verified OAuth MCP endpoint — one a marketer can authorize from the Connect button — chosen and tested before it goes to the team.
@@ -48,10 +56,10 @@ These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not
 ## Onboarding flow
 The `/setup-marketing` skill walks through the lists in order:
 **Live today (what setup walks through):**
-1. **Native:** Google Drive (mandatory — needed for Mad Minds)
-2. **Self-hosted (live):** Google Search Console — per-user Google sign-in link
-3. **Self-hosted (live):** Google Ads — per-user Google sign-in link
-4. **Optional:** Notion, Slack, Supabase, Vercel
+1. **Built-in catalog:** Google Drive → Connect
+2. **Custom connector:** Google Search Console → Add custom connector (URL above) → Connect
+3. **Custom connector:** Google Ads → Add custom connector (URL above) → Connect
+4. **Optional plugin connectors:** Notion, Slack, Supabase, Vercel
 
 **Coming (NOT part of setup yet):**
 - **Meta Ads** — Meta's official MCP, per-Business-Manager URL + Meta Business sign-in (see below). Awaiting the URL(s).

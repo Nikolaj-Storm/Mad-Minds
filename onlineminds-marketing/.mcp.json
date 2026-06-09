@@ -20,16 +20,6 @@
       "type": "http",
       "url": "https://mcp.slack.com/mcp",
       "_comment": "Optional. Share finished reports as messages. Vendor-native MCP."
-    },
-    "google-search-console": {
-      "type": "http",
-      "url": "https://onlineminds-gsc-mcp.fly.dev/mcp",
-      "_comment": "Self-hosted GSC (gsc-mcp/, FastMCP Google OAuth-proxy). Per-user: marketers click Connect and sign in with Google, nothing to paste. Read-only (webmasters.readonly). Persistent (Fly volume) -> sign in once."
-    },
-    "google-ads": {
-      "type": "http",
-      "url": "https://onlineminds-gads-mcp.fly.dev/mcp",
-      "_comment": "Self-hosted Google Ads (gads-mcp/, FastMCP Google OAuth-proxy + google-ads lib). Per-user: marketers click Connect and sign in with Google; shared developer token is a server secret. READONLY_MODE simulates writes until flipped; real writes route through /ad-actions. Multi-MCC via GOOGLE_ADS_LOGIN_CUSTOMER_ID if needed."
     }
   },
   "_pending_connectors": {
@@ -64,5 +54,6 @@
         "_comment": "Meta official MCP. Per-user Meta Business OAuth. Free during beta (long-term pricing unannounced). Writes route through /ad-actions spend-gate. Move into mcpServers once the real URL is filled in."
       }
     }
-  }
+  },
+  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers \u2014 Claude desktop's plugin/in-session OAuth flow is buggy (no localhost callback listener; 'a server with this URL already exists'). Marketers add them as CUSTOM CONNECTORS, which use Claude's hosted callback (claude.ai/api/mcp/auth_callback) and work. URLs: GSC = https://onlineminds-gsc-mcp.fly.dev/mcp ; Google Ads = https://onlineminds-gads-mcp.fly.dev/mcp . Both support DCR, so no Client ID/Secret to paste. See CONNECTORS.md and the setup guide."
 }
