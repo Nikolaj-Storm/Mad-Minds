@@ -77,7 +77,6 @@ This is exactly what each marketer will do — running through it yourself first
    - Google Search Console (Composio + Google)
    - Google Tag Manager (Composio + Google)
    - Google Merchant Center (only if you'll test Shopping/PMax brands)
-   - Ahrefs (paste org API key)
    - Similarweb (paste org API key)
 5. Open Cowork → `/setup-marketing` → should walk through verification, ask your name (pick `nikolaj` from the dropdown), end with the capabilities tour
 

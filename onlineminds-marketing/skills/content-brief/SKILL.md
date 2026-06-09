@@ -15,7 +15,7 @@ argument-hint: "<brand> <content type> <topic>"
 1. Brand (portfolio brand; ask if missing) and market/language (Danish for DK assets, else English unless specified).
 2. Content type: blog post / landing page / marketing email / social.
 3. Topic, target audience/persona (pull from `01_Knowledge_Base/ICP-and-personas/` if present), and primary goal (traffic, signups, sales).
-4. Target keyword/intent (optional — can derive from Ahrefs).
+4. Target keyword/intent (optional — provide it).
 
 ## Output
 A brief containing: working title + 3 headline options, target keyword + search/AI intent, audience and angle, key messages, required sections/outline, internal links to other brand pages, CTA, tone notes from the brand voice, and SEO/GEO notes (schema, citable facts to include). 

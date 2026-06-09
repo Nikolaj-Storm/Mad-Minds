@@ -21,7 +21,6 @@ These load automatically when the `onlineminds-marketing` plugin installs. Each 
 | Capability | Server (in `.mcp.json`) | Auth model | Notes |
 |---|---|---|---|
 | **Google Search Console** | Self-hosted `gsc-mcp/` on Fly (`onlineminds-gsc-mcp.fly.dev`) | Per-user Google OAuth (sign-in link) | **Live.** Organic clicks/impressions/positions, URL inspection, sitemaps. Read-only. Each marketer signs in with their own Google account (Internal app, auto-trusted by Workspace). Persistent — sign in once. |
-| SEO + GEO | Ahrefs (`api.ahrefs.com`) | Org API key | Keyword research, backlinks, site audits, Brand Radar (AI mentions/GEO). Also exposes GSC `gsc-*` tools as a fallback. |
 | Competitive traffic | SimilarWeb (`mcp.similarweb.com`) | Org API key | Market benchmarking. |
 | Notion | Vendor MCP | Per-user OAuth | Optional. Briefs/playbooks. |
 | Supabase | Vendor MCP | Per-user / org | Already in use. Portfolio-site data. |
@@ -41,7 +40,7 @@ These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not
 | Capability | Status | Plan |
 |---|---|---|
 | GA4 (Google Analytics) | Needs a verified OAuth MCP | Evaluate a managed GA4 MCP with built-in OAuth (candidates: Cogny, Stape) or self-host `google-analytics-mcp` and register an OAuth client ID in the connector's Advanced settings. Read-only. |
-| Google Search Console | **Self-host ready** (deploy, then wire) | Direct per-user GSC connector via the **corrected, vendored** server at `gsc-mcp/` (FastMCP Google **OAuth-proxy**; from damupi/mcp-gsc-oauth with 3 tested-and-fixed defects — see `gsc-mcp/NOTICE.md`) on Fly.io. Maintainer hosts it once and holds the Google secret server-side; marketers just click **Connect → sign in with Google**, nothing to paste. Per-user, read-only, only their own properties. Steps in `GSC-SELF-HOST-RUNBOOK.md`. (Ahrefs `gsc-*` tools remain a fallback.) |
+| Google Search Console | **Self-host ready** (deploy, then wire) | Direct per-user GSC connector via the **corrected, vendored** server at `gsc-mcp/` (FastMCP Google **OAuth-proxy**; from damupi/mcp-gsc-oauth with 3 tested-and-fixed defects — see `gsc-mcp/NOTICE.md`) on Fly.io. Maintainer hosts it once and holds the Google secret server-side; marketers just click **Connect → sign in with Google**, nothing to paste. Per-user, read-only, only their own properties. Steps in `GSC-SELF-HOST-RUNBOOK.md`. |
 | Google Tag Manager | Needs a verified OAuth MCP | **Tier-1 tracking edits depend on this.** No Connect-button OAuth MCP confirmed yet; until one is wired and tested, GTM writes via `/ad-actions` stay unavailable. Do not roll out GTM writes until verified. |
 | Google Merchant Center | Needs a verified OAuth MCP | Feed brands only. Fallback: official Google Content API via a self-hosted MCP with an Advanced-settings OAuth client ID. |
 
@@ -50,16 +49,17 @@ These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not
 ## Onboarding flow
 The `/setup-marketing` skill walks through the lists in order:
 1. **Native:** Google Drive (mandatory — needed for Mad Minds)
-2. **Plugin-prewired (Pipeboard):** Google Ads + Meta Ads (mandatory for paid skills) — one Pipeboard sign-in covers both
-3. **Plugin-prewired (vendor):** Ahrefs (SEO + GSC), SimilarWeb (competitive)
-4. **Optional:** Notion, Slack, Supabase, Vercel
-5. **Self-host (deploy then connect):** Google Search Console — see `GSC-SELF-HOST-RUNBOOK.md`
-6. **Pending (skip for now):** GA4, GTM, Merchant Center — only once a verified URL is wired
+2. **Self-hosted (live):** Google Search Console — per-user Google sign-in link, no panel install
+3. **Meta's official MCP:** Meta Ads — per-Business-Manager URL, Meta Business (Facebook) sign-in (see below)
+4. **Plugin-prewired (vendor):** SimilarWeb (competitive)
+5. **Optional:** Notion, Slack, Supabase, Vercel
+6. **Not available yet:** Google Ads (blocked on org approval), GA4 / GTM / Merchant Center (not wired)
 
-## Pipeboard account requirement
-The Google Ads + Meta Ads connectors are brokered by **Pipeboard** (free plan at pipeboard.co). On the first Connect, the marketer signs in to Pipeboard once, then completes the normal Google/Meta OAuth screen. Pipeboard provisions the platform developer access under its own project and never stores the marketer's credentials. Per-user from end to end.
+## Meta Ads — official MCP, per company
+Meta Ads uses **Meta's own official MCP** (free beta), authenticated via **Meta Business OAuth (Facebook)** — not Google, so the Workspace third-party-app block doesn't apply. A Business admin authorizes at Meta's "Connect to AI tool" page and copies the unique MCP URL Meta provisions for that Business account. Because OnlineMinds runs **multiple Business Managers**, each company provisions its own URL and is wired as its own connector (`meta-ads-<company>`). Per-user: each marketer signs in with their own Meta account and only sees ad accounts they can access.
 
-If Pipeboard is ever missing a specific action OnlineMinds needs, alternatives that also support per-user OAuth from Claude's Connect button can be evaluated — but verify the URL works in Claude desktop before swapping it into `.mcp.json`.
+## Google Ads — parked (no self-serve path)
+Every Google Ads option needs either a developer token (self-host / Google's official MCP) **or** a Google Workspace allowlist for a third-party app. Neither is grantable without an admin, so Google Ads stays disconnected. Interim: run `claude-ads` audits on exported Google Ads data.
 
 ## Per-user auth
 Every connector uses per-user OAuth (or per-user API key). Claude acts as the authenticated marketer — it can only touch ad accounts, GA4 properties, GTM containers, etc. that person already has access to in real life. There is no shared service account.

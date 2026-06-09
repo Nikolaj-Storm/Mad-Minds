@@ -1,6 +1,6 @@
 ---
 name: setup-marketing
-description: First-session onboarding for a new marketer in the Mad Minds project. Walks them through authorizing every required connector (Google Drive, Google Ads + Meta Ads via Pipeboard, Ahrefs incl. Search Console data, SimilarWeb), verifies Drive access to Mad Minds, asks their first name and confirms their personal folder, and ends with a capabilities overview of every skill they can run. Triggered automatically by CLAUDE.md on first session, or manually as /setup-marketing whenever a marketer wants to re-verify their setup. Use whenever a marketer is new, says "hi" / "what can you do" / "I just installed this", or asks to check their connectors.
+description: First-session onboarding for a new marketer in the Mad Minds project. Walks them through authorizing every required connector (Google Drive, Google Search Console, Meta Ads, SimilarWeb), verifies Drive access to Mad Minds, asks their first name and confirms their personal folder, and ends with a capabilities overview of every skill they can run. Triggered automatically by CLAUDE.md on first session, or manually as /setup-marketing whenever a marketer wants to re-verify their setup. Use whenever a marketer is new, says "hi" / "what can you do" / "I just installed this", or asks to check their connectors.
 argument-hint: "(no args — runs interactively)"
 ---
 
@@ -58,7 +58,6 @@ Connector order and one-line purpose:
 - **Google Drive** (native catalog — the only panel connect) — reach Mad Minds (the shared Hub). Account: `@onlineminds.io`.
 - **Google Search Console** (plugin; sign-in link) — organic clicks/impressions/positions per query and page. Direct Google sign-in; they see only their own verified properties. Read-only.
 - **Meta Ads** (Meta's official MCP; sign-in link) — Facebook/Instagram reporting + campaign management (read+write). Auth is **Meta Business OAuth** (Facebook, not Google). If the connector is wired (a `meta-ads*` server exists), authorize it via its sign-in link and have them pick the Meta Business account for their brands. If it is NOT yet wired, tell them Meta is being set up and skip it. Writes go through `/ad-actions`.
-- **Ahrefs** — keyword research, backlinks, site audits, Brand Radar. Org API key (configured centrally; no marketer action).
 - **SimilarWeb** — competitive traffic and market benchmarking. Org API key (configured centrally).
 
 Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional.
@@ -122,7 +121,7 @@ Show them this — verbatim layout, headings exactly as shown:
 ### Step 6 — Smoke test
 Offer to run one of:
 - `/account-conventions` (read-only, fastest — just loads the shared brain so they can see it works)
-- `/competitor-scan <one of their brands> <market>` (read-only, uses Ahrefs + SimilarWeb so it tests those connectors)
+- `/competitor-scan <one of their brands> <market>` (read-only, uses SimilarWeb so it tests that connector)
 - "Show me last 7 days performance for `<brand>` on Google Ads" (tests Google Ads read)
 
 Let them pick. Run it, narrate as you go ("pulling the data… writing a draft to your folder… done").

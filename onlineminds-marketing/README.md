@@ -7,7 +7,7 @@ Every skill reads inputs from and writes outputs to the shared **Mad Minds** Goo
 ## Connector model
 
 - **Google-family connectors (Drive, Google Ads, Meta Ads, GA4, Search Console, Tag Manager)** come from **Claude desktop's native Connectors UI**. The plugin does NOT pre-wire them. Each marketer enables each one once via Customize → Connectors → OAuth with their own account. Claude acts as that person.
-- **Vendor-native MCPs (Ahrefs, SimilarWeb, Notion, Supabase, Vercel, Slack)** are pre-wired in `.mcp.json` and load automatically when the plugin installs.
+- **Vendor-native MCPs (SimilarWeb, Notion, Supabase, Vercel, Slack)** are pre-wired in `.mcp.json` and load automatically when the plugin installs.
 - The `/setup-marketing` skill walks each marketer through both lists on their first session.
 
 ## What's inside

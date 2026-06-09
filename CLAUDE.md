@@ -11,7 +11,7 @@ This is the **Mad Minds marketplace** — a single GitHub repo that ships two Cl
 
 Marketers paste this one repo URL into Claude desktop and get both plugins. They do not clone or read this repo.
 
-The plugins read from and write to the shared **Mad Minds** Google Drive Hub. Live data comes from per-user OAuth connectors (Google Ads, Meta Ads, GA4, Search Console, Google Tag Manager, Google Drive — all via Claude desktop's native Connectors UI) and pre-wired vendor MCPs (Ahrefs, SimilarWeb, Notion, Supabase, Vercel, Slack — in `onlineminds-marketing/.mcp.json`).
+The plugins read from and write to the shared **Mad Minds** Google Drive Hub. Live data comes from per-user OAuth connectors (Google Ads, Meta Ads, GA4, Search Console, Google Tag Manager, Google Drive — all via Claude desktop's native Connectors UI) and pre-wired vendor MCPs (SimilarWeb, Notion, Supabase, Vercel, Slack — in `onlineminds-marketing/.mcp.json`).
 
 ## Anti-guessing rule
 

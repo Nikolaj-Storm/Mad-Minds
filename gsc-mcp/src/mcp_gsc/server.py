@@ -37,6 +37,10 @@ def _build_auth():
         base_url=os.environ.get("FASTMCP_SERVER_AUTH_GOOGLE_BASE_URL", "http://localhost:8000"),
         required_scopes=[s.strip() for s in scopes.split(",") if s.strip()],
         client_storage=DiskStore(directory=storage_dir),
+        # Skip FastMCP's extra /consent interstitial. It adds a hop/click that
+        # native connectors (Drive/Notion) don't have, and it was timing out the
+        # MCP client's localhost callback listener -> "No OAuth flow is in progress".
+        require_authorization_consent=False,
     )
     jwt_key = os.environ.get("JWT_SIGNING_KEY")
     if jwt_key:

@@ -100,7 +100,6 @@ On your first Connect click, you'll be asked to sign in to Composio (30 sec, fre
 - **Google Search Console** — Google account with GSC verified for the relevant domains
 - **Google Tag Manager** — GTM-admin Google account
 - **Google Merchant Center** — only if your brand runs Shopping or Performance Max with a product feed
-- **Ahrefs** — paste the org API key (ask Nikolaj if you don't have it)
 - **Similarweb** — paste the org API key
 
 Skip Notion / Slack / Supabase / Vercel unless you actually use them.
