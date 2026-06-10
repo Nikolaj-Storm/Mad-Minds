@@ -55,10 +55,11 @@ For each connector: say what it's for in one sentence, test it with a trivial re
 - **Google Drive** (built-in catalog) — the Mad Minds Hub. Steps: Customize → Connectors → **Google Drive → Connect** → sign in with `@onlineminds.io`.
 - **Google Search Console** (custom connector) — organic clicks/impressions/positions; read-only; they see only their own verified properties. Steps: Customize → Connectors → **Add custom connector** → URL `https://onlineminds-gsc-mcp.fly.dev/mcp` → leave Advanced settings empty → **Add** → **Connect** → sign in with the Google account that has their Search Console. (After connecting, a new session may be needed for the tools to appear.)
 - **Google Ads** (custom connector) — campaign reporting + management (read+write); per-user; they see only accounts they can access; writes simulate (READONLY_MODE) until enabled and route through `/ad-actions`. Steps: Customize → Connectors → **Add custom connector** → URL `https://onlineminds-gads-mcp.fly.dev/mcp` → leave Advanced settings empty → **Add** → **Connect** → sign in with the Google account that has their Google Ads.
+- **Meta Ads** (custom connector, per company — Meta-hosted) — Facebook/Instagram reporting + management; writes route through `/ad-actions`. Each company/Business Manager has its OWN Meta MCP URL (`https://mcp.meta.com/ads/<business-id>`). Look up the marketer's company's URL in `account-conventions-live` (Meta MCP URLs). If it's there: Customize → Connectors → **Add custom connector** → that URL → leave Advanced settings empty → **Add** → **Connect** → sign in with their **Meta/Facebook** account. If their company's URL hasn't been minted yet, skip it and note it (ask Nikolaj to mint it via Meta's Connect-to-AI page).
 
 Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional plugin connectors.
 
-Not available yet (don't walk through; if asked, say they're coming): **Meta Ads** (Meta's official MCP, per-Business URL — not wired yet), **GA4**, **Google Tag Manager**, **Google Merchant Center**. For organic search, use Google Search Console.
+Not available yet (don't walk through; if asked, say they're coming): **GA4**, **Google Tag Manager**, **Google Merchant Center**. For organic search, use Google Search Console.
 
 If a connector fails to authorize twice in a row, note it in the summary and continue. Do not block the whole onboarding on one connector.
 
@@ -69,6 +70,7 @@ As the connectors come online, capture what this person can actually reach, and 
 Gather (from the connectors that connected):
 - **Google Search Console** — call `list_sites`; record each property URL and its permission level (e.g. siteFullUser vs siteUnverifiedUser).
 - **Google Ads** — call `list_accounts`; record the account IDs, and where `account-conventions-live` maps an ID to a brand, note the brand too.
+- **Meta Ads** — if connected, list the ad accounts they can access (via the Meta connector's account-listing tool) and record them + mapped brands/company.
 - **Google Drive** — their personal folder, plus any shared Hub folders they can open.
 - Which connectors are connected vs. still missing.
 

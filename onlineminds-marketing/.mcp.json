@@ -42,18 +42,7 @@
       "status": "needs-verified-oauth-mcp",
       "purpose": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed.",
       "note": "Candidate fallback: the official Google Content API via a self-hosted MCP with Advanced-settings OAuth client ID."
-    },
-    "meta-ads": {
-      "status": "use Meta's official MCP (free beta) \u2014 needs the per-Business URL Meta provisions",
-      "purpose": "Facebook + Instagram ad reporting AND campaign management (read+write, 29 tools). Auth = Meta Business OAuth (NOT Google) so the Workspace block does not apply.",
-      "how_to_get_url": "A Meta Business admin opens facebook.com/business/help/1456422242197840 -> Connect to AI tool -> authorize ad-account + campaign scopes -> copy the exact MCP URL Meta provisions (looks like https://mcp.meta.com/ads/<business-id>). Paste that exact URL; do not hand-construct it.",
-      "multi_company": "One Meta Business Manager => one URL serves everyone (each marketer still signs in per-user and only sees accounts they can access). Multiple Business Managers => one connector entry per BM, named meta-ads-<company>, each with that BM's URL.",
-      "final_config_template": {
-        "type": "http",
-        "url": "https://mcp.meta.com/ads/REPLACE-WITH-EXACT-URL-FROM-META",
-        "_comment": "Meta official MCP. Per-user Meta Business OAuth. Free during beta (long-term pricing unannounced). Writes route through /ad-actions spend-gate. Move into mcpServers once the real URL is filled in."
-      }
     }
   },
-  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers \u2014 Claude desktop's plugin/in-session OAuth flow is buggy (no localhost callback listener; 'a server with this URL already exists'). Marketers add them as CUSTOM CONNECTORS, which use Claude's hosted callback (claude.ai/api/mcp/auth_callback) and work. URLs: GSC = https://onlineminds-gsc-mcp.fly.dev/mcp ; Google Ads = https://onlineminds-gads-mcp.fly.dev/mcp . Both support DCR, so no Client ID/Secret to paste. See CONNECTORS.md and the setup guide."
+  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers \u2014 Claude desktop's plugin/in-session OAuth flow is buggy (no localhost callback listener; 'a server with this URL already exists'). Marketers add them as CUSTOM CONNECTORS, which use Claude's hosted callback (claude.ai/api/mcp/auth_callback) and work. URLs: GSC = https://onlineminds-gsc-mcp.fly.dev/mcp ; Google Ads = https://onlineminds-gads-mcp.fly.dev/mcp . Both support DCR, so no Client ID/Secret to paste. See CONNECTORS.md and the setup guide. Meta Ads is ALSO a custom connector, but Meta-hosted (https://mcp.meta.com/ads/<business-id>) \u2014 Facebook login, free beta, no self-hosting. One URL per Business Manager, minted at Meta's Connect-to-AI page; the per-company URLs are stored in account-conventions-live."
 }

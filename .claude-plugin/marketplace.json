@@ -13,7 +13,7 @@
       "name": "onlineminds-marketing",
       "source": "./onlineminds-marketing",
       "description": "OnlineMinds marketing department plugin: shared skills, Mad Minds Drive Hub routing, the personal-vs-shared workflow, write-capable Google/Meta/GTM actions with a non-overridable Tier 1 / Tier 2 spend-gate. Brand-specific values live in account-conventions-live in Drive.",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "author": {
         "name": "OnlineMinds ApS"
       },

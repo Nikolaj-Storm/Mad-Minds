@@ -39,6 +39,7 @@ Google Search Console and Google Ads are self-hosted (`gsc-mcp/`, `gads-mcp/` on
 |---|---|---|
 | Google Search Console | `https://onlineminds-gsc-mcp.fly.dev/mcp` | Read-only organic search data. Sign in with the Google account that owns the properties. |
 | Google Ads | `https://onlineminds-gads-mcp.fly.dev/mcp` | Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. Shared developer token is a server secret. |
+| Meta Ads | `https://mcp.meta.com/ads/<business-id>` — **one per Business Manager** (Meta-hosted, not self-hosted) | Meta's official MCP (free beta). **Facebook login** (not Google). Reporting + management; gated by `/ad-actions`. Mint each company's URL at Meta's Connect-to-AI page; store the per-company URLs in `account-conventions-live`. |
 
 Steps (per marketer, once each): **Customize → Connectors → Add custom connector** → paste the URL → leave Advanced settings empty (the servers support DCR, so no Client ID/Secret) → **Add** → **Connect** → sign in with Google. A new session may be needed for the tools to appear. Per-user — each marketer only sees accounts/properties they already have.
 
@@ -59,10 +60,10 @@ The `/setup-marketing` skill walks through the lists in order:
 1. **Built-in catalog:** Google Drive → Connect
 2. **Custom connector:** Google Search Console → Add custom connector (URL above) → Connect
 3. **Custom connector:** Google Ads → Add custom connector (URL above) → Connect
-4. **Optional plugin connectors:** Notion, Slack, Supabase, Vercel
+4. **Custom connector (per company):** Meta Ads → Add custom connector with the company's Meta URL → Connect (Facebook login)
+5. **Optional plugin connectors:** Notion, Slack, Supabase, Vercel
 
 **Coming (NOT part of setup yet):**
-- **Meta Ads** — Meta's official MCP, per-Business-Manager URL + Meta Business sign-in (see below). Awaiting the URL(s).
 - **GA4 / Google Tag Manager / Merchant Center** — not wired.
 
 ## Meta Ads — official MCP, per company
