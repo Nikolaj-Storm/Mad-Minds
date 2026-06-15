@@ -1,0 +1,37 @@
+name: Deploy Google Ads MCP
+
+# Deploys the self-hosted Google Ads MCP (gads-mcp/) to Fly app
+# `onlineminds-gads-mcp`. Runs automatically when gads-mcp/ changes land on
+# main (i.e. after a PR merge), and can be triggered by hand from the Actions
+# tab via "Run workflow". No laptop required.
+#
+# One-time setup: add a Fly deploy token as the repo secret FLY_API_TOKEN
+# (GitHub -> Settings -> Secrets and variables -> Actions). See
+# GADS-SELF-HOST-RUNBOOK.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "gads-mcp/**"
+      - ".github/workflows/deploy-gads-mcp.yml"
+  workflow_dispatch:
+
+# Never let two deploys of the same app overlap.
+concurrency: deploy-gads-mcp
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: flyctl deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy to Fly
+        working-directory: gads-mcp
+        run: flyctl deploy --remote-only --ha=false
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
