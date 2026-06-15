@@ -1,23 +1,6 @@
 """Reporting tools: get_performance and get_search_terms."""
 
-from .client import get_client, resolve_customer_id, handle_errors
-
-# Date ranges Google Ads understands as literals. We whitelist them so the
-# value can be dropped straight into a GAQL query without risk of injection.
-ALLOWED_DATE_RANGES = {
-    "TODAY",
-    "YESTERDAY",
-    "LAST_7_DAYS",
-    "LAST_14_DAYS",
-    "LAST_30_DAYS",
-    "LAST_BUSINESS_WEEK",
-    "THIS_WEEK_SUN_TODAY",
-    "THIS_WEEK_MON_TODAY",
-    "LAST_WEEK_SUN_SAT",
-    "LAST_WEEK_MON_SUN",
-    "THIS_MONTH",
-    "LAST_MONTH",
-}
+from .client import get_client, resolve_customer_id, handle_errors, build_date_filter
 
 ALLOWED_LEVELS = {"campaign", "ad_group", "ad"}
 
@@ -47,22 +30,26 @@ def get_performance(
     date_range: str = "LAST_30_DAYS",
     level: str = "campaign",
     customer_id: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> list | dict:
     """Get Google Ads performance metrics (impressions, clicks, spend, conversions, ROAS, CPA).
 
     Args:
-        date_range: One of TODAY, YESTERDAY, LAST_7_DAYS, LAST_14_DAYS, LAST_30_DAYS,
-            THIS_MONTH, LAST_MONTH (and a few other Google range literals).
+        date_range: A Google date-range literal — one of TODAY, YESTERDAY,
+            LAST_7_DAYS, LAST_14_DAYS, LAST_30_DAYS, THIS_MONTH, LAST_MONTH (and a
+            few other Google range literals). Used only when start_date/end_date
+            are omitted.
         level: Aggregation level — "campaign", "ad_group", or "ad".
         customer_id: 10-digit account ID. Optional if GOOGLE_ADS_CUSTOMER_ID is set.
+        start_date: Optional custom-range start, "YYYY-MM-DD". Must be paired with end_date.
+        end_date: Optional custom-range end, "YYYY-MM-DD". Must be paired with start_date.
+            When both are given they take precedence over date_range and let you
+            pull any period — including older than 30 days — e.g.
+            start_date="2026-03-01", end_date="2026-03-31" for March 2026.
+            Interpreted in the account's reporting time zone (no conversion).
     """
-    date_range = date_range.upper()
-    if date_range not in ALLOWED_DATE_RANGES:
-        return {
-            "error": "invalid_date_range",
-            "message": f"'{date_range}' is not supported.",
-            "allowed": sorted(ALLOWED_DATE_RANGES),
-        }
+    date_filter = build_date_filter(date_range, start_date, end_date)
     if level not in ALLOWED_LEVELS:
         return {
             "error": "invalid_level",
@@ -83,21 +70,21 @@ def get_performance(
         query = f"""
             SELECT campaign.id, campaign.name, {metric_fields}
             FROM campaign
-            WHERE segments.date DURING {date_range}
+            WHERE {date_filter}
             ORDER BY metrics.cost_micros DESC
         """
     elif level == "ad_group":
         query = f"""
             SELECT campaign.name, ad_group.id, ad_group.name, {metric_fields}
             FROM ad_group
-            WHERE segments.date DURING {date_range}
+            WHERE {date_filter}
             ORDER BY metrics.cost_micros DESC
         """
     else:  # ad
         query = f"""
             SELECT campaign.name, ad_group.name, ad_group_ad.ad.id, {metric_fields}
             FROM ad_group_ad
-            WHERE segments.date DURING {date_range}
+            WHERE {date_filter}
             ORDER BY metrics.cost_micros DESC
         """
 
@@ -130,28 +117,30 @@ def get_search_terms(
     campaign_id: str | None = None,
     limit: int = 100,
     customer_id: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> list | dict:
     """Get the search terms report — the actual searches that triggered your ads.
 
     Args:
-        date_range: A Google date range literal (e.g. LAST_30_DAYS).
+        date_range: A Google date-range literal (e.g. LAST_30_DAYS). Used only
+            when start_date/end_date are omitted.
         campaign_id: Optional — restrict to one campaign.
         limit: Max rows to return (default 100).
         customer_id: 10-digit account ID. Optional if GOOGLE_ADS_CUSTOMER_ID is set.
+        start_date: Optional custom-range start, "YYYY-MM-DD". Must be paired with end_date.
+        end_date: Optional custom-range end, "YYYY-MM-DD". Must be paired with start_date.
+            When both are given they take precedence over date_range, e.g.
+            start_date="2026-03-01", end_date="2026-03-31".
+            Interpreted in the account's reporting time zone (no conversion).
     """
-    date_range = date_range.upper()
-    if date_range not in ALLOWED_DATE_RANGES:
-        return {
-            "error": "invalid_date_range",
-            "message": f"'{date_range}' is not supported.",
-            "allowed": sorted(ALLOWED_DATE_RANGES),
-        }
+    date_filter = build_date_filter(date_range, start_date, end_date)
 
     client = get_client()
     cid = resolve_customer_id(customer_id)
     ga_service = client.get_service("GoogleAdsService")
 
-    where = [f"segments.date DURING {date_range}"]
+    where = [date_filter]
     if campaign_id:
         where.append(f"campaign.id = {int(campaign_id)}")
     where_clause = " AND ".join(where)
