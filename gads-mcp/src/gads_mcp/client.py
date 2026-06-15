@@ -14,9 +14,112 @@ All ``google.ads`` imports are done lazily inside functions so this module
 """
 
 import os
+import re
 import sys
 import functools
+from datetime import datetime
 from functools import lru_cache
+
+
+# --------------------------------------------------------------------------- #
+# Date ranges — shared by the reporting tools (get_performance, get_search_terms)
+# --------------------------------------------------------------------------- #
+# Date ranges Google Ads understands as literals. We whitelist them so the value
+# can be dropped straight into a GAQL query without risk of injection.
+ALLOWED_DATE_RANGES = {
+    "TODAY",
+    "YESTERDAY",
+    "LAST_7_DAYS",
+    "LAST_14_DAYS",
+    "LAST_30_DAYS",
+    "LAST_BUSINESS_WEEK",
+    "THIS_WEEK_SUN_TODAY",
+    "THIS_WEEK_MON_TODAY",
+    "LAST_WEEK_SUN_SAT",
+    "LAST_WEEK_MON_SUN",
+    "THIS_MONTH",
+    "LAST_MONTH",
+}
+
+# Strict YYYY-MM-DD. Anchored so the WHOLE string must be a plain ISO date; this
+# is the guard that stops a custom range from being used to inject GAQL.
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _validate_iso_date(value: str, field: str) -> str:
+    """Return ``value`` if it is a strict YYYY-MM-DD calendar date, else raise.
+
+    Two stages: the regex rejects anything that isn't exactly ``YYYY-MM-DD``
+    (the injection guard), and ``strptime`` rejects impossible dates such as
+    ``2026-02-31``.
+    """
+    if not isinstance(value, str) or not _ISO_DATE_RE.match(value):
+        raise ValueError(
+            f"{field} must be in YYYY-MM-DD format (e.g. 2026-03-01); got {value!r}."
+        )
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError(
+            f"{field} {value!r} is not a real calendar date (use YYYY-MM-DD)."
+        )
+    return value
+
+
+def build_date_filter(
+    date_range: str = "LAST_30_DAYS",
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> str:
+    """Build the GAQL ``segments.date`` predicate shared by the reporting tools.
+
+    Returns just the predicate so each caller can drop it into its own WHERE
+    clause, e.g. ``segments.date DURING LAST_30_DAYS`` or
+    ``segments.date BETWEEN '2026-03-01' AND '2026-03-31'``.
+
+    Rules:
+      * ``start_date`` AND ``end_date`` (both YYYY-MM-DD) -> a custom ``BETWEEN``
+        range. Explicit dates WIN: any ``date_range`` literal is ignored when
+        both dates are supplied.
+      * Neither given -> ``DURING <date_range>`` using the literal (default
+        ``LAST_30_DAYS``); identical to the behaviour before these params existed.
+      * Exactly one of ``start_date`` / ``end_date`` -> ValueError.
+
+    Raises ValueError (surfaced by ``handle_errors`` as ``invalid_input``) on a
+    bad date format, an impossible date, a reversed range, a lone date, or an
+    unknown literal.
+
+    Google Ads matches ``segments.date`` against the *account's reporting time
+    zone*; the dates are passed through verbatim with no timezone conversion.
+    """
+    has_start = start_date is not None and start_date != ""
+    has_end = end_date is not None and end_date != ""
+
+    if has_start ^ has_end:
+        raise ValueError(
+            "Provide BOTH start_date and end_date (YYYY-MM-DD), or neither. "
+            f"Got start_date={start_date!r}, end_date={end_date!r}."
+        )
+
+    if has_start and has_end:
+        start = _validate_iso_date(start_date, "start_date")
+        end = _validate_iso_date(end_date, "end_date")
+        # Zero-padded ISO dates sort lexicographically, so a string compare is a
+        # correct ordering check.
+        if end < start:
+            raise ValueError(
+                f"end_date ({end}) must not be before start_date ({start})."
+            )
+        return f"segments.date BETWEEN '{start}' AND '{end}'"
+
+    literal = (date_range or "LAST_30_DAYS").upper()
+    if literal not in ALLOWED_DATE_RANGES:
+        raise ValueError(
+            f"date_range '{literal}' is not a supported Google Ads literal. "
+            f"Allowed: {', '.join(sorted(ALLOWED_DATE_RANGES))}. "
+            "Or pass explicit start_date and end_date (YYYY-MM-DD)."
+        )
+    return f"segments.date DURING {literal}"
 
 
 # --------------------------------------------------------------------------- #
