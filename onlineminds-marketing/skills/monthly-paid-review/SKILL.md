@@ -23,6 +23,7 @@ User runs `/monthly-paid-review`, names a brand, or asks for a monthly paid-medi
 1. **Cleaned hub data:** check `03_Data/cleaned/` for a file matching the brand + month. Use it if present.
 2. **Raw exports:** check `03_Data/raw_exports/<YYYY-MM>/` for platform dumps.
 3. **Live pull:** if connectors are authenticated, query Google Ads and Meta Ads for the month. Pull per-channel: spend, impressions, clicks, CTR, CPC, conversions, conversion value, CPA, ROAS. Pull the prior month too for comparison.
+   - For Google Ads, pass the **exact month as `start_date`/`end_date`** (e.g. `start_date=2026-05-01`, `end_date=2026-05-31`). The connector supports any custom range, so you are not limited to presets like `LAST_MONTH` — pull whichever month or quarter was asked for, no matter how far back it is.
 4. **Fallback:** if none available, ask the user to paste the numbers.
 
 Always record which source was used and the exact date range, and state it at the top of the report.
