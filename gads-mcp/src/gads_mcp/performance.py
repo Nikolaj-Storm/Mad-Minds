@@ -35,19 +35,27 @@ def get_performance(
 ) -> list | dict:
     """Get Google Ads performance metrics (impressions, clicks, spend, conversions, ROAS, CPA).
 
+    Works for ANY time period. Two ways to set the window — pick whichever matches
+    what the user asked for:
+      * start_date + end_date (YYYY-MM-DD) for an explicit custom range — a specific
+        month or quarter, year-to-date, or anything OLDER than 30 days that the
+        presets can't reach (e.g. "2026-03-01".."2026-03-31" for March 2026, or
+        "2026-01-01".."2026-03-31" for Q1).
+      * date_range preset literal for common rolling windows.
+    Don't restrict yourself to the presets — if the user names a month, quarter, or
+    arbitrary span, pass start_date/end_date.
+
     Args:
-        date_range: A Google date-range literal — one of TODAY, YESTERDAY,
-            LAST_7_DAYS, LAST_14_DAYS, LAST_30_DAYS, THIS_MONTH, LAST_MONTH (and a
-            few other Google range literals). Used only when start_date/end_date
-            are omitted.
+        date_range: Preset literal for rolling windows — TODAY, YESTERDAY, LAST_7_DAYS,
+            LAST_14_DAYS, LAST_30_DAYS, THIS_MONTH, LAST_MONTH (and a few other Google
+            literals). Used only when start_date/end_date are omitted. Default LAST_30_DAYS.
+        start_date: Custom-range start, "YYYY-MM-DD". Pair with end_date. Takes precedence
+            over date_range when both ends are given. Ranges older than 30 days are fine.
+        end_date: Custom-range end, "YYYY-MM-DD". Must be paired with start_date.
+            Dates use the account's reporting time zone (no conversion).
         level: Aggregation level — "campaign", "ad_group", or "ad".
-        customer_id: 10-digit account ID. Optional if GOOGLE_ADS_CUSTOMER_ID is set.
-        start_date: Optional custom-range start, "YYYY-MM-DD". Must be paired with end_date.
-        end_date: Optional custom-range end, "YYYY-MM-DD". Must be paired with start_date.
-            When both are given they take precedence over date_range and let you
-            pull any period — including older than 30 days — e.g.
-            start_date="2026-03-01", end_date="2026-03-31" for March 2026.
-            Interpreted in the account's reporting time zone (no conversion).
+        customer_id: 10-digit account ID — a CLIENT account, not a manager/MCC account
+            (managers have no metrics). Optional if GOOGLE_ADS_CUSTOMER_ID is set.
     """
     date_filter = build_date_filter(date_range, start_date, end_date)
     if level not in ALLOWED_LEVELS:
@@ -122,17 +130,22 @@ def get_search_terms(
 ) -> list | dict:
     """Get the search terms report — the actual searches that triggered your ads.
 
+    Works for ANY time period: pass start_date + end_date (YYYY-MM-DD) for an explicit
+    custom range — a specific month or quarter, or anything OLDER than 30 days — or a
+    date_range preset for common rolling windows. If the user names a month/quarter or
+    arbitrary span, use start_date/end_date rather than forcing a preset.
+
     Args:
-        date_range: A Google date-range literal (e.g. LAST_30_DAYS). Used only
-            when start_date/end_date are omitted.
+        date_range: Preset literal (e.g. LAST_30_DAYS). Used only when start_date/end_date
+            are omitted. Default LAST_30_DAYS.
+        start_date: Custom-range start, "YYYY-MM-DD". Pair with end_date. Takes precedence
+            over date_range when both ends are given. Ranges older than 30 days are fine.
+        end_date: Custom-range end, "YYYY-MM-DD". Must be paired with start_date.
+            Dates use the account's reporting time zone (no conversion).
         campaign_id: Optional — restrict to one campaign.
         limit: Max rows to return (default 100).
-        customer_id: 10-digit account ID. Optional if GOOGLE_ADS_CUSTOMER_ID is set.
-        start_date: Optional custom-range start, "YYYY-MM-DD". Must be paired with end_date.
-        end_date: Optional custom-range end, "YYYY-MM-DD". Must be paired with start_date.
-            When both are given they take precedence over date_range, e.g.
-            start_date="2026-03-01", end_date="2026-03-31".
-            Interpreted in the account's reporting time zone (no conversion).
+        customer_id: 10-digit account ID — a CLIENT account, not a manager/MCC account.
+            Optional if GOOGLE_ADS_CUSTOMER_ID is set.
     """
     date_filter = build_date_filter(date_range, start_date, end_date)
 

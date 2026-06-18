@@ -40,8 +40,25 @@ def _build_auth():
     return GoogleProvider(**kwargs)
 
 
+SERVER_INSTRUCTIONS = (
+    "Google Ads reporting and management via each marketer's own Google sign-in.\n\n"
+    "DATE RANGES: the reporting tools (get_performance, get_search_terms) accept ANY "
+    "time period. Pass start_date and end_date (YYYY-MM-DD) for an explicit custom "
+    "range -- a specific month or quarter, year-to-date, or any window older than 30 "
+    "days -- or a date_range preset (LAST_7_DAYS, LAST_30_DAYS, THIS_MONTH, LAST_MONTH, "
+    "...) for common rolling windows. When both are given, the explicit dates win. "
+    "Pull whatever window the user actually asked for; do NOT limit yourself to the "
+    "presets. Dates resolve in the account's reporting time zone.\n\n"
+    "ACCOUNTS: metrics are only available on client accounts. Manager (MCC) accounts "
+    "return no metrics -- use list_accounts and query a client account ID."
+)
+
 _auth = _build_auth()
-mcp = FastMCP(name="Google Ads", auth=_auth) if _auth else FastMCP(name="Google Ads")
+mcp = (
+    FastMCP(name="Google Ads", instructions=SERVER_INSTRUCTIONS, auth=_auth)
+    if _auth
+    else FastMCP(name="Google Ads", instructions=SERVER_INSTRUCTIONS)
+)
 
 
 @mcp.custom_route("/health", methods=["GET"])
