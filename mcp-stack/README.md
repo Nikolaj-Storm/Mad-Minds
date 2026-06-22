@@ -4,51 +4,50 @@ Runs the self-hosted MCP servers (starting with **Meta Ads**) as Docker
 containers on our Hetzner box (`mcp@37.27.23.202`, hostname `Openclaw` — a KVM VM
 with **rootless** Docker and **no sudo** for the `mcp` user).
 
-Because the box is rootless + no-sudo, public HTTPS comes from a **Cloudflare
-Tunnel**: a `cloudflared` container dials *out* to Cloudflare, which serves
-HTTPS and forwards to each MCP over the internal network. No inbound ports, no
-privileged-port problem, no root.
+Because the box is rootless + no-sudo **and** we don't want to tie up a domain,
+public HTTPS comes from a **Tailscale Funnel**: a `tailscale` container joins the
+tailnet in userspace mode and exposes a stable public URL like
+`https://meta-mcp.<your-tailnet>.ts.net`, forwarding to the MCP over the internal
+network. No domain, no inbound ports, no root — free.
 
 ```
-internet ──HTTPS──► Cloudflare edge ──tunnel──► cloudflared ──► meta-ads-mcp:8000
-                                                          └────► next-mcp:8000  (later)
+internet ──HTTPS──► Tailscale Funnel ──► tailscale (userspace) ──► meta-ads-mcp:8000
 ```
 
-One tunnel serves every MCP. This is the **"containers inside the container"**
-setup: the `mcp@` VM hosts the Compose stack, each MCP is its own container.
+This is the **"containers inside the container"** setup: the `mcp@` VM hosts the
+Compose stack; each MCP (and the tunnel) is its own container.
 
-> **Have root on the host instead?** Skip Cloudflare and use `compose.caddy.yaml`
-> (Caddy + Let's Encrypt on 80/443). See "Alternative: Caddy" at the bottom.
+> Alternatives if your situation differs: `compose.cloudflare.yaml` (Cloudflare
+> Tunnel, needs a domain on Cloudflare) and `compose.caddy.yaml` (own TLS on
+> 80/443, needs root). See the bottom of this file.
 
 ---
 
 ## Prerequisites
 
-1. **Docker works as `mcp`** (it does on Openclaw — rootless, no sudo needed to
-   build/run). Confirm: `docker version && docker compose version`.
-2. **A domain on Cloudflare.** The tunnel creates its public hostname in a
-   Cloudflare-managed zone, so the domain's nameservers must point at Cloudflare
-   (free plan is fine). If you don't want to move `onlineminds.io`'s nameservers,
-   use a separate small domain on Cloudflare just for the MCP endpoints.
-3. **A Facebook App** for `META_APP_ID` / `META_APP_SECRET` — see
-   `../META-SELF-HOST-RUNBOOK.md` Step 1 (incl. the app-Tester trick that skips
-   App Review for the team). The app's redirect URI is `https://<host>/auth/callback`.
+1. **Docker works as `mcp`** (it does on Openclaw — rootless, no sudo to build/run).
+   Confirm: `docker version && docker compose version`.
+2. **A free Tailscale account** (just you — marketers never touch it).
+3. **A Facebook App** for `META_APP_ID` / `META_APP_SECRET` — `../META-SELF-HOST-RUNBOOK.md`
+   Step 1 (incl. the app-Tester trick that skips App Review). Its redirect URI is
+   `https://<host>/auth/callback`.
 
-## 1. Create the Cloudflare Tunnel (dashboard, ~3 min)
+## 1. One-time Tailscale setup (admin console, ~3 min)
 
-In the **Cloudflare Zero Trust** dashboard (one.dash.cloudflare.com):
+At <https://login.tailscale.com> after signing up:
 
-1. **Networks → Tunnels → Create a tunnel → Cloudflared.** Name it `madminds-mcp`.
-2. Copy the **tunnel token** it shows (a long `eyJ…` string). That's all the
-   server needs — this is a remotely-managed tunnel; routing is set here, not in
-   a local file.
-3. On the tunnel's **Public Hostname** tab, **Add a public hostname:**
-   - Subdomain: `meta-mcp` · Domain: `<your-cloudflare-domain>`
-   - Service: **`http://meta-ads-mcp:8000`** (HTTP — TLS terminates at Cloudflare;
-     `meta-ads-mcp` is the Compose service name on the internal network)
-
-Cloudflare auto-creates the DNS record for `meta-mcp.<domain>`. No A record to
-add by hand.
+1. **DNS** tab → note your **Tailnet name** (e.g. `tail9a8b7.ts.net`, or rename it
+   to something nicer). Your MCP URL will be `https://meta-mcp.<tailnet-name>`.
+2. **DNS** tab → **Enable HTTPS** (provisions the certs Funnel needs).
+3. **Access Controls** tab → add a Funnel node-attribute policy to the JSON, then
+   Save:
+   ```jsonc
+   "nodeAttrs": [
+     { "target": ["*"], "attr": ["funnel"] }
+   ]
+   ```
+4. **Settings → Keys → Generate auth key** (tick **Reusable**). Copy the
+   `tskey-auth-…` value.
 
 ## 2. Put the code + secrets on the box (as `mcp`)
 
@@ -56,52 +55,63 @@ add by hand.
 git clone https://github.com/Nikolaj-Storm/Mad-Minds.git   # or: git pull
 cd Mad-Minds/mcp-stack
 
-cp cloudflared.env.example cloudflared.env
-nano cloudflared.env        # paste TUNNEL_TOKEN=eyJ…
+cp tailscale.env.example tailscale.env
+nano tailscale.env          # paste TS_AUTHKEY=tskey-auth-…
 
 cp meta.env.example meta.env
 nano meta.env               # META_APP_ID, META_APP_SECRET,
-#                             META_OAUTH_BASE_URL=https://meta-mcp.<domain>,
+#                             META_OAUTH_BASE_URL=https://meta-mcp.<tailnet-name>,
 #                             JWT_SIGNING_KEY (openssl rand -hex 32)
 ```
 
-`META_OAUTH_BASE_URL` must equal the tunnel's public hostname AND the Facebook
-app's redirect-URI host.
+`META_OAUTH_BASE_URL` = `https://meta-mcp.<tailnet-name>` (from step 1) — it must
+match the Funnel hostname AND the Facebook app's redirect-URI host.
 
 ## 3. Launch
 
 ```bash
 docker compose up -d --build
-docker compose ps
-docker compose logs -f cloudflared     # should show 4 connections "registered"
+docker compose logs -f tailscale     # should show it logging in + Funnel started
 ```
 
-`restart: unless-stopped` + the user's lingering (already enabled on Openclaw)
-means the stack comes back on reboot.
+`restart: unless-stopped` + the user's lingering (already on, on Openclaw) brings
+the stack back on reboot.
 
-## 4. Verify
+## 4. Confirm the Funnel + URL
 
 ```bash
-curl -s https://meta-mcp.<domain>/health
-curl -s https://meta-mcp.<domain>/.well-known/oauth-authorization-server | head -c 400
+docker compose exec tailscale tailscale funnel status
+docker compose exec tailscale tailscale status     # shows the node's full name
 ```
 
-`/health` → `{"status":"healthy","service":"Meta Ads MCP"}`. Then add
-`https://meta-mcp.<domain>/mcp` as a custom connector in Claude and run
-`server_status` → `list_ad_accounts`. (Facebook-app setup, full verify, and the
-connector wiring are in `../META-SELF-HOST-RUNBOOK.md` Steps 1, 7, 8.)
+Funnel status should list `https://meta-mcp.<tailnet>.ts.net` → `http://meta-ads-mcp:8000`.
+
+## 5. Verify + wire the connector
+
+```bash
+curl -s https://meta-mcp.<tailnet>.ts.net/health
+```
+
+→ `{"status":"healthy","service":"Meta Ads MCP"}`. Set the Facebook app's redirect
+URI to `https://meta-mcp.<tailnet>.ts.net/auth/callback`, then add
+`https://meta-mcp.<tailnet>.ts.net/mcp` as a custom connector in Claude and run
+`server_status` → `list_ad_accounts`. (Facebook-app + full verify + wiring:
+`../META-SELF-HOST-RUNBOOK.md` Steps 1, 7, 8.)
 
 ---
 
 ## Adding the next MCP later
 
-1. **compose.yaml** — copy the commented `gads-mcp` block; point `build:` at the
-   MCP's folder, give it its own `*_data` volume + `*.env` file.
-2. **Cloudflare dashboard** — on the same tunnel, add another Public Hostname:
-   `gads-mcp.<domain>` → `http://gads-mcp:8000`.
+1. **compose.yaml** — add the new MCP service (copy `meta-ads-mcp`'s block; point
+   `build:` at its folder, give it its own `*_data` volume + `*.env`).
+2. Expose it via Tailscale. Two options:
+   - **Same node, by path** — add a handler to `tailscale/serve.json`
+     (`"/gads/": {"Proxy": "http://gads-mcp:8000"}`), URL becomes
+     `…ts.net/gads/mcp`. Simplest.
+   - **Its own subdomain** — add a second `tailscale` service with
+     `TS_HOSTNAME: gads-mcp` and its own serve.json → `https://gads-mcp.<tailnet>.ts.net`.
+     Cleaner per-MCP URLs.
 3. `docker compose up -d --build`.
-
-Same tunnel, same token, no new DNS. That's the whole point of the shared stack.
 
 ## Updating
 
@@ -110,37 +120,33 @@ cd Mad-Minds && git pull
 cd mcp-stack && docker compose up -d --build
 ```
 
-Named volumes survive, so no one has to re-Connect.
+Named volumes survive (token store + Tailscale identity), so no one re-Connects.
 
 ## Troubleshooting
 
-- **`cloudflared` logs errors / no connections** → bad or missing `TUNNEL_TOKEN`
-  in `cloudflared.env`. Recopy it from the dashboard.
-- **`502`/`error 1033` at the public URL** → the Public Hostname's Service must be
-  `http://meta-ads-mcp:8000` exactly (the Compose service name), and `cloudflared`
-  must be on `mcpnet` (it is, in this compose). `docker compose logs meta-ads-mcp`
-  to confirm the MCP is up.
+- **`funnel status` says Funnel not available / HTTPS** → step 1.2 (Enable HTTPS)
+  or 1.3 (the `funnel` nodeAttr) wasn't applied. Fix in the admin console, then
+  `docker compose restart tailscale`.
+- **Node didn't authenticate** → bad/expired `TS_AUTHKEY` in `tailscale.env`.
+  Regenerate it; `docker compose up -d` re-reads it.
+- **`/health` works locally but not over the Funnel URL** → the serve.json `Proxy`
+  must be `http://meta-ads-mcp:8000` (the Compose service name) and tailscale must
+  be on `mcpnet` (it is here).
 - **OAuth loops / wrong redirect** → `META_OAUTH_BASE_URL` must equal
-  `https://meta-mcp.<domain>` and the Facebook app's redirect URI must be
-  `https://meta-mcp.<domain>/auth/callback`.
+  `https://meta-mcp.<tailnet>.ts.net` and the Facebook redirect URI must be that +
+  `/auth/callback`.
 - **Meta `190`** for a marketer → their Facebook sign-in expired (~60-day token);
   re-Connect. `(#200)`/permission → not on that ad account / Business Manager.
-- **Stack didn't survive reboot** (rootless) → check `loginctl show-user mcp -p Linger`
-  is `yes` (it is on Openclaw). If ever not, root runs `loginctl enable-linger mcp`.
+- **Didn't survive reboot** (rootless) → `loginctl show-user mcp -p Linger` should
+  be `yes` (it is on Openclaw); if not, root runs `loginctl enable-linger mcp`.
 
 ---
 
-## Alternative: Caddy (only where you control ports 80/443)
+## Alternatives
 
-On a host with rootful Docker — or rootless after root sets
-`net.ipv4.ip_unprivileged_port_start=80` — you can skip Cloudflare and let Caddy
-get its own Let's Encrypt cert:
-
-```bash
-nano Caddyfile                                  # set meta-mcp.<domain>
-# DNS: A record meta-mcp.<domain> -> the host's public IP
-docker compose -f compose.caddy.yaml up -d --build
-```
-
-Not usable on Openclaw as-is (rootless + no sudo can't bind 80/443), which is why
-the default is the Cloudflare Tunnel above.
+- **`compose.cloudflare.yaml`** — Cloudflare Tunnel. Cleaner branded URL, but needs
+  a domain on Cloudflare. `docker compose -f compose.cloudflare.yaml up -d --build`
+  (fill `cloudflared.env` + add a Public Hostname → `http://meta-ads-mcp:8000`).
+- **`compose.caddy.yaml`** — Caddy + Let's Encrypt on 80/443. Needs a domain (A
+  record) AND control of ports 80/443 (rootful Docker, or rootless after root sets
+  `net.ipv4.ip_unprivileged_port_start=80`). Not usable on Openclaw as-is.
