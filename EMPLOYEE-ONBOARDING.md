@@ -4,8 +4,6 @@ Welcome. You're setting up your own marketing assistant inside Claude Cowork. Af
 
 This is a one-time setup. Future sessions just need you to open Cowork and ask.
 
-> **Note on Composio:** it's per-user, not org-level. There's no centralized setup that has to happen first. You sign up for your own free Composio account; each colleague signs up for theirs. Treat it like your Google or Facebook login.
-
 ---
 
 ## Step 1 — Install Claude desktop
@@ -81,29 +79,34 @@ This one lives in the **native** Connectors panel (the top-level one, not under 
 
 Result: Claude can now read and write the shared Mad Minds Drive Hub on your behalf.
 
-## Step 5 — Connect the ad/analytics MCPs (~5 min)
+## Step 5 — Connect the ad & search connectors (~5 min)
 
-> **⚠️ This section is out of date.** OnlineMinds no longer uses Composio. The ad/analytics connectors are now **custom connectors**, and **Google Ads + Meta Ads are self-hosted** (per-user OAuth — you sign in with your own Google/Facebook account and only ever see accounts you already have access to). The authoritative, current walkthrough is the **`/setup-marketing`** skill — run it in Cowork and it connects Google Drive, Google Search Console, Google Ads, and Meta Ads in order, each via **Customize → Connectors → Add custom connector**. The Composio steps below are kept only as historical context pending a rewrite; see `onlineminds-marketing/CONNECTORS.md` for the live connector list.
+These are **custom connectors**: you paste a URL and sign in with your own account, so Claude only ever sees the accounts you already have access to. Google Ads and Meta Ads are hosted by us — you don't need any developer account, API key, or token, just your normal Google / Facebook login.
 
-These live in the **per-plugin** Connectors panel — separately from Drive:
+They're added in the **top-level** Connectors panel — the same place as Google Drive (not under a specific plugin). For each one:
 
-1. Customize → **Onlineminds-marketing → Connectors** (left sidebar, under the plugin name)
-2. Click **Connect** on each connector you need. For each, a browser tab opens for Composio's OAuth flow.
+**Customize → Connectors → Add custom connector** → paste the URL → leave Advanced settings empty (they self-register, so there's no Client ID/Secret to enter) → **Add** → **Connect** → sign in.
 
-**What is Composio?** A free third-party service that handles the OAuth handshake for Google Ads, Meta Ads, GA4, Search Console, Google Tag Manager, and Merchant Center. It removes the need for any developer-token application or technical setup — you just sign in to the actual platform (Google or Facebook) through Composio's flow.
+> One gotcha: always use **Add custom connector**, which uses Claude's reliable hosted sign-in. If an in-session `localhost` sign-in link ever appears, don't use it — that path is buggy and the tools won't register.
 
-On your first Connect click, you'll be asked to sign in to Composio (30 sec, free). After that, every subsequent Connect just shows the platform's OAuth screen.
+Add these three, in order:
 
-**Connect in this order:**
+| Connector | URL to paste | Sign in with |
+|---|---|---|
+| **Google Search Console** | `https://onlineminds-gsc-mcp.fly.dev/mcp` | the Google account that has your Search Console properties (read-only organic data) |
+| **Google Ads** | `https://onlineminds-gads-mcp.fly.dev/mcp` | the Google account with your brand's Google Ads access (via the OnlineMinds Manager / MCC) |
+| **Meta Ads** | `https://<meta-mcp-domain>/mcp` | your **Facebook** account with Business Manager / ad-account access |
 
-- **Google Ads** — sign in with the Google account that has access to your brand's Google Ads (via the OnlineMinds Manager / MCC)
-- **Meta Ads** — self-hosted custom connector; sign in with your **Facebook** account that has Business Manager / ad-account access (one org-wide URL — see `/setup-marketing`)
-- **Google Analytics (GA4)** — Google account with GA4 viewer access
-- **Google Search Console** — Google account with GSC verified for the relevant domains
-- **Google Tag Manager** — GTM-admin Google account
-- **Google Merchant Center** — only if your brand runs Shopping or Performance Max with a product feed
+A few notes:
+- Each is **per-user** — you only see the accounts/properties you personally have. If Meta returns a permission error, your Facebook isn't added to that ad account / Business Manager yet.
+- After adding a connector, you may need to start a **new session** for its tools to appear.
+- Writes (pause, budgets, etc.) are off or simulated until enabled, and always run through the `/ad-actions` spend-gate — see "How taking actions works" below.
 
-Skip Notion / Slack / Supabase / Vercel unless you actually use them.
+**Not wired yet** (coming later — don't go looking for them): GA4, Google Tag Manager, Google Merchant Center. For organic search today, use Google Search Console.
+
+Skip Notion / Slack / Supabase / Vercel unless you actually use them — those are optional.
+
+> Prefer to be walked through it? Step 6's `/setup-marketing` connects all of these interactively and verifies each one, so you can skip ahead and let it guide you.
 
 ## Step 6 — Open your Mad Minds project and run `/setup-marketing` (~3 min)
 

@@ -53,16 +53,40 @@ later if you ever need non-app-role / external users.) You can leave the app in
 
 ---
 
-## Step 2 — DNS
+## Step 2 — Pick a domain + point it at the VPS
 
-Point a subdomain at the VPS:
+You need a stable HTTPS hostname for the server. You do **not** need to buy a
+TLS certificate — Caddy (Step 6) gets one free from Let's Encrypt. You just need
+a name that resolves to the VPS.
+
+**Easiest (recommended): a subdomain of a domain OnlineMinds already owns.**
+e.g. `meta-mcp.onlineminds.io`. No new purchase, no extra cost. If you'd rather
+not touch the main domain's DNS, grab a throwaway domain for ~$10/yr at
+Cloudflare / Namecheap / Porkbun and use that.
+
+**Then add ONE DNS record** in whatever controls that domain's DNS (your
+registrar or Cloudflare):
 
 ```
-meta-mcp.example.com.   A   <your.vps.ip.address>
+Type: A     Name: meta-mcp     Value: <your VPS public IPv4>     TTL: auto
 ```
 
-Wait for it to resolve (`dig +short meta-mcp.example.com`) before Step 6 so
-Caddy can get a certificate.
+- The VPS's public IP is shown in your provider's dashboard (Hetzner /
+  DigitalOcean / Linode / Vultr…), or run `curl -4 ifconfig.me` on the box. Use
+  the IPv4; add a matching `AAAA` record too if you want IPv6.
+- "Name `meta-mcp`" + domain `onlineminds.io` → the host
+  `meta-mcp.onlineminds.io`. Use whatever subdomain you like.
+- If the domain is on **Cloudflare**, set the record to **DNS only** (grey
+  cloud) for the first deploy so Caddy can complete the Let's Encrypt challenge;
+  you can switch the proxy on afterwards.
+
+Wait for it to resolve before Step 6 (`dig +short meta-mcp.onlineminds.io` should
+return your VPS IP) so Caddy can get its certificate.
+
+> This hostname is used in **three places that must match**: `META_OAUTH_BASE_URL`
+> (Step 4), the Facebook app's **Valid OAuth Redirect URI** = `https://<host>/auth/callback`
+> (Step 1), and the connector URL marketers paste = `https://<host>/mcp` (Step 8).
+> Decide the hostname now and reuse it verbatim everywhere.
 
 ---
 
