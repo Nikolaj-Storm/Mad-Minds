@@ -138,7 +138,7 @@ def get_yaml_path() -> str:
     return os.path.join(project_root, "google-ads.yaml")
 
 
-def get_client():
+def get_client(login_customer_id: str | None = None):
     """Build a Google Ads client for the CURRENT request's signed-in marketer.
 
     Per-user OAuth: the access token comes from the FastMCP Google OAuth proxy
@@ -161,7 +161,7 @@ def get_client():
     if not dev_token:
         raise ValueError("Server is missing GOOGLE_ADS_DEVELOPER_TOKEN.")
 
-    login_cid = os.environ.get("GOOGLE_ADS_LOGIN_CUSTOMER_ID") or None
+    login_cid = login_customer_id or os.environ.get("GOOGLE_ADS_LOGIN_CUSTOMER_ID") or None
     if login_cid:
         login_cid = normalize_customer_id(login_cid)
 
