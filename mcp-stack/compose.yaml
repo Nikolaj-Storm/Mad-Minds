@@ -1,25 +1,27 @@
-# Mad Minds MCP stack — runs one or more self-hosted MCP servers behind a single
-# Caddy reverse proxy with automatic HTTPS. Built to grow: add a new MCP by
-# adding a service block here, a block in Caddyfile, and an env file.
+# Mad Minds MCP stack — Cloudflare Tunnel edition (no root, no inbound ports).
 #
-# Deploy (on the server, inside the mcp@ container — see README.md):
-#   cp meta.env.example meta.env     # then fill in the real secrets
-#   edit Caddyfile                   # set your real meta-mcp.<domain>
+# cloudflared dials OUT to Cloudflare, which serves public HTTPS and forwards to
+# each MCP over the internal mcpnet network. Perfect for the rootless / no-sudo
+# Hetzner box: nothing binds privileged ports, nothing is exposed on the host.
+#
+# One tunnel serves every MCP. Adding an MCP = add a service here + add a Public
+# Hostname in the Cloudflare tunnel dashboard (e.g. gads-mcp.<domain> ->
+# http://gads-mcp:8000). No new tunnel, token, or DNS record needed.
+#
+# Deploy (on the server, as mcp — see README.md):
+#   cp meta.env.example meta.env              # fill in secrets + domain
+#   cp cloudflared.env.example cloudflared.env # paste the tunnel token
 #   docker compose up -d --build
 name: madminds-mcp
 
 services:
-  caddy:
-    image: caddy:2
+  cloudflared:
+    image: cloudflare/cloudflared:latest
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+    command: tunnel --no-autoupdate run        # reads TUNNEL_TOKEN from the env
+    env_file: ./cloudflared.env
     networks: [mcpnet]
+    depends_on: [meta-ads-mcp]
 
   meta-ads-mcp:
     build: ../meta-ads-mcp
@@ -30,11 +32,10 @@ services:
       - meta_data:/data            # persists the OAuth token store (sign in once)
     networks: [mcpnet]
     expose:
-      - "8000"                     # reachable only on mcpnet (via Caddy), not on the host
+      - "8000"                     # reached only by cloudflared over mcpnet
 
-  # --- Add the next MCP like this (example — uncomment + adjust) --------------
-  # The repo's gads-mcp/ currently deploys to Fly; if you move it here later,
-  # this is all it takes. Also add a Caddyfile block and a gads.env file.
+  # --- Add the next MCP like this (uncomment + adjust), then add its Public
+  # --- Hostname in the Cloudflare tunnel dashboard pointing at http://gads-mcp:8000
   # gads-mcp:
   #   build: ../gads-mcp
   #   image: madminds/gads-mcp:latest
@@ -49,7 +50,5 @@ networks:
   mcpnet:
 
 volumes:
-  caddy_data:
-  caddy_config:
   meta_data:
   # gads_data:
