@@ -95,7 +95,8 @@ Add these three, in order:
 |---|---|---|
 | **Google Search Console** | `https://onlineminds-gsc-mcp.fly.dev/mcp` | the Google account that has your Search Console properties (read-only organic data) |
 | **Google Ads** | `https://onlineminds-gads-mcp.fly.dev/mcp` | the Google account with your brand's Google Ads access (via the OnlineMinds Manager / MCC) |
-| **Meta Ads** | `https://<meta-mcp-domain>/mcp` | your **Facebook** account with Business Manager / ad-account access |
+| **Meta Ads — onlineminds** | `https://meta-onlineminds.tail40453d.ts.net/mcp` | your **Facebook** account with onlineminds.io ad-account access |
+| **Meta Ads — Rentumo** | `https://meta-rentumo.tail40453d.ts.net/mcp` | your **Facebook** account with Rentumo ad-account access |
 
 A few notes:
 - Each is **per-user** — you only see the accounts/properties you personally have. If Meta returns a permission error, your Facebook isn't added to that ad account / Business Manager yet.
