@@ -166,8 +166,12 @@ Named volumes survive, so no one has to re-Connect.
   internet, or DNS isn't pointing at `37.27.23.202` yet. Fix the port forward /
   DNS, then `docker compose restart caddy`. (Cloudflare users: set the record to
   DNS-only / grey-cloud for issuance.)
-- **`permission denied` on the Docker socket** → add `mcp` to the `docker` group
-  (`usermod -aG docker mcp`, re-login) or use `sudo docker compose …`.
+- **`permission denied` on the Docker socket** (rootful only) → add `mcp` to the
+  `docker` group (`usermod -aG docker mcp`, re-login) or use `sudo docker compose …`.
+- **Stack doesn't come back after logout/reboot** (rootless) → the user's Docker
+  daemon needs *lingering*. Check `loginctl show-user mcp -p Linger` (want
+  `Linger=yes`); if not, `sudo loginctl enable-linger mcp`. With that + the
+  services' `restart: unless-stopped`, the stack auto-starts on boot.
 - **Meta returns `190`** for a marketer → their Facebook sign-in expired (~60-day
   token); they just re-Connect. A `(#200)`/permission error means their Facebook
   isn't on that ad account / Business Manager.
