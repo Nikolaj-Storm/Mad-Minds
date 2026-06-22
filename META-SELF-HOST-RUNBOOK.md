@@ -23,6 +23,13 @@ won't return live data until the app + a marketer's Facebook access line up.
 
 Throughout, replace `meta-mcp.example.com` with your real (sub)domain.
 
+> **Running several MCPs on one box?** Use the Compose stack in **`mcp-stack/`**
+> instead of the single `docker run` in Steps 5–6 — it runs each MCP as a service
+> behind one shared Caddy proxy, so adding the next MCP is one service block. Same
+> Facebook-app + DNS setup (Steps 1–2), same verify + wiring (Steps 7–8); only the
+> "bring it up" part differs. See `mcp-stack/README.md`. This is the recommended
+> path for the Hetzner `mcp@` host.
+
 ---
 
 ## Step 1 — Create the Meta App + Facebook Login

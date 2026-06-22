@@ -1,0 +1,55 @@
+# Mad Minds MCP stack — runs one or more self-hosted MCP servers behind a single
+# Caddy reverse proxy with automatic HTTPS. Built to grow: add a new MCP by
+# adding a service block here, a block in Caddyfile, and an env file.
+#
+# Deploy (on the server, inside the mcp@ container — see README.md):
+#   cp meta.env.example meta.env     # then fill in the real secrets
+#   edit Caddyfile                   # set your real meta-mcp.<domain>
+#   docker compose up -d --build
+name: madminds-mcp
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [mcpnet]
+
+  meta-ads-mcp:
+    build: ../meta-ads-mcp
+    image: madminds/meta-ads-mcp:latest
+    restart: unless-stopped
+    env_file: ./meta.env
+    volumes:
+      - meta_data:/data            # persists the OAuth token store (sign in once)
+    networks: [mcpnet]
+    expose:
+      - "8000"                     # reachable only on mcpnet (via Caddy), not on the host
+
+  # --- Add the next MCP like this (example — uncomment + adjust) --------------
+  # The repo's gads-mcp/ currently deploys to Fly; if you move it here later,
+  # this is all it takes. Also add a Caddyfile block and a gads.env file.
+  # gads-mcp:
+  #   build: ../gads-mcp
+  #   image: madminds/gads-mcp:latest
+  #   restart: unless-stopped
+  #   env_file: ./gads.env
+  #   volumes:
+  #     - gads_data:/data
+  #   networks: [mcpnet]
+  #   expose: ["8000"]
+
+networks:
+  mcpnet:
+
+volumes:
+  caddy_data:
+  caddy_config:
+  meta_data:
+  # gads_data:
