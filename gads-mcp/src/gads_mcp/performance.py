@@ -32,6 +32,7 @@ def get_performance(
     customer_id: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
+    login_customer_id: str | None = None,
 ) -> list | dict:
     """Get Google Ads performance metrics (impressions, clicks, spend, conversions, ROAS, CPA).
 
@@ -56,6 +57,9 @@ def get_performance(
         level: Aggregation level — "campaign", "ad_group", or "ad".
         customer_id: 10-digit account ID — a CLIENT account, not a manager/MCC account
             (managers have no metrics). Optional if GOOGLE_ADS_CUSTOMER_ID is set.
+        login_customer_id: Manager (MCC) 10-digit ID to send as login-customer-id, for
+            querying client accounts under a manager. Optional; falls back to the
+            GOOGLE_ADS_LOGIN_CUSTOMER_ID env var.
     """
     date_filter = build_date_filter(date_range, start_date, end_date)
     if level not in ALLOWED_LEVELS:
@@ -65,7 +69,7 @@ def get_performance(
             "allowed": sorted(ALLOWED_LEVELS),
         }
 
-    client = get_client()
+    client = get_client(login_customer_id)
     cid = resolve_customer_id(customer_id)
     ga_service = client.get_service("GoogleAdsService")
 
@@ -127,6 +131,7 @@ def get_search_terms(
     customer_id: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
+    login_customer_id: str | None = None,
 ) -> list | dict:
     """Get the search terms report — the actual searches that triggered your ads.
 
@@ -146,10 +151,13 @@ def get_search_terms(
         limit: Max rows to return (default 100).
         customer_id: 10-digit account ID — a CLIENT account, not a manager/MCC account.
             Optional if GOOGLE_ADS_CUSTOMER_ID is set.
+        login_customer_id: Manager (MCC) 10-digit ID to send as login-customer-id, for
+            querying client accounts under a manager. Optional; falls back to the
+            GOOGLE_ADS_LOGIN_CUSTOMER_ID env var.
     """
     date_filter = build_date_filter(date_range, start_date, end_date)
 
-    client = get_client()
+    client = get_client(login_customer_id)
     cid = resolve_customer_id(customer_id)
     ga_service = client.get_service("GoogleAdsService")
 
