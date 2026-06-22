@@ -1,0 +1,7 @@
+# Pinned for the deployed Meta Ads MCP.
+fastmcp>=2.12,<3
+facebook-business>=21.0.0
+httpx>=0.27
+python-dotenv>=1.0.0
+py-key-value-aio>=0.3.0
+diskcache>=5.6.0

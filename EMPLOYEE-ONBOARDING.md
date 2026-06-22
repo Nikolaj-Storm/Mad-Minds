@@ -81,7 +81,9 @@ This one lives in the **native** Connectors panel (the top-level one, not under 
 
 Result: Claude can now read and write the shared Mad Minds Drive Hub on your behalf.
 
-## Step 5 — Connect the ad/analytics MCPs via Composio (~5 min)
+## Step 5 — Connect the ad/analytics MCPs (~5 min)
+
+> **⚠️ This section is out of date.** OnlineMinds no longer uses Composio. The ad/analytics connectors are now **custom connectors**, and **Google Ads + Meta Ads are self-hosted** (per-user OAuth — you sign in with your own Google/Facebook account and only ever see accounts you already have access to). The authoritative, current walkthrough is the **`/setup-marketing`** skill — run it in Cowork and it connects Google Drive, Google Search Console, Google Ads, and Meta Ads in order, each via **Customize → Connectors → Add custom connector**. The Composio steps below are kept only as historical context pending a rewrite; see `onlineminds-marketing/CONNECTORS.md` for the live connector list.
 
 These live in the **per-plugin** Connectors panel — separately from Drive:
 
@@ -95,7 +97,7 @@ On your first Connect click, you'll be asked to sign in to Composio (30 sec, fre
 **Connect in this order:**
 
 - **Google Ads** — sign in with the Google account that has access to your brand's Google Ads (via the OnlineMinds Manager / MCC)
-- **Meta Ads** — sign in with the Facebook account that has Business Manager access
+- **Meta Ads** — self-hosted custom connector; sign in with your **Facebook** account that has Business Manager / ad-account access (one org-wide URL — see `/setup-marketing`)
 - **Google Analytics (GA4)** — Google account with GA4 viewer access
 - **Google Search Console** — Google account with GSC verified for the relevant domains
 - **Google Tag Manager** — GTM-admin Google account
