@@ -37,9 +37,14 @@ Interpreting it:
 
 - **`docker version` works** and B shows a VM / LXC (or nothing) → you're on the
   normal path. Use **Mode A** below.
-- **`docker version` says permission denied** → the `mcp` user isn't in the
-  `docker` group. Have your colleague run `usermod -aG docker mcp` (then re-login),
-  or run the stack with `sudo`.
+- **Rootless Docker** (the daemon runs as your user — `docker version` shows a
+  `rootlesskit` section, StateDir `/run/user/<uid>/dockerd-rootless`) → you can
+  build and run with **no sudo**, but rootless can't publish ports < 1024 until
+  root sets one sysctl. Do step **1b** before Mode A. *(This is our Hetzner
+  `Openclaw` box's setup — KVM VM, rootless Docker as the `mcp` user.)*
+- **`docker version` says permission denied** (rootful Docker) → the `mcp` user
+  isn't in the `docker` group. Have your colleague run `usermod -aG docker mcp`
+  (then re-login), or run the stack with `sudo`.
 - **B says "inside a Docker container (nested)"** and `docker` is missing → this
   is Docker-in-Docker. Your colleague needs to either mount the host's Docker
   socket into this container (`-v /var/run/docker.sock:/var/run/docker.sock`)
@@ -70,9 +75,26 @@ The hostname must be identical in three places: `Caddyfile`,
 `META_OAUTH_BASE_URL` in `meta.env`, and the Facebook app's redirect URI
 (`https://<host>/auth/callback`).
 
+## 1b. Rootless Docker — allow ports 80/443 (one-time, needs root)
+
+Skip this on rootful Docker, or if you're using Mode B. On **rootless** Docker
+(our Hetzner box) the daemon can't publish privileged ports until the host's
+unprivileged-port floor is lowered. Whoever has root — the colleague who set up
+the box, or you via `sudo` — runs this **once**:
+
+```bash
+echo 'net.ipv4.ip_unprivileged_port_start=80' | sudo tee /etc/sysctl.d/99-rootless-ports.conf
+sudo sysctl --system
+```
+
+This is the *only* command that needs root; everything else runs as `mcp`. If a
+later `docker compose up` errors with "cannot expose privileged port", this
+wasn't applied — set it, then `systemctl --user restart docker` (runs as `mcp`,
+no sudo) and retry.
+
 ## 2a. Mode A — self-contained (our Caddy does HTTPS)  ← default
 
-Use this when 80/443 reach the container.
+Use this when 80/443 reach the container (and, on rootless, after step 1b).
 
 ```bash
 docker compose up -d --build
