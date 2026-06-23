@@ -1,6 +1,6 @@
 ---
 name: wasted-spend-audit
-description: Find wasted ad spend across Google Ads, Meta Ads, and (for feed-based brands) Google Merchant Center for an OnlineMinds brand. Surfaces underperforming keywords, audiences, placements, AND product-level spend in Shopping/PMax (products spending without converting, low-impression products burning budget, disapproved-but-active SKUs). Produces an uploadable exclusion/negative list, a per-product action list for the feed where applicable, and a savings estimate. Reads account-conventions for KPI thresholds and Drive paths. Use when asked to cut wasted spend, find underperforming keywords/audiences/placements/products, clean up an account, or reduce CPA.
+description: Find wasted ad spend across Google Ads, Meta Ads, Thribee, and (for feed-based brands) Google Merchant Center for an OnlineMinds brand. Surfaces underperforming keywords, audiences, placements, AND product-level spend in Shopping/PMax (products spending without converting, low-impression products burning budget, disapproved-but-active SKUs). Produces an uploadable exclusion/negative list, a per-product action list for the feed where applicable, and a savings estimate. Reads account-conventions for KPI thresholds and Drive paths. Use when asked to cut wasted spend, find underperforming keywords/audiences/placements/products, clean up an account, or reduce CPA.
 argument-hint: "<brand> [lookback, e.g. last 90 days]"
 ---
 
@@ -14,7 +14,7 @@ argument-hint: "<brand> [lookback, e.g. last 90 days]"
 ## Inputs
 1. Brand (portfolio brand; ask if missing).
 2. Lookback window (default last 90 days).
-3. Channels (Google Ads + Meta Ads default).
+3. Channels (Google Ads + Meta Ads + Thribee default).
 
 ## Method
 Pull from the connectors (or hub data) and flag spend that produced poor or no return against the brand's CPA/ROAS targets:
@@ -29,6 +29,12 @@ Pull from the connectors (or hub data) and flag spend that produced poor or no r
 - Ad sets / audiences below target ROAS with material spend.
 - Creatives with high frequency + falling CTR (fatigue).
 - Placements with poor efficiency.
+
+
+**Thribee**
+- Markets with spend above CPA/ROAS threshold that have no corresponding Google/Meta conversions — signals spend leak or missing attribution.
+- Markets with MoM spend increases not matched by conversion lift — candidates for budget reallocation.
+- Use `thribee_get_all_spend` to get a cross-market spend snapshot; compare against Google/Meta conversion data to identify markets where Thribee spend is not yielding measurable returns.
 
 For each flag: entity, spend, conversions, the metric that failed, and recommended action (pause / negative / reduce budget / refresh creative).
 

@@ -24,6 +24,7 @@ These load automatically when the `onlineminds-marketing` plugin installs. Each 
 | Supabase | Vendor MCP | Per-user / org | Already in use. Portfolio-site data. |
 | Vercel | Vendor MCP | Per-user / org | Already in use. Deployment + scheduled-job inspection. |
 | Slack | Vendor MCP | Per-user OAuth | Optional. Share finished reports. |
+| Thribee | Self-hosted VPS MCP (SSE, port 3456) | Shared bearer token (pre-wired — no marketer action needed) | Read-only ad spend across 22 markets. Tools: `thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`. See `Mad Minds Thribee MCP/README.md` for infra + token rotation. |
 
 ### B. Native Claude desktop catalog
 Claude desktop's built-in **Customize → Connectors** (the top-level one, not the per-plugin one). For OnlineMinds we use exactly one connector from here:
@@ -62,6 +63,7 @@ The `/setup-marketing` skill walks through the lists in order:
 3. **Custom connector:** Google Ads → Add custom connector (URL above) → Connect
 4. **Custom connector (per company):** Meta Ads → Add custom connector with the company's Meta URL → Connect (Facebook login)
 5. **Optional plugin connectors:** Notion, Slack, Supabase, Vercel
+6. **Thribee** — pre-wired (no marketer action), verify with "list Thribee markets"
 
 **Coming (NOT part of setup yet):**
 - **GA4 / Google Tag Manager / Merchant Center** — not wired.

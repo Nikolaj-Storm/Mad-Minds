@@ -20,6 +20,14 @@
       "type": "http",
       "url": "https://mcp.slack.com/mcp",
       "_comment": "Optional. Share finished reports as messages. Vendor-native MCP."
+    },
+    "thribee": {
+      "type": "http",
+      "url": "http://37.27.23.202:3456/sse",
+      "headers": {
+        "Authorization": "Bearer 8cfa22099f383712d98423230fa8247c388bf10c523af884ebdf30310b22d8e7"
+      },
+      "_comment": "Thribee ad spend data across 22 markets. Self-hosted on VPS (Docker, port 3456). Shared bearer token — read-only, no per-user OAuth needed. Tools: thribee_list_markets, thribee_get_spend (single market + date range), thribee_get_all_spend (all 22 markets in parallel). See Mad Minds Thribee MCP/README.md for infra details and token rotation procedure."
     }
   },
   "_pending_connectors": {
@@ -44,5 +52,5 @@
       "note": "Candidate fallback: the official Google Content API via a self-hosted MCP with Advanced-settings OAuth client ID."
     }
   },
-  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers \u2014 Claude desktop's plugin/in-session OAuth flow is buggy (no localhost callback listener; 'a server with this URL already exists'). Marketers add them as CUSTOM CONNECTORS, which use Claude's hosted callback (claude.ai/api/mcp/auth_callback) and work. URLs: GSC = https://onlineminds-gsc-mcp.fly.dev/mcp ; Google Ads = https://onlineminds-gads-mcp.fly.dev/mcp . Both support DCR, so no Client ID/Secret to paste. See CONNECTORS.md and the setup guide. Meta Ads is ALSO a custom connector, but Meta-hosted (https://mcp.meta.com/ads/<business-id>) \u2014 Facebook login, free beta, no self-hosting. One URL per Business Manager, minted at Meta's Connect-to-AI page; the per-company URLs are stored in account-conventions-live."
+  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers — Claude desktop's plugin/in-session OAuth flow is buggy (no localhost callback listener; 'a server with this URL already exists'). Marketers add them as CUSTOM CONNECTORS, which use Claude's hosted callback (claude.ai/api/mcp/auth_callback) and work. URLs: GSC = https://onlineminds-gsc-mcp.fly.dev/mcp ; Google Ads = https://onlineminds-gads-mcp.fly.dev/mcp . Both support DCR, so no Client ID/Secret to paste. See CONNECTORS.md and the setup guide. Meta Ads is ALSO a custom connector, but Meta-hosted (https://mcp.meta.com/ads/<business-id>) — Facebook login, free beta, no self-hosting. One URL per Business Manager, minted at Meta's Connect-to-AI page; the per-company URLs are stored in account-conventions-live."
 }

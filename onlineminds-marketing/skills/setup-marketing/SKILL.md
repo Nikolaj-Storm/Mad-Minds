@@ -57,6 +57,8 @@ For each connector: say what it's for in one sentence, test it with a trivial re
 - **Google Ads** (custom connector) — campaign reporting + management (read+write); per-user; they see only accounts they can access; writes simulate (READONLY_MODE) until enabled and route through `/ad-actions`. Steps: Customize → Connectors → **Add custom connector** → URL `https://onlineminds-gads-mcp.fly.dev/mcp` → leave Advanced settings empty → **Add** → **Connect** → sign in with the Google account that has their Google Ads.
 - **Meta Ads** (custom connector, per company — Meta-hosted) — Facebook/Instagram reporting + management; writes route through `/ad-actions`. Each company/Business Manager has its OWN Meta MCP URL (`https://mcp.meta.com/ads/<business-id>`). Look up the marketer's company's URL in `account-conventions-live` (Meta MCP URLs). If it's there: Customize → Connectors → **Add custom connector** → that URL → leave Advanced settings empty → **Add** → **Connect** → sign in with their **Meta/Facebook** account. If their company's URL hasn't been minted yet, skip it and note it. (Minting is a Meta-Business-admin task — whoever manages that company's Meta Ads does it once via Meta's Connect-to-AI page and the URL gets stored in account-conventions-live. Nikolaj does not necessarily have Meta access, so don't assume he can mint it.)
 
+- **Thribee** (plugin connector — pre-wired, no setup needed) — ad spend data across 22 markets. This is already included in the plugin's `.mcp.json` with a shared bearer token, so it connects automatically when the plugin loads. No action required from the marketer. Verify it's working by asking "list Thribee markets" — it should return the 22 configured markets.
+
 Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional plugin connectors.
 
 Not available yet (don't walk through; if asked, say they're coming): **GA4**, **Google Tag Manager**, **Google Merchant Center**. For organic search, use Google Search Console.
@@ -104,6 +106,7 @@ Show them this — verbatim layout, headings exactly as shown:
 >
 > Act (live ad accounts, with safety gates)
 > - `/ad-actions <brand> <change>` — pause/enable, budget/bid changes, add negatives, create ads/campaigns on Google + Meta, edit GTM. **Spend increases require you to type back a verbatim confirmation phrase** (Tier 1). Pauses and budget decreases are quick yes (Tier 2). GTM changes affecting conversion tracking are Tier 1.
+> - **Thribee** is pre-wired (no login needed) — ask "show Thribee spend for DK last month" to pull cross-market spend data across all 22 markets.
 >
 > Document
 > - `/report-builder` — assemble any of the above into a stakeholder-ready report
