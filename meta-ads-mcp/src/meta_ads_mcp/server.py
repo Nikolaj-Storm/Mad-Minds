@@ -45,7 +45,11 @@ def _build_auth():
 
     if redis_url and redis_token:
         from meta_ads_mcp.redis_store import RedisStore
-        storage = RedisStore(url=redis_url, token=redis_token)
+        storage = RedisStore(
+            url=redis_url,
+            token=redis_token,
+            prefix=os.environ.get("REDIS_KEY_PREFIX", ""),
+        )
     elif storage_dir:
         from key_value.aio.stores.disk import DiskStore
         storage = DiskStore(directory=storage_dir)
