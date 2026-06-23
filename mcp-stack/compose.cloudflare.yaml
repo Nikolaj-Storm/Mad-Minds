@@ -1,10 +1,25 @@
-# ALTERNATIVE to compose.yaml — Cloudflare Tunnel instead of Tailscale Funnel.
-# Use this if you DO have a domain on Cloudflare (cleaner branded URL). cloudflared
-# dials out; no inbound ports, no root. Needs cloudflared.env (TUNNEL_TOKEN) and a
-# Public Hostname configured on the tunnel pointing at http://meta-ads-mcp:8000.
+# Mad Minds MCP stack — Cloudflare Tunnel, TWO Meta business areas.
 #
-# Run with:  docker compose -f compose.cloudflare.yaml up -d --build
+# Use this instead of the Tailscale compose when the public URL must be a real
+# domain (Facebook OAuth rejects Tailscale's shared .ts.net). One cloudflared
+# dials out to Cloudflare and serves both instances via two Public Hostnames you
+# configure on the tunnel (no inbound ports, no root):
+#
+#   https://meta-onlineminds.<domain>/mcp -> meta-ads-onlineminds:8000
+#   https://meta-rentumo.<domain>/mcp     -> meta-ads-rentumo:8000
+#
+# Deploy (see README / chat):
+#   cp cloudflared.env.example cloudflared.env   # paste TUNNEL_TOKEN
+#   # set each META_OAUTH_BASE_URL to its https://meta-*.<domain>
+#   docker compose -f compose.cloudflare.yaml up -d --build
 name: madminds-mcp
+
+x-meta-ads: &meta-ads
+  build: ../meta-ads-mcp
+  image: madminds/meta-ads-mcp:latest
+  restart: unless-stopped
+  networks: [mcpnet]
+  expose: ["8000"]
 
 services:
   cloudflared:
@@ -13,20 +28,23 @@ services:
     command: tunnel --no-autoupdate run        # reads TUNNEL_TOKEN from the env
     env_file: ./cloudflared.env
     networks: [mcpnet]
-    depends_on: [meta-ads-mcp]
+    depends_on: [meta-ads-onlineminds, meta-ads-rentumo]
 
-  meta-ads-mcp:
-    build: ../meta-ads-mcp
-    image: madminds/meta-ads-mcp:latest
-    restart: unless-stopped
-    env_file: ./meta.env
+  meta-ads-onlineminds:
+    <<: *meta-ads
+    env_file: ./meta-onlineminds.env
     volumes:
-      - meta_data:/data
-    networks: [mcpnet]
-    expose: ["8000"]
+      - meta_onlineminds_data:/data
+
+  meta-ads-rentumo:
+    <<: *meta-ads
+    env_file: ./meta-rentumo.env
+    volumes:
+      - meta_rentumo_data:/data
 
 networks:
   mcpnet:
 
 volumes:
-  meta_data:
+  meta_onlineminds_data:
+  meta_rentumo_data:
