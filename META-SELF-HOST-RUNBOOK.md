@@ -241,104 +241,129 @@ docker run -d --name meta-ads-mcp --restart unless-stopped \
 
 The `meta_data` volume survives, so no one has to re-Connect.
 
-## Alternative: deploy to Vercel (no VPS needed)
+## Vercel deployment (live — this is how it runs today)
 
-Instead of running the Docker stack on Hetzner, you can deploy `meta-ads-mcp/`
-directly to **Vercel** as two serverless projects — one per Meta business area.
-Vercel gives you stable `*.vercel.app` hostnames (or a custom domain) that
-Facebook accepts, and skips the Tailscale/tunnel setup entirely.
+`meta-ads-mcp/` is deployed to Vercel as **two serverless projects**, one per
+Meta business area. Vercel gives stable `*.vercel.app` hostnames that Facebook
+accepts, with zero server management. Token storage is Upstash Redis (HTTP-only
+client, works inside Vercel's ephemeral containers).
 
-Token storage switches automatically to **Vercel KV** (Upstash Redis) — no
-volume mount needed.
+**Live URLs:**
+- onlineminds.io → `https://meta-ads-onlineminds.vercel.app/mcp`
+- Rentumo ApS → `https://meta-ads-rentumo.vercel.app/mcp`
 
 ### 1. Create two Vercel projects
 
 In [vercel.com/new](https://vercel.com/new), import `Nikolaj-Storm/Mad-Minds`
-twice and give each project a meaningful name:
+twice:
 - `meta-ads-onlineminds` — for the onlineminds.io Facebook App
 - `meta-ads-rentumo` — for the Rentumo ApS Facebook App
 
 For **each** project:
-- **Root Directory** → `meta-ads-mcp`  (tells Vercel where `vercel.json` lives)
-- Framework preset → **Other** (Vercel detects `@vercel/python` from `vercel.json`)
+- **Root Directory** → `meta-ads-mcp`
+- Framework preset → **Other**
 
-### 2. Attach a Vercel KV store to each project
+### 2. Attach Upstash Redis
 
-In the Vercel dashboard for each project: **Storage → Create → KV** (Upstash
-Redis). Give it a descriptive name (`kv-meta-onlineminds`, `kv-meta-rentumo`).
-Vercel auto-injects `KV_REST_API_URL` and `KV_REST_API_TOKEN` into the project's
-environment — the server picks these up to replace the disk store.
+In the Vercel dashboard: **Marketplace → Upstash → Redis** (not the deprecated
+Vercel KV option). Create **one** Redis database and connect it to **both**
+projects. The projects are isolated by the `REDIS_KEY_PREFIX` env var (Step 3),
+so one database is enough — no key collisions.
 
-> **Important:** create a **separate** KV store per project. Sharing one store
-> between two business-area servers risks token key collisions.
+Vercel auto-injects `KV_REST_API_URL` and `KV_REST_API_TOKEN` into both
+projects.
 
-### 3. Set environment variables in each project
+### 3. Set environment variables
 
-In each project: **Settings → Environment Variables** — add all vars from
-`mcp-stack/meta.env.example`, substituting `META_OAUTH_BASE_URL` with the
-Vercel domain (see Step 4). Do **not** set `CLIENT_STORAGE_DIR` (no volume
-needed on Vercel).
+In each project: **Settings → Environment Variables**. Do **not** set
+`CLIENT_STORAGE_DIR` (no volume needed on Vercel).
 
 ```ini
-META_APP_ID=<the Facebook App ID for this business area>
-META_APP_SECRET=<the Facebook App Secret>
-# Set this AFTER the first deploy so you know the exact Vercel URL:
+META_APP_ID=<Facebook App ID for this business area>
+META_APP_SECRET=<Facebook App Secret>
 META_OAUTH_BASE_URL=https://meta-ads-onlineminds.vercel.app
 META_SCOPES=ads_read,ads_management
-# META_CONFIG_ID=<Facebook Login for Business config ID, if applicable>
+# REDIS_KEY_PREFIX isolates the two projects in the shared Redis database.
+# Use a short unique label per project:
+REDIS_KEY_PREFIX=onlineminds        # → rentumo on the other project
 META_GRAPH_VERSION=v21.0
-JWT_SIGNING_KEY=<output of: openssl rand -hex 32>
+JWT_SIGNING_KEY=<openssl rand -hex 32>
 READONLY_MODE=true
-# KV_REST_API_URL and KV_REST_API_TOKEN are injected automatically by Vercel KV.
+# KV_REST_API_URL and KV_REST_API_TOKEN — auto-injected by Upstash integration.
+# META_CONFIG_ID — only needed if using Facebook Login for Business with a config.
 ```
 
-The `JWT_SIGNING_KEY` encrypts the on-disk (now in-Redis) token store. Keep it
-stable across redeployments or all marketers have to re-Connect.
+`JWT_SIGNING_KEY` encrypts the Redis token store. Keep it stable across
+redeployments or marketers have to re-Connect.
 
-### 4. Deploy + note the production URL
+### 4. Deploy
 
-Click **Deploy**. After the first deploy, note the production URL shown in the
-Vercel dashboard — it will be `https://meta-ads-onlineminds.vercel.app` (or
-whatever project name you chose). If you want a custom subdomain (e.g.
-`https://meta-mcp.onlineminds.io`), add it under **Settings → Domains** and
-update your DNS.
-
-Go back and set `META_OAUTH_BASE_URL` to that URL and redeploy (or trigger a
-redeployment from Settings → Environment Variables → Save → Redeploy).
-
-### 5. Update the Facebook App (same as Steps 1–4 in the main runbook)
-
-For each business-area Facebook App at <https://developers.facebook.com/apps>:
-- **App settings → Basic → App Domains:** add the Vercel hostname without scheme,
-  e.g. `meta-ads-onlineminds.vercel.app`
-- **Facebook Login for Business → Settings → Valid OAuth Redirect URIs:** add
-  `https://meta-ads-onlineminds.vercel.app/auth/callback`
-- If using Facebook Login for Business: **Configurations** → create/update the
-  config granting `ads_read + ads_management` → copy the config ID into
-  `META_CONFIG_ID`.
-
-### 6. Verify
+Push to `main` — Vercel deploys automatically. Verify:
 
 ```bash
 curl -s https://meta-ads-onlineminds.vercel.app/health
 # → {"status":"healthy","service":"Meta Ads MCP"}
 curl -s https://meta-ads-onlineminds.vercel.app/.well-known/oauth-authorization-server | python3 -m json.tool
+# authorization_endpoint must show the vercel.app domain, not a placeholder.
 ```
 
-### 7. Wire into Claude (same as Step 8 in the main runbook)
+### 5. Configure the Facebook App
 
-Each marketer: **Customize → Connectors → Add custom connector** → paste
-`https://meta-ads-onlineminds.vercel.app/mcp` → **Add** → **Connect** →
-sign in with Facebook.
+For **each** business-area Facebook App at <https://developers.facebook.com/apps>:
 
-Update `onlineminds-marketing/.mcp.json` `_custom_connectors_note` with the
-final Vercel URLs once confirmed.
+1. **App Settings → Basic → App Domains:** add only the bare hostname, e.g.
+   `meta-ads-onlineminds.vercel.app`. Do **not** add full URLs with `https://`
+   or paths here — App Domains only accepts bare hostnames.
+
+2. **App Settings → Advanced:** turn **"Native or desktop app?" OFF**. Having
+   this toggle ON switches Facebook to a native-app OAuth flow that breaks the
+   server-side redirect.
+
+3. **Facebook Login for Business → Settings → Valid OAuth Redirect URIs:** add
+   `https://meta-ads-onlineminds.vercel.app/auth/callback`. This is separate
+   from App Domains and must be set explicitly.
+
+4. If using Facebook Login for Business with a config: **Configurations** →
+   create/update the config granting `ads_read + ads_management` → copy the
+   config ID into `META_CONFIG_ID`.
+
+### 6. Wire into Claude
+
+Each marketer: **Customize → Connectors → Add custom connector** → paste URL →
+leave Advanced settings empty (DCR, no Client ID/Secret) → **Add** → **Connect**
+→ sign in with Facebook.
+
+```
+https://meta-ads-onlineminds.vercel.app/mcp   ← onlineminds.io
+https://meta-ads-rentumo.vercel.app/mcp        ← Rentumo ApS
+```
 
 ### Vercel cold-start note
 
-Vercel serverless functions have ~200–800 ms cold starts. The MCP tools and
-OAuth flows are fast enough that this is invisible in practice; Facebook's OAuth
-redirect happens in a browser, not in a tight loop.
+~200–800 ms cold starts. Invisible in practice — Facebook's OAuth redirect
+happens in a browser, not a tight loop.
+
+### Known gotchas (all fixed in the codebase)
+
+- **DCR `grant_types` mismatch:** FastMCP 2.12 requires both `authorization_code`
+  AND `refresh_token` in `grant_types` at `/register`, but Claude's MCP client
+  only sends `authorization_code`. Fixed by `_DCRGrantTypeFix` in `api/index.py`,
+  which patches the request body before FastMCP sees it.
+
+- **`RedisStore.put(collection=…)` crash:** FastMCP's OAuthProxy calls
+  `put(..., collection=...)` for key namespacing. Fixed in `redis_store.py` —
+  the `collection` (and optional `REDIS_KEY_PREFIX`) are prepended to the Redis
+  key as `{prefix}:{collection}:{key}`.
+
+- **`META_OAUTH_BASE_URL` placeholder:** Vercel's default env for new projects
+  may still say `https://api.example.com`. Must be set to the actual production
+  URL (`https://meta-ads-onlineminds.vercel.app`) or Facebook will receive an
+  `api.example.com` redirect URI and reject it.
+
+- **App Domains with full URLs:** Facebook's App Domains field only accepts bare
+  hostnames. Entries like `https://meta-ads-onlineminds.vercel.app/auth/callback`
+  in App Domains are silently ignored and do not substitute for the Valid OAuth
+  Redirect URIs field.
 
 ---
 
