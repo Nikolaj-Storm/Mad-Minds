@@ -219,6 +219,37 @@ class FacebookProvider(OAuthProxy):
         q["config_id"] = self._fb_config_id
         return urlunparse(parts._replace(query=urlencode(q)))
 
+    async def _handle_idp_callback(self, request):
+        """Surface Facebook's real error instead of a generic "missing code".
+
+        Facebook signals dialog/login failures with ``error_code`` /
+        ``error_message`` (and sometimes ``error_reason``) rather than the
+        standard ``error`` param, so the base handler reports them as "Missing
+        authorization code". Log the full callback params and render them, so
+        failures are actually debuggable. The success path is unchanged.
+        """
+        qp = dict(request.query_params)
+        if any(k in qp for k in ("error", "error_code", "error_message", "error_reason")):
+            logger.error("Facebook IdP callback returned an error: %s", qp)
+            from starlette.responses import HTMLResponse
+
+            rows = "".join(
+                f"<tr><td style='padding:4px 12px;font-weight:600;vertical-align:top'>"
+                f"{k}</td><td style='padding:4px 12px'>{v}</td></tr>"
+                for k, v in qp.items()
+                if k != "code"
+            )
+            html = (
+                "<html><body style='font-family:system-ui,sans-serif;max-width:680px;"
+                "margin:48px auto;color:#222'><h2>Facebook sign-in error</h2>"
+                "<p>Facebook returned an error instead of an authorization code. "
+                "Details from Facebook:</p>"
+                f"<table style='border-collapse:collapse;background:#faf5f5'>{rows}</table>"
+                "</body></html>"
+            )
+            return HTMLResponse(html, status_code=400)
+        return await super()._handle_idp_callback(request)
+
     async def _exchange_for_long_lived(self, short_token: str) -> dict | None:
         """Exchange a short-lived user token for a ~60-day long-lived one."""
         try:
