@@ -1,6 +1,6 @@
 ---
 name: monthly-paid-review
-description: Produce OnlineMinds' monthly paid-media performance review for a brand across Google Ads, Meta Ads, and (where applicable) Google Merchant Center for Shopping/PMax feed health. Reads house KPIs and the Drive folder map from account-conventions, pulls last month's spend/conversions/ROAS from the ad-platform connectors (or cleaned data in the hub), surfaces product-feed issues that may have dragged performance (disapprovals, missing GTINs, price mismatches) for feed-based brands, compares to prior month and target, and writes a finished, templated report into the Marketing Hub. Use when asked for a monthly paid review, paid-media report, monthly ads summary, or "how did paid do last month" for any brand.
+description: Produce OnlineMinds' monthly paid-media performance review for a brand across Google Ads, Meta Ads, Thribee, and (where applicable) Google Merchant Center for Shopping/PMax feed health. Reads house KPIs and the Drive folder map from account-conventions, pulls last month's spend/conversions/ROAS from the ad-platform connectors (or cleaned data in the hub), surfaces product-feed issues that may have dragged performance (disapprovals, missing GTINs, price mismatches) for feed-based brands, compares to prior month and target, and writes a finished, templated report into the Marketing Hub. Use when asked for a monthly paid review, paid-media report, monthly ads summary, or "how did paid do last month" for any brand.
 argument-hint: "<brand> [month, e.g. 2026-05]"
 ---
 
@@ -16,7 +16,7 @@ User runs `/monthly-paid-review`, names a brand, or asks for a monthly paid-medi
 
 1. **Brand** — must be one of the portfolio brands. If not given, ask.
 2. **Month** — default to the most recently completed calendar month. Accept `YYYY-MM`.
-3. **Channels** — Google Ads and Meta Ads by default. Include others if the brand runs them (check the brand's entry in account-conventions).
+3. **Channels** — Google Ads, Meta Ads, and Thribee by default. Include others if the brand runs them (check the brand's entry in account-conventions).
 
 ## Step 2 — Get the data (in priority order)
 
@@ -24,7 +24,8 @@ User runs `/monthly-paid-review`, names a brand, or asks for a monthly paid-medi
 2. **Raw exports:** check `03_Data/raw_exports/<YYYY-MM>/` for platform dumps.
 3. **Live pull:** if connectors are authenticated, query Google Ads and Meta Ads for the month. Pull per-channel: spend, impressions, clicks, CTR, CPC, conversions, conversion value, CPA, ROAS. Pull the prior month too for comparison.
    - For Google Ads, pass the **exact month as `start_date`/`end_date`** (e.g. `start_date=2026-05-01`, `end_date=2026-05-31`). The connector supports any custom range, so you are not limited to presets like `LAST_MONTH` — pull whichever month or quarter was asked for, no matter how far back it is.
-4. **Fallback:** if none available, ask the user to paste the numbers.
+4. **Thribee live pull:** call `thribee_get_spend` (or `thribee_get_all_spend` for portfolio reviews) for the month and prior month. Thribee returns spend in native market currencies — convert to the house reporting currency using the currency map (UK=GBP, SE/AT=EUR, BR=BRL, all others=USD). Include in the blended and per-channel views.
+5. **Fallback:** if no connector data is available, ask the user to paste the numbers.
 
 Always record which source was used and the exact date range, and state it at the top of the report.
 
@@ -56,7 +57,7 @@ Using the KPI definitions and targets from account-conventions (and the brand's 
 1. **Header** — brand, month, data source + date range, currency, attribution window.
 2. **Executive summary** — 3 sentences: headline result, biggest win, biggest concern.
 3. **KPI dashboard** — table: Metric | This month | Prior month | MoM change | Target | Status.
-4. **Per-channel breakdown** — Google Ads and Meta Ads each, same metric set.
+4. **Per-channel breakdown** — Google Ads, Meta Ads, and Thribee each, same metric set. For Thribee, report spend and available metrics; note any gaps (Thribee is spend-focused; conversion data comes from Google/Meta).
 5. **What worked** — 3 wins + hypotheses.
 6. **What needs fixing** — 3 problems + hypotheses + recommended fix.
 7. **Recommendations** — prioritized by impact × effort; mark each immediate / next month / later.

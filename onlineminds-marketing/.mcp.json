@@ -1,5 +1,5 @@
 {
-  "_comment": "Plugin MCP wiring (vendor MCPs only). The write-capable ad platforms (Google Ads + Meta Ads) are NOT wired here -- they are SELF-HOSTED custom connectors with per-user OAuth: gads-mcp/ (Fly) for Google Ads, meta-ads-mcp/ (our VPS) for Meta Ads. The marketer clicks Connect and signs in with their own Google/Meta account, which is the true per-user auth the spend-gate relies on. See _custom_connectors_note below, CONNECTORS.md, GADS-SELF-HOST-RUNBOOK.md and META-SELF-HOST-RUNBOOK.md. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). Composio's hosted MCP endpoints authenticate with an x-api-key header, so they cannot be authorized from the Connect button - that mismatch caused the dynamic-client-registration failures. GA4 / Search Console / Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md).",
+  "_comment": "Plugin MCP wiring (vendor MCPs only). The write-capable ad platforms (Google Ads + Meta Ads) are NOT wired here -- they are SELF-HOSTED custom connectors with per-user OAuth: gads-mcp/ (Fly) for Google Ads, meta-ads-mcp/ (our VPS) for Meta Ads. The marketer clicks Connect and signs in with their own Google/Meta account, which is the true per-user auth the spend-gate relies on. See _custom_connectors_note below, CONNECTORS.md, GADS-SELF-HOST-RUNBOOK.md and META-SELF-HOST-RUNBOOK.md. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). GA4 / Search Console / Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md).",
   "mcpServers": {
     "notion": {
       "type": "http",
@@ -20,10 +20,18 @@
       "type": "http",
       "url": "https://mcp.slack.com/mcp",
       "_comment": "Optional. Share finished reports as messages. Vendor-native MCP."
+    },
+    "thribee": {
+      "type": "http",
+      "url": "http://37.27.23.202:3456/sse",
+      "headers": {
+        "Authorization": "Bearer 8cfa22099f383712d98423230fa8247c388bf10c523af884ebdf30310b22d8e7"
+      },
+      "_comment": "Thribee ad spend data across 22 markets. Self-hosted on VPS (Docker, port 3456). Shared bearer token — read-only, no per-user OAuth needed. Tools: thribee_list_markets, thribee_get_spend (single market + date range), thribee_get_all_spend (all 22 markets in parallel). See Mad Minds Thribee MCP/README.md for infra details and token rotation procedure."
     }
   },
   "_pending_connectors": {
-    "_comment": "NOT wired yet - do NOT ship guessed URLs. Each needs a verified OAuth MCP endpoint (one a marketer can authorize from Claude desktop's Connect button) chosen and tested before team rollout. Candidates are listed for evaluation; once a URL is confirmed working in Claude desktop, move the entry up into mcpServers. See CONNECTORS.md section 'Pending connectors' for the decision log.",
+    "_comment": "NOT wired yet - do NOT ship guessed URLs. Each needs a verified OAuth MCP endpoint chosen and tested before team rollout.",
     "google-analytics": {
       "status": "needs-verified-oauth-mcp",
       "purpose": "GA4 sessions, conversions, funnel data (read-only).",
@@ -36,13 +44,12 @@
     "google-tag-manager": {
       "status": "needs-verified-oauth-mcp",
       "purpose": "WRITE-CAPABLE: read containers/tags/triggers, create/edit, publish versions. Conversion-tracking changes are Tier 1 in the spend-gate.",
-      "note": "No verified Connect-button OAuth MCP confirmed yet. Until one is wired, Tier-1 GTM tracking edits via /ad-actions are unavailable. Block team rollout of GTM writes until verified."
+      "note": "No verified Connect-button OAuth MCP confirmed yet."
     },
     "google-merchant-center": {
       "status": "needs-verified-oauth-mcp",
-      "purpose": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed.",
-      "note": "Candidate fallback: the official Google Content API via a self-hosted MCP with Advanced-settings OAuth client ID."
+      "purpose": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed."
     }
   },
-  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers \u2014 Claude desktop's plugin/in-session OAuth flow is buggy (no localhost callback listener; 'a server with this URL already exists'). Marketers add them as CUSTOM CONNECTORS, which use Claude's hosted callback (claude.ai/api/mcp/auth_callback) and work. URLs: GSC = https://onlineminds-gsc-mcp.fly.dev/mcp ; Google Ads = https://onlineminds-gads-mcp.fly.dev/mcp . Both support DCR, so no Client ID/Secret to paste. See CONNECTORS.md and the setup guide. Meta Ads is ALSO a custom connector, deployed to Vercel (TWO projects, one per Meta business area) \u2014 Facebook login, per-user OAuth, writes gated by /ad-actions + READONLY_MODE. Each marketer signs in with their own Facebook and only sees the accounts they manage; add whichever business area(s) you work in. Connector URLs (update with your actual Vercel project names once deployed): https://meta-ads-onlineminds.vercel.app/mcp and https://meta-ads-rentumo.vercel.app/mcp . Built in meta-ads-mcp/; deploy per META-SELF-HOST-RUNBOOK.md (Vercel section). Replaces the former Tailscale-tunnel URLs."
+  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers — Claude desktop's plugin/in-session OAuth flow is buggy. Marketers add them as CUSTOM CONNECTORS. URLs: GSC = https://onlineminds-gsc-mcp.fly.dev/mcp ; Google Ads = https://onlineminds-gads-mcp.fly.dev/mcp . Both support DCR, so no Client ID/Secret to paste. Meta Ads is ALSO a custom connector, now SELF-HOSTED on our Hetzner box (TWO connectors, one per Meta business area: https://meta-onlineminds.tail40453d.ts.net/mcp and https://meta-rentumo.tail40453d.ts.net/mcp) — Facebook login, per-user OAuth, writes gated by /ad-actions + READONLY_MODE."
 }

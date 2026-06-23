@@ -5,7 +5,7 @@
     "email": "marketing@onlineminds.io"
   },
   "metadata": {
-    "description": "Mad Minds \u2014 the OnlineMinds marketing department's Claude plugin marketplace. Includes onlineminds-marketing (in-house skills, Drive Hub routing, write-action safety gates, self-hosted Google Ads / Search Console / Meta Ads connectors) and a vendored copy of AgriciDaniel/claude-ads (250+ paid-advertising audit checks across Google, Meta, YouTube, LinkedIn, TikTok, Microsoft, Apple, Amazon).",
+    "description": "Mad Minds — the OnlineMinds marketing department's Claude plugin marketplace. Includes onlineminds-marketing (in-house skills, Drive Hub routing, write-action safety gates, self-hosted Google Ads / Search Console / Meta Ads connectors) and a vendored copy of AgriciDaniel/claude-ads (250+ paid-advertising audit checks across Google, Meta, YouTube, LinkedIn, TikTok, Microsoft, Apple, Amazon).",
     "version": "0.8.0"
   },
   "plugins": [
