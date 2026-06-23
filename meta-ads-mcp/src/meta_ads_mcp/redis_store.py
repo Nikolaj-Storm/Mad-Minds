@@ -32,14 +32,15 @@ class RedisStore:
     killed between requests.
     """
 
-    def __init__(self, url: str, token: str) -> None:
+    def __init__(self, url: str, token: str, prefix: str = "") -> None:
         from upstash_redis.asyncio import Redis  # type: ignore[import]
 
         self._r = Redis(url=url, token=token)
+        self._prefix = prefix
 
-    @staticmethod
-    def _k(key: str, collection: str | None) -> str:
-        return f"{collection}:{key}" if collection else key
+    def _k(self, key: str, collection: str | None) -> str:
+        parts = [p for p in (self._prefix, collection, key) if p]
+        return ":".join(parts)
 
     async def get(self, *, key: str, collection: str | None = None) -> Any:
         raw = await self._r.get(self._k(key, collection))
