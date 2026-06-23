@@ -36,9 +36,10 @@ Throughout, replace `meta-mcp.example.com` with your real (sub)domain.
 
 At <https://developers.facebook.com/apps> → **Create app**:
 1. Type **Business**. Name it `Mad Minds Meta Ads MCP`.
-2. **Add products → Marketing API** and **Facebook Login** (either the plain
-   "Facebook Login" *or* "Facebook Login for Business" — both work; "for Business"
-   is just stricter, so be sure to do step 3's App Domains).
+2. **Add products → Marketing API** and **Facebook Login**. New "Business" apps
+   only offer **Facebook Login for Business** (classic "Facebook Login" is
+   retired) — that's fine, but it then needs the **App Domains** step (3) *and* a
+   **Configuration / config_id** (step 5).
 3. **App settings → Basic:** copy the **App ID** and **App Secret**, and add the
    server's **host** to the **App Domains** field — no scheme, no path, e.g.
    `meta-mcp.example.com`. Save. (Facebook validates the OAuth callback against
@@ -46,9 +47,14 @@ At <https://developers.facebook.com/apps> → **Create app**:
    gives "Can't load URL — the domain of this URL isn't included in the app's
    domains" at Connect time. If it won't save without a **Privacy Policy URL**,
    any non-empty URL is fine in Development mode.)
-4. **Facebook Login → Settings → Valid OAuth Redirect URIs:** add
+4. **Facebook Login (for Business) → Settings → Valid OAuth Redirect URIs:** add
    `https://meta-mcp.example.com/auth/callback` (exactly — this must equal
    `META_OAUTH_BASE_URL` + `/auth/callback`). Save.
+5. **(Facebook Login for Business only) → Configurations → Create configuration:**
+   grant **ads_read + ads_management**, save, and copy the **Configuration ID**.
+   Put it in that instance's env as `META_CONFIG_ID`. FLB carries permissions in
+   the config, not in `scope`; without it the dialog redirects back with "Missing
+   authorization code". (Skip only for classic Facebook Login, which uses `scope`.)
 
 ### The App-Review shortcut for an internal team (do this — saves weeks)
 `ads_management` normally needs Meta **App Review** to be granted to users

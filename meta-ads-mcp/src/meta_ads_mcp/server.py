@@ -46,6 +46,7 @@ def _build_auth():
         client_storage=DiskStore(directory=storage_dir),
         jwt_signing_key=os.environ.get("JWT_SIGNING_KEY"),
         require_authorization_consent=False,
+        config_id=os.environ.get("META_CONFIG_ID") or None,
     )
 
 
@@ -161,6 +162,7 @@ def server_status() -> dict:
         "app_secret_has_surrounding_whitespace": secret != secret.strip(),
         "graph_version": os.environ.get("META_GRAPH_VERSION") or DEFAULT_GRAPH_VERSION,
         "requested_scopes": _scopes_from_env(),
+        "login_for_business_config_id_present": bool(os.environ.get("META_CONFIG_ID")),
     }
 
 

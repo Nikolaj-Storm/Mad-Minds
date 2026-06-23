@@ -143,6 +143,7 @@ class FacebookProvider(OAuthProxy):
         jwt_signing_key: str | bytes | None = None,
         require_authorization_consent: bool = False,
         timeout_seconds: int = 10,
+        config_id: str | None = None,
     ):
         if not app_id or not app_secret:
             raise ValueError(
@@ -155,6 +156,9 @@ class FacebookProvider(OAuthProxy):
         self._fb_app_secret = app_secret
         self._graph_version = graph_version
         self._graph_base = f"https://graph.facebook.com/{graph_version}"
+        # Facebook Login for Business: when set, the OAuth dialog uses this
+        # config_id (which carries the permissions) instead of `scope`.
+        self._fb_config_id = config_id or None
 
         # The verifier only GATES on what is strictly needed to do anything
         # (ads_read). ads_management may legitimately be absent for a read-only
@@ -186,11 +190,34 @@ class FacebookProvider(OAuthProxy):
             require_authorization_consent=require_authorization_consent,
         )
         logger.debug(
-            "Initialized Facebook OAuth provider (app %s, scopes %s, graph %s)",
+            "Initialized Facebook OAuth provider (app %s, scopes %s, graph %s, "
+            "login_for_business %s)",
             app_id,
             scopes,
             graph_version,
+            bool(self._fb_config_id),
         )
+
+    def _build_upstream_authorize_url(self, txn_id, transaction):
+        """Build the Facebook dialog URL, switching to config_id for FLB.
+
+        New "Business" apps only offer **Facebook Login for Business** (classic
+        "Facebook Login" is retired). FLB rejects the scope-based flow — it
+        redirects back with no ``code`` ("Missing authorization code"). FLB
+        instead uses a ``config_id`` that carries the requested permissions, and
+        ``scope`` must be omitted. When ``config_id`` is set we drop ``scope`` and
+        add ``config_id``; otherwise this is the plain (classic) flow unchanged.
+        """
+        url = super()._build_upstream_authorize_url(txn_id, transaction)
+        if not self._fb_config_id:
+            return url
+        from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+
+        parts = urlparse(url)
+        q = {k: v[-1] for k, v in parse_qs(parts.query, keep_blank_values=True).items()}
+        q.pop("scope", None)
+        q["config_id"] = self._fb_config_id
+        return urlunparse(parts._replace(query=urlencode(q)))
 
     async def _exchange_for_long_lived(self, short_token: str) -> dict | None:
         """Exchange a short-lived user token for a ~60-day long-lived one."""
