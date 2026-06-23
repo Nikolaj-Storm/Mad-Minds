@@ -6,7 +6,7 @@ Every skill reads inputs from and writes outputs to the shared **Mad Minds** Goo
 
 ## Connector model
 
-- **Google-family connectors (Drive, Google Ads, Meta Ads, GA4, Search Console, Tag Manager)** come from **Claude desktop's native Connectors UI**. The plugin does NOT pre-wire them. Each marketer enables each one once via Customize → Connectors → OAuth with their own account. Claude acts as that person.
+- **Google Drive** comes from Claude desktop's built-in Connectors catalog. **Google Search Console, Google Ads, and Meta Ads are self-hosted MCPs in this repo** (`gsc-mcp/`, `gads-mcp/`, `meta-ads-mcp/`), added as **custom connectors** (one URL each — Meta has two, one per business area). All **per-user OAuth**: each marketer signs in with their own Google/Facebook account once, and Claude acts as that person. GA4 / Tag Manager / Merchant Center aren't wired yet. (No Composio.)
 - **Vendor-native MCPs (Notion, Supabase, Vercel, Slack)** are pre-wired in `.mcp.json` and load automatically when the plugin installs.
 - The `/setup-marketing` skill walks each marketer through both lists on their first session.
 

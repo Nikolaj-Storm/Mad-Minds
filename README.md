@@ -19,6 +19,20 @@ Install **both** plugins when prompted. Then open Cowork and type `/setup-market
 
 See [`EMPLOYEE-ONBOARDING.md`](./EMPLOYEE-ONBOARDING.md) for the full walkthrough.
 
+## Connectors
+
+Every connector is **per-user OAuth** — Claude acts as the signed-in marketer and only ever touches accounts that person already has. `/setup-marketing` walks marketers through connecting them.
+
+| Capability | How to add it | Sign in with |
+|---|---|---|
+| Mad Minds Drive Hub | Built-in Connectors catalog → **Google Drive** | `@onlineminds.io` |
+| Google Search Console | Add custom connector → `https://onlineminds-gsc-mcp.fly.dev/mcp` | Google |
+| Google Ads | Add custom connector → `https://onlineminds-gads-mcp.fly.dev/mcp` | Google |
+| Meta Ads — onlineminds.io | Add custom connector → `https://meta-onlineminds.tail40453d.ts.net/mcp` | Facebook |
+| Meta Ads — Rentumo | Add custom connector → `https://meta-rentumo.tail40453d.ts.net/mcp` | Facebook |
+
+Google Ads, Search Console, and Meta Ads are **self-hosted** in this repo (`gads-mcp/`, `gsc-mcp/`, `meta-ads-mcp/`). Meta runs as **two connectors** because OnlineMinds has two Meta business areas (onlineminds.io + Rentumo ApS); add the one(s) you manage. GA4 / Tag Manager / Merchant Center aren't wired yet. (No Composio — an earlier draft used it; removed.)
+
 ## Repo layout
 
 ```
@@ -27,13 +41,26 @@ onlineminds-marketing/            ← in-house plugin
   .claude-plugin/plugin.json
   .mcp.json                       ← vendor-native MCPs (Notion, Supabase, etc.)
   skills/                         ← 9 skills incl. /ad-actions, /setup-marketing
+  CONNECTORS.md                   ← the live connector list + auth model
 claude-ads/                       ← vendored upstream plugin (MIT)
-  .claude-plugin/plugin.json
-  ads/, agents/, skills/, scripts/
-  LICENSE, NOTICE.md, UPSTREAM-CLAUDE.md, UPSTREAM-README.md
+  ads/, agents/, skills/, scripts/, LICENSE, NOTICE.md
+gsc-mcp/  gads-mcp/  meta-ads-mcp/ ← self-hosted connector servers (FastMCP, per-user OAuth)
+mcp-stack/                        ← Docker Compose stack to run the MCPs on a VPS (Tailscale Funnel)
 scripts/sync-claude-ads.sh        ← refresh vendored copy from upstream
-SETUP.md, EMPLOYEE-ONBOARDING.md, COWORK-SETUP-RUNBOOK.md, BUILD-HUB-RUNBOOK.md
+SETUP.md                          ← maintainer setup (one-time)
+EMPLOYEE-ONBOARDING.md            ← marketer onboarding
+{GSC,GADS,META}-SELF-HOST-RUNBOOK.md ← deploy guides for the self-hosted connectors
+COWORK-SETUP-RUNBOOK.md, BUILD-HUB-RUNBOOK.md
 ```
+
+## Self-hosted connectors (maintainer)
+
+Google Ads, Search Console, and Meta Ads run as small [FastMCP](https://gofastmcp.com) servers in this repo, so there's no per-marketer API-key or developer-token setup — each marketer just signs in with their own Google/Facebook account.
+
+- **Google Search Console / Google Ads** — on Fly.io. See [`GSC-SELF-HOST-RUNBOOK.md`](./GSC-SELF-HOST-RUNBOOK.md) / [`GADS-SELF-HOST-RUNBOOK.md`](./GADS-SELF-HOST-RUNBOOK.md).
+- **Meta Ads** — on our Hetzner box via [`mcp-stack/`](./mcp-stack/) (Docker Compose + Tailscale Funnel, no domain/root needed). Deploy guide: [`META-SELF-HOST-RUNBOOK.md`](./META-SELF-HOST-RUNBOOK.md); server internals: [`meta-ads-mcp/NOTICE.md`](./meta-ads-mcp/NOTICE.md).
+
+All writes are gated by the `/ad-actions` Tier 1 / Tier 2 spend-gate **and** a server-side `READONLY_MODE` flag that simulates writes until you flip it.
 
 ## Boundary between the two plugins
 
