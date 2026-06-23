@@ -37,8 +37,12 @@ class RedisStore:
 
         self._r = Redis(url=url, token=token)
 
-    async def get(self, *, key: str) -> Any:
-        raw = await self._r.get(key)
+    @staticmethod
+    def _k(key: str, collection: str | None) -> str:
+        return f"{collection}:{key}" if collection else key
+
+    async def get(self, *, key: str, collection: str | None = None) -> Any:
+        raw = await self._r.get(self._k(key, collection))
         if raw is None:
             return None
         try:
@@ -46,12 +50,13 @@ class RedisStore:
         except Exception:
             return None
 
-    async def put(self, *, key: str, value: Any, ttl: int | None = None) -> None:
+    async def put(self, *, key: str, value: Any, collection: str | None = None, ttl: int | None = None) -> None:
         data = base64.b64encode(pickle.dumps(value)).decode()
+        rkey = self._k(key, collection)
         if ttl:
-            await self._r.setex(key, ttl, data)
+            await self._r.setex(rkey, ttl, data)
         else:
-            await self._r.set(key, data)
+            await self._r.set(rkey, data)
 
-    async def delete(self, *, key: str) -> None:
-        await self._r.delete(key)
+    async def delete(self, *, key: str, collection: str | None = None) -> None:
+        await self._r.delete(self._k(key, collection))
