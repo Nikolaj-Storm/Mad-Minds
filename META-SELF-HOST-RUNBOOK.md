@@ -36,9 +36,16 @@ Throughout, replace `meta-mcp.example.com` with your real (sub)domain.
 
 At <https://developers.facebook.com/apps> → **Create app**:
 1. Type **Business**. Name it `Mad Minds Meta Ads MCP`.
-2. **Add products → Marketing API** and **Facebook Login** (the plain
-   "Facebook Login", *not* "for Business").
-3. **App settings → Basic:** copy the **App ID** and **App Secret**.
+2. **Add products → Marketing API** and **Facebook Login** (either the plain
+   "Facebook Login" *or* "Facebook Login for Business" — both work; "for Business"
+   is just stricter, so be sure to do step 3's App Domains).
+3. **App settings → Basic:** copy the **App ID** and **App Secret**, and add the
+   server's **host** to the **App Domains** field — no scheme, no path, e.g.
+   `meta-mcp.example.com`. Save. (Facebook validates the OAuth callback against
+   **both** App Domains *and* the redirect URI in step 4; missing App Domains
+   gives "Can't load URL — the domain of this URL isn't included in the app's
+   domains" at Connect time. If it won't save without a **Privacy Policy URL**,
+   any non-empty URL is fine in Development mode.)
 4. **Facebook Login → Settings → Valid OAuth Redirect URIs:** add
    `https://meta-mcp.example.com/auth/callback` (exactly — this must equal
    `META_OAUTH_BASE_URL` + `/auth/callback`). Save.
