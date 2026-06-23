@@ -1,0 +1,42 @@
+# ALTERNATIVE to compose.yaml — self-contained Caddy reverse proxy with its own
+# Let's Encrypt HTTPS, instead of Cloudflare Tunnel. Use this only on a host
+# where you control ports 80/443:
+#   * rootful Docker, or
+#   * rootless Docker AFTER root sets net.ipv4.ip_unprivileged_port_start=80
+#     (see README.md step 1b).
+# The Hetzner box is rootless + no-sudo, so it uses compose.yaml (tunnel) instead.
+#
+# Run with:  docker compose -f compose.caddy.yaml up -d --build
+# Needs a Caddyfile (see the repo's Caddyfile) and DNS A record -> the host IP.
+name: madminds-mcp
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [mcpnet]
+
+  meta-ads-mcp:
+    build: ../meta-ads-mcp
+    image: madminds/meta-ads-mcp:latest
+    restart: unless-stopped
+    env_file: ./meta.env
+    volumes:
+      - meta_data:/data
+    networks: [mcpnet]
+    expose: ["8000"]
+
+networks:
+  mcpnet:
+
+volumes:
+  caddy_data:
+  caddy_config:
+  meta_data:

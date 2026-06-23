@@ -1,0 +1,32 @@
+# ALTERNATIVE to compose.yaml — Cloudflare Tunnel instead of Tailscale Funnel.
+# Use this if you DO have a domain on Cloudflare (cleaner branded URL). cloudflared
+# dials out; no inbound ports, no root. Needs cloudflared.env (TUNNEL_TOKEN) and a
+# Public Hostname configured on the tunnel pointing at http://meta-ads-mcp:8000.
+#
+# Run with:  docker compose -f compose.cloudflare.yaml up -d --build
+name: madminds-mcp
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run        # reads TUNNEL_TOKEN from the env
+    env_file: ./cloudflared.env
+    networks: [mcpnet]
+    depends_on: [meta-ads-mcp]
+
+  meta-ads-mcp:
+    build: ../meta-ads-mcp
+    image: madminds/meta-ads-mcp:latest
+    restart: unless-stopped
+    env_file: ./meta.env
+    volumes:
+      - meta_data:/data
+    networks: [mcpnet]
+    expose: ["8000"]
+
+networks:
+  mcpnet:
+
+volumes:
+  meta_data:

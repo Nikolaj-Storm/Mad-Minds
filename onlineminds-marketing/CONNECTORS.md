@@ -40,7 +40,8 @@ Google Search Console and Google Ads are self-hosted (`gsc-mcp/`, `gads-mcp/` on
 |---|---|---|
 | Google Search Console | `https://onlineminds-gsc-mcp.fly.dev/mcp` | Read-only organic search data. Sign in with the Google account that owns the properties. |
 | Google Ads | `https://onlineminds-gads-mcp.fly.dev/mcp` | Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. Shared developer token is a server secret. |
-| Meta Ads | `https://mcp.meta.com/ads/<business-id>` — **one per Business Manager** (Meta-hosted, not self-hosted) | Meta's official MCP (free beta). **Facebook login** (not Google). Reporting + management; gated by `/ad-actions`. Mint each company's URL at Meta's Connect-to-AI page; store the per-company URLs in `account-conventions-live`. |
+| Meta Ads — onlineminds | `https://meta-onlineminds.tail40453d.ts.net/mcp` | Self-hosted (`meta-ads-mcp/` on our Hetzner box, Tailscale Funnel). **Facebook login**, per-user OAuth. The **onlineminds.io** Meta business. Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. |
+| Meta Ads — Rentumo | `https://meta-rentumo.tail40453d.ts.net/mcp` | Same, for the **Rentumo ApS** Meta business. Add whichever area(s) you manage; per-user — you only see accounts your Facebook can access. |
 
 Steps (per marketer, once each): **Customize → Connectors → Add custom connector** → paste the URL → leave Advanced settings empty (the servers support DCR, so no Client ID/Secret) → **Add** → **Connect** → sign in with Google. A new session may be needed for the tools to appear. Per-user — each marketer only sees accounts/properties they already have.
 
@@ -61,15 +62,21 @@ The `/setup-marketing` skill walks through the lists in order:
 1. **Built-in catalog:** Google Drive → Connect
 2. **Custom connector:** Google Search Console → Add custom connector (URL above) → Connect
 3. **Custom connector:** Google Ads → Add custom connector (URL above) → Connect
-4. **Custom connector (per company):** Meta Ads → Add custom connector with the company's Meta URL → Connect (Facebook login)
+4. **Custom connector(s):** Meta Ads — add the one(s) for the business area(s) you manage → Connect (Facebook login):
+   - onlineminds.io: `https://meta-onlineminds.tail40453d.ts.net/mcp`
+   - Rentumo ApS: `https://meta-rentumo.tail40453d.ts.net/mcp`
 5. **Optional plugin connectors:** Notion, Slack, Supabase, Vercel
 6. **Thribee** — pre-wired (no marketer action), verify with "list Thribee markets"
 
 **Coming (NOT part of setup yet):**
 - **GA4 / Google Tag Manager / Merchant Center** — not wired.
 
-## Meta Ads — official MCP, per company
-Meta Ads uses **Meta's own official MCP** (free beta), authenticated via **Meta Business OAuth (Facebook)** — not Google, so the Workspace third-party-app block doesn't apply. A Business admin authorizes at Meta's "Connect to AI tool" page and copies the unique MCP URL Meta provisions for that Business account. Because OnlineMinds runs **multiple Business Managers**, each company provisions its own URL and is wired as its own connector (`meta-ads-<company>`). Per-user: each marketer signs in with their own Meta account and only sees ad accounts they can access.
+## Meta Ads — self-hosted, two business areas
+Meta Ads uses **our own self-hosted MCP** (`meta-ads-mcp/`, on our Hetzner box behind a Tailscale Funnel — see `META-SELF-HOST-RUNBOOK.md` and `mcp-stack/`), mirroring the Google Ads connector. Auth is **per-user Facebook OAuth** — each marketer signs in with their own Facebook account and only touches ad accounts they already manage. OnlineMinds runs **two Meta business areas**, each with its own Facebook app + MCP instance, so there are **two connectors**:
+- onlineminds.io → `https://meta-onlineminds.tail40453d.ts.net/mcp`
+- Rentumo ApS → `https://meta-rentumo.tail40453d.ts.net/mcp`
+
+Marketers add whichever area(s) they manage. Reporting + management; writes simulate under `READONLY_MODE` and route through `/ad-actions`. (This replaces the former Meta-hosted `mcp.meta.com/ads/<business-id>` per-BM connectors.)
 
 ## Per-user auth
 Every connector uses per-user OAuth (or per-user API key). Claude acts as the authenticated marketer — it can only touch ad accounts, GA4 properties, GTM containers, etc. that person already has access to in real life. There is no shared service account.

@@ -1,5 +1,5 @@
 {
-  "_comment": "Plugin MCP wiring. The write-capable ad platforms (Google Ads + Meta Ads) use Pipeboard's hosted MCP servers, which speak Claude's native remote-MCP OAuth flow: the marketer clicks Connect, signs in with their own Google/Meta account, and Pipeboard brokers the platform OAuth WITHOUT ever seeing the credentials and WITHOUT any Google Ads developer-token application. This is true per-user auth, which is what the spend-gate relies on. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). Composio's hosted MCP endpoints authenticate with an x-api-key header, so they cannot be authorized from the Connect button - that mismatch caused the dynamic-client-registration failures. GA4 / Search Console / Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md).",
+  "_comment": "Plugin MCP wiring (vendor MCPs only). The write-capable ad platforms (Google Ads + Meta Ads) are NOT wired here -- they are SELF-HOSTED custom connectors with per-user OAuth: gads-mcp/ (Fly) for Google Ads, meta-ads-mcp/ (our VPS) for Meta Ads. The marketer clicks Connect and signs in with their own Google/Meta account, which is the true per-user auth the spend-gate relies on. See _custom_connectors_note below, CONNECTORS.md, GADS-SELF-HOST-RUNBOOK.md and META-SELF-HOST-RUNBOOK.md. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). GA4 / Search Console / Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md).",
   "mcpServers": {
     "notion": {
       "type": "http",
@@ -31,7 +31,7 @@
     }
   },
   "_pending_connectors": {
-    "_comment": "NOT wired yet - do NOT ship guessed URLs. Each needs a verified OAuth MCP endpoint (one a marketer can authorize from Claude desktop's Connect button) chosen and tested before team rollout. Candidates are listed for evaluation; once a URL is confirmed working in Claude desktop, move the entry up into mcpServers. See CONNECTORS.md section 'Pending connectors' for the decision log.",
+    "_comment": "NOT wired yet - do NOT ship guessed URLs. Each needs a verified OAuth MCP endpoint chosen and tested before team rollout.",
     "google-analytics": {
       "status": "needs-verified-oauth-mcp",
       "purpose": "GA4 sessions, conversions, funnel data (read-only).",
@@ -44,13 +44,12 @@
     "google-tag-manager": {
       "status": "needs-verified-oauth-mcp",
       "purpose": "WRITE-CAPABLE: read containers/tags/triggers, create/edit, publish versions. Conversion-tracking changes are Tier 1 in the spend-gate.",
-      "note": "No verified Connect-button OAuth MCP confirmed yet. Until one is wired, Tier-1 GTM tracking edits via /ad-actions are unavailable. Block team rollout of GTM writes until verified."
+      "note": "No verified Connect-button OAuth MCP confirmed yet."
     },
     "google-merchant-center": {
       "status": "needs-verified-oauth-mcp",
-      "purpose": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed.",
-      "note": "Candidate fallback: the official Google Content API via a self-hosted MCP with Advanced-settings OAuth client ID."
+      "purpose": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed."
     }
   },
-  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers — Claude desktop's plugin/in-session OAuth flow is buggy (no localhost callback listener; 'a server with this URL already exists'). Marketers add them as CUSTOM CONNECTORS, which use Claude's hosted callback (claude.ai/api/mcp/auth_callback) and work. URLs: GSC = https://onlineminds-gsc-mcp.fly.dev/mcp ; Google Ads = https://onlineminds-gads-mcp.fly.dev/mcp . Both support DCR, so no Client ID/Secret to paste. See CONNECTORS.md and the setup guide. Meta Ads is ALSO a custom connector, but Meta-hosted (https://mcp.meta.com/ads/<business-id>) — Facebook login, free beta, no self-hosting. One URL per Business Manager, minted at Meta's Connect-to-AI page; the per-company URLs are stored in account-conventions-live."
+  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers — Claude desktop's plugin/in-session OAuth flow is buggy. Marketers add them as CUSTOM CONNECTORS. URLs: GSC = https://onlineminds-gsc-mcp.fly.dev/mcp ; Google Ads = https://onlineminds-gads-mcp.fly.dev/mcp . Both support DCR, so no Client ID/Secret to paste. Meta Ads is ALSO a custom connector, now SELF-HOSTED on our Hetzner box (TWO connectors, one per Meta business area: https://meta-onlineminds.tail40453d.ts.net/mcp and https://meta-rentumo.tail40453d.ts.net/mcp) — Facebook login, per-user OAuth, writes gated by /ad-actions + READONLY_MODE."
 }

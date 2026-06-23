@@ -122,7 +122,9 @@ class _FakeClient:
 def captured(monkeypatch):
     """Patch get_client in performance.py with a fake that records the GAQL."""
     sink = {}
-    monkeypatch.setattr("gads_mcp.performance.get_client", lambda: _FakeClient(sink))
+    monkeypatch.setattr(
+        "gads_mcp.performance.get_client", lambda *a, **k: _FakeClient(sink)
+    )
     return sink
 
 
