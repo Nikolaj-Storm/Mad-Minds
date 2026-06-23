@@ -1,0 +1,77 @@
+# Mad Minds MCP stack — Tailscale Funnel, TWO Meta business areas.
+#
+# onlineminds.io and Rentumo ApS each have their own Meta business + Facebook app,
+# and each Facebook app needs its own MCP instance (the server is wired to exactly
+# one App ID/Secret). So each runs as its own meta-ads-mcp behind its own Tailscale
+# Funnel hostname. Marketers add the connector(s) for the area(s) they work in.
+#
+#   https://meta-onlineminds.<tailnet>.ts.net/mcp  -> "Mad Minds MCP onlineminds.io"
+#   https://meta-rentumo.<tailnet>.ts.net/mcp      -> "Mad Minds MCP Rentumo aps"
+#
+# Deploy (as mcp — see README.md):
+#   cp tailscale.env.example tailscale.env       # one reusable TS_AUTHKEY (both nodes)
+#   cp meta.env.example meta-onlineminds.env     # app 1 creds + its own base URL
+#   cp meta.env.example meta-rentumo.env         # app 2 creds + its own base URL
+#   docker compose up -d --build
+name: madminds-mcp
+
+x-meta-ads: &meta-ads
+  build: ../meta-ads-mcp
+  image: madminds/meta-ads-mcp:latest
+  restart: unless-stopped
+  networks: [mcpnet]
+  expose: ["8000"]
+
+x-tailscale: &tailscale
+  image: tailscale/tailscale:latest
+  restart: unless-stopped
+  env_file: ./tailscale.env          # one reusable TS_AUTHKEY serves both nodes
+  networks: [mcpnet]
+
+services:
+  # ---- onlineminds.io business area ----
+  meta-ads-onlineminds:
+    <<: *meta-ads
+    env_file: ./meta-onlineminds.env
+    volumes:
+      - meta_onlineminds_data:/data
+
+  tailscale-onlineminds:
+    <<: *tailscale
+    environment:
+      TS_HOSTNAME: meta-onlineminds     # -> https://meta-onlineminds.<tailnet>.ts.net
+      TS_USERSPACE: "true"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./tailscale/serve-onlineminds.json:/config/serve.json:ro
+      - ts_onlineminds_state:/var/lib/tailscale
+    depends_on: [meta-ads-onlineminds]
+
+  # ---- Rentumo ApS business area ----
+  meta-ads-rentumo:
+    <<: *meta-ads
+    env_file: ./meta-rentumo.env
+    volumes:
+      - meta_rentumo_data:/data
+
+  tailscale-rentumo:
+    <<: *tailscale
+    environment:
+      TS_HOSTNAME: meta-rentumo         # -> https://meta-rentumo.<tailnet>.ts.net
+      TS_USERSPACE: "true"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./tailscale/serve-rentumo.json:/config/serve.json:ro
+      - ts_rentumo_state:/var/lib/tailscale
+    depends_on: [meta-ads-rentumo]
+
+networks:
+  mcpnet:
+
+volumes:
+  meta_onlineminds_data:
+  meta_rentumo_data:
+  ts_onlineminds_state:
+  ts_rentumo_state:

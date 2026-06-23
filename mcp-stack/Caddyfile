@@ -1,0 +1,13 @@
+# One block per MCP. Caddy auto-provisions HTTPS (Let's Encrypt) per hostname.
+# Replace example.com with your real domain. The hostname here MUST match the
+# META_OAUTH_BASE_URL in meta.env AND the redirect URI in the Facebook app
+# (https://<host>/auth/callback).
+
+meta-mcp.example.com {
+	reverse_proxy meta-ads-mcp:8000
+}
+
+# Add the next MCP by uncommenting and editing (service name = compose service):
+# gads-mcp.example.com {
+# 	reverse_proxy gads-mcp:8000
+# }
