@@ -145,6 +145,13 @@ def get_client(login_customer_id: str | None = None):
     (the marketer's own Google sign-in). The developer token and optional
     login-customer-id are server-side env secrets (set once, org-wide). NOT
     cached -- each request is a different user/token.
+
+    Args:
+        login_customer_id: Optional manager (MCC) 10-digit ID to send as the
+            login-customer-id header for this client. Overrides the
+            GOOGLE_ADS_LOGIN_CUSTOMER_ID env default. Needed to read a client
+            account that sits under a manager, and to walk a manager's subtree
+            in list_accounts.
     """
     from google.ads.googleads.client import GoogleAdsClient
     from google.oauth2.credentials import Credentials

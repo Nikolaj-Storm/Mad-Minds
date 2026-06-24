@@ -219,3 +219,13 @@ Each brand's voice, tone, banned/preferred terms, and positioning live in `01_Kn
 | Optional | Notion, Slack, Supabase, Vercel | See `CONNECTORS.md`. |
 
 For new marketer onboarding, run `/setup-marketing` — it walks through each of the above in order, tests authorization, and ends with a capabilities tour.
+
+
+## Google Ads account structure — the data is on the CLIENT accounts
+
+OnlineMinds runs Google Ads through a **manager (MCC) account**. The brand accounts (Rentumo per market, Printumo, Monetumo, Adsumo, Bidumo, Photumo, JLA, …) are **client accounts under that manager**. Two hard consequences — never forget them:
+
+1. **Manager accounts carry no metrics.** Querying the MCC for spend/conversions/ROAS returns a "metrics cannot be requested for a manager account" error. That is NOT "no data" — it means you queried the wrong level.
+2. **`list_accounts` returns the queryable client accounts.** It walks the manager tree and returns each client account with its `customer_id` and the `login_customer_id` (the manager to send as the login-customer-id header). Always pass BOTH to `get_performance`, `get_campaigns`, `get_search_terms`, etc. when working a client account under a manager.
+
+**Operating rule:** to pull anything for a brand, start from `list_accounts`, find the brand's client account, and query it with its `customer_id` + `login_customer_id`. If a brand looks like it has "no data", you almost certainly queried a manager ID — expand to its client accounts and retry before reporting nothing. Do not maintain a hard-coded ID list; always discover live.
