@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Mad Minds — the OnlineMinds marketing department's Claude plugin marketplace. Includes onlineminds-marketing (in-house skills, Drive Hub routing, write-action safety gates, self-hosted Google Ads / Search Console / Meta Ads connectors) and a vendored copy of AgriciDaniel/claude-ads (250+ paid-advertising audit checks across Google, Meta, YouTube, LinkedIn, TikTok, Microsoft, Apple, Amazon).",
-    "version": "0.8.1"
+    "version": "0.8.2"
   },
   "plugins": [
     {
       "name": "onlineminds-marketing",
       "source": "./onlineminds-marketing",
       "description": "OnlineMinds marketing department plugin: shared skills, Mad Minds Drive Hub routing, the personal-vs-shared workflow, write-capable Google/Meta/GTM actions with a non-overridable Tier 1 / Tier 2 spend-gate. Brand-specific values live in account-conventions-live in Drive.",
-      "version": "0.8.1",
+      "version": "0.8.2",
       "author": {
         "name": "OnlineMinds ApS"
       },
