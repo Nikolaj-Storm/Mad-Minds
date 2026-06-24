@@ -1,0 +1,80 @@
+# Mad Minds MCP stack — Google Ads + Google Search Console, Tailscale Funnel.
+#
+# A SEPARATE compose project (`madminds-google`) from Meta's `madminds-mcp`
+# (compose.yaml), with its own network, so `up`/`down` here never recreates or
+# touches the Meta or Thribee containers. Each MCP is its own container behind
+# its own Tailscale Funnel hostname:
+#
+#   https://gads.<tailnet>.ts.net/mcp -> gads-mcp:8000  (Google Ads)
+#   https://gsc.<tailnet>.ts.net/mcp  -> gsc-mcp:8000   (Search Console)
+#
+# Per-user Google OAuth (FastMCP GoogleProvider); token storage on a disk volume
+# at CLIENT_STORAGE_DIR=/data so marketers sign in once. Reuses the same reusable
+# TS_AUTHKEY in tailscale.env that the Meta stack uses.
+#
+# Deploy (as mcp — see GADS-/GSC-SELF-HOST-RUNBOOK.md):
+#   cp google.env.example gads.env   # Google Ads OAuth client + dev token + base URL
+#   cp google.env.example gsc.env    # GSC OAuth client + base URL (webmasters.readonly)
+#   docker compose -f compose.google.yaml up -d --build
+name: madminds-google
+
+x-google-mcp: &google-mcp
+  restart: unless-stopped
+  networks: [gnet]
+  expose: ["8000"]
+
+x-tailscale: &tailscale
+  image: tailscale/tailscale:latest
+  restart: unless-stopped
+  env_file: ./tailscale.env          # same reusable TS_AUTHKEY as the Meta stack
+  networks: [gnet]
+
+services:
+  # ---- Google Ads ----
+  gads-mcp:
+    <<: *google-mcp
+    build: ../gads-mcp
+    image: madminds/gads-mcp:latest
+    env_file: ./gads.env
+    volumes: [ gads_data:/data ]
+
+  tailscale-gads:
+    <<: *tailscale
+    environment:
+      TS_HOSTNAME: gads               # -> https://gads.<tailnet>.ts.net
+      TS_USERSPACE: "true"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./tailscale/serve-gads.json:/config/serve.json:ro
+      - ts_gads_state:/var/lib/tailscale
+    depends_on: [gads-mcp]
+
+  # ---- Google Search Console ----
+  gsc-mcp:
+    <<: *google-mcp
+    build: ../gsc-mcp
+    image: madminds/gsc-mcp:latest
+    env_file: ./gsc.env
+    volumes: [ gsc_data:/data ]
+
+  tailscale-gsc:
+    <<: *tailscale
+    environment:
+      TS_HOSTNAME: gsc                # -> https://gsc.<tailnet>.ts.net
+      TS_USERSPACE: "true"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./tailscale/serve-gsc.json:/config/serve.json:ro
+      - ts_gsc_state:/var/lib/tailscale
+    depends_on: [gsc-mcp]
+
+networks:
+  gnet:
+
+volumes:
+  gads_data:
+  gsc_data:
+  ts_gads_state:
+  ts_gsc_state:
