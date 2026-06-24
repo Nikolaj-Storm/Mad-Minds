@@ -23,17 +23,38 @@ def _scopes_from_env() -> list[str]:
 
 
 def _build_auth():
-    """Facebook OAuth-proxy provider with persistent disk storage (sign in once)."""
-    storage_dir = os.environ.get("CLIENT_STORAGE_DIR")
+    """Facebook OAuth-proxy provider with persistent storage (sign in once).
+
+    Storage backend is selected automatically:
+    - Vercel / stateless: set KV_REST_API_URL + KV_REST_API_TOKEN (Vercel KV) or
+      UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (manual Upstash).
+    - Docker / VPS: set CLIENT_STORAGE_DIR to a mounted volume path.
+    """
     app_id = os.environ.get("META_APP_ID")
     app_secret = os.environ.get("META_APP_SECRET")
     base_url = os.environ.get("META_OAUTH_BASE_URL")
-    if not (storage_dir and app_id and app_secret and base_url):
+    if not (app_id and app_secret and base_url):
         # Missing config -> boot WITHOUT auth so /health and server_status still
         # answer for diagnosis. Tools that need a signed-in user will report it.
         return None
 
-    from key_value.aio.stores.disk import DiskStore
+    # Redis (Vercel KV / Upstash) takes priority; fall back to disk for Docker.
+    redis_url = os.environ.get("KV_REST_API_URL") or os.environ.get("UPSTASH_REDIS_REST_URL")
+    redis_token = os.environ.get("KV_REST_API_TOKEN") or os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    storage_dir = os.environ.get("CLIENT_STORAGE_DIR")
+
+    if redis_url and redis_token:
+        from meta_ads_mcp.redis_store import RedisStore
+        storage = RedisStore(
+            url=redis_url,
+            token=redis_token,
+            prefix=os.environ.get("REDIS_KEY_PREFIX", ""),
+        )
+    elif storage_dir:
+        from key_value.aio.stores.disk import DiskStore
+        storage = DiskStore(directory=storage_dir)
+    else:
+        return None
 
     from meta_ads_mcp.facebook_provider import FacebookProvider
 
@@ -43,7 +64,7 @@ def _build_auth():
         base_url=base_url,
         required_scopes=_scopes_from_env(),
         graph_version=os.environ.get("META_GRAPH_VERSION") or DEFAULT_GRAPH_VERSION,
-        client_storage=DiskStore(directory=storage_dir),
+        client_storage=storage,
         jwt_signing_key=os.environ.get("JWT_SIGNING_KEY"),
         require_authorization_consent=False,
         config_id=os.environ.get("META_CONFIG_ID") or None,
