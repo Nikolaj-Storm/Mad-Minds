@@ -154,9 +154,10 @@ def get_api():
             "Not signed in. Connect Meta Ads (sign in with Facebook) and try again."
         )
 
-    app_id = os.environ.get("META_APP_ID") or None
-    app_secret = os.environ.get("META_APP_SECRET") or None
-    api_version = os.environ.get("META_GRAPH_VERSION") or None  # None -> SDK default
+    _c = lambda v: "".join(ch for ch in (v or "") if ch >= " ") or None  # strip control chars
+    app_id = _c(os.environ.get("META_APP_ID"))
+    app_secret = _c(os.environ.get("META_APP_SECRET"))
+    api_version = _c(os.environ.get("META_GRAPH_VERSION"))  # None -> SDK default
 
     session = FacebookSession(
         app_id=app_id,
