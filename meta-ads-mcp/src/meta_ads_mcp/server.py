@@ -22,6 +22,11 @@ def _scopes_from_env() -> list[str]:
     return [s.strip() for s in raw.split(",") if s.strip()]
 
 
+def _clean(val: str | None) -> str:
+    """Remove all ASCII control characters (tabs, newlines, carriage returns, etc.)."""
+    return "".join(c for c in (val or "") if c >= " ")
+
+
 def _build_auth():
     """Facebook OAuth-proxy provider with persistent storage (sign in once).
 
@@ -30,9 +35,9 @@ def _build_auth():
       UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (manual Upstash).
     - Docker / VPS: set CLIENT_STORAGE_DIR to a mounted volume path.
     """
-    app_id = (os.environ.get("META_APP_ID") or "").strip()
-    app_secret = (os.environ.get("META_APP_SECRET") or "").strip()
-    base_url = (os.environ.get("META_OAUTH_BASE_URL") or "").strip()
+    app_id = _clean(os.environ.get("META_APP_ID"))
+    app_secret = _clean(os.environ.get("META_APP_SECRET"))
+    base_url = _clean(os.environ.get("META_OAUTH_BASE_URL"))
     if not (app_id and app_secret and base_url):
         # Missing config -> boot WITHOUT auth so /health and server_status still
         # answer for diagnosis. Tools that need a signed-in user will report it.
@@ -63,7 +68,7 @@ def _build_auth():
         app_secret=app_secret,
         base_url=base_url,
         required_scopes=_scopes_from_env(),
-        graph_version=os.environ.get("META_GRAPH_VERSION") or DEFAULT_GRAPH_VERSION,
+        graph_version=_clean(os.environ.get("META_GRAPH_VERSION")) or DEFAULT_GRAPH_VERSION,
         client_storage=storage,
         jwt_signing_key=os.environ.get("JWT_SIGNING_KEY"),
         require_authorization_consent=False,
