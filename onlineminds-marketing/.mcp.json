@@ -23,7 +23,7 @@
     },
     "thribee": {
       "type": "http",
-      "url": "http://37.27.23.202:3456/sse",
+      "url": "https://thribee.tail40453d.ts.net/sse",
       "_comment": "Thribee ad spend data across 22 markets. Self-hosted on VPS (Docker, port 3456). No client auth — Thribee API tokens stay server-side in data/tokens.json. Tools: thribee_list_markets, thribee_get_spend (single market + date range), thribee_get_all_spend (all 22 markets in parallel). See Mad Minds Thribee MCP/README.md for infra details."
     }
   },
