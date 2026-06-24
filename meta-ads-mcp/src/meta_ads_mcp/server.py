@@ -30,9 +30,9 @@ def _build_auth():
       UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (manual Upstash).
     - Docker / VPS: set CLIENT_STORAGE_DIR to a mounted volume path.
     """
-    app_id = os.environ.get("META_APP_ID")
-    app_secret = os.environ.get("META_APP_SECRET")
-    base_url = os.environ.get("META_OAUTH_BASE_URL")
+    app_id = (os.environ.get("META_APP_ID") or "").strip()
+    app_secret = (os.environ.get("META_APP_SECRET") or "").strip()
+    base_url = (os.environ.get("META_OAUTH_BASE_URL") or "").strip()
     if not (app_id and app_secret and base_url):
         # Missing config -> boot WITHOUT auth so /health and server_status still
         # answer for diagnosis. Tools that need a signed-in user will report it.
