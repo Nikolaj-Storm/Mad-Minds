@@ -146,7 +146,7 @@ Mad Minds/
 └── 06_Automation_Outputs/    ← logs/, scheduled/
 ```
 
-**Reading inputs:** ook first in `03_Data/cleaned/`, then `03_Data/raw_exports/<latest month>/`. If no usable data is present and a connector is available, pull live. If neither, ask the user to paste data.
+**Reading inputs:** look first in `03_Data/cleaned/`, then `03_Data/raw_exports/<latest month>/`. If no usable data is present and a connector is available, pull live. If neither, ask the user to paste data.
 
 **Writing outputs (shared, published):** match the cadence folder (`04_Reports/monthly/` etc.) or `04_Reports/ad-hoc/` for one-offs. Always use the matching template from `04_Reports/_templates/`.
 
