@@ -13,37 +13,13 @@ from fastmcp import FastMCP
 
 
 def _build_auth():
-    """OAuth-proxy provider with persistent storage (sign in once).
-
-    Storage backend is selected automatically so the same code runs on Vercel
-    and on a Docker/VPS host:
-    - Vercel / stateless: set KV_REST_API_URL + KV_REST_API_TOKEN (Vercel KV) or
-      UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (manual Upstash).
-    - Docker / VPS: set CLIENT_STORAGE_DIR to a mounted volume path.
-    Without a client_id OR any storage backend, auth is disabled (so /health and
-    server_status still answer for diagnosis).
-    """
-    client_id = os.environ.get("FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_ID")
-    redis_url = os.environ.get("KV_REST_API_URL") or os.environ.get("UPSTASH_REDIS_REST_URL")
-    redis_token = os.environ.get("KV_REST_API_TOKEN") or os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    """OAuth-proxy provider with persistent disk storage (sign in once)."""
     storage_dir = os.environ.get("CLIENT_STORAGE_DIR")
-
-    if not client_id or not ((redis_url and redis_token) or storage_dir):
+    client_id = os.environ.get("FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_ID")
+    if not storage_dir or not client_id:
         return None
-
     from fastmcp.server.auth.providers.google import GoogleProvider
-
-    # Redis (Vercel KV / Upstash) takes priority; fall back to disk for Docker/VPS.
-    if redis_url and redis_token:
-        from gads_mcp.redis_store import RedisStore
-        storage = RedisStore(
-            url=redis_url,
-            token=redis_token,
-            prefix=os.environ.get("REDIS_KEY_PREFIX", ""),
-        )
-    else:
-        from key_value.aio.stores.disk import DiskStore
-        storage = DiskStore(directory=storage_dir)
+    from key_value.aio.stores.disk import DiskStore
 
     scopes = os.environ.get(
         "FASTMCP_SERVER_AUTH_GOOGLE_REQUIRED_SCOPES",
@@ -55,7 +31,7 @@ def _build_auth():
         client_secret=os.environ["FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_SECRET"],
         base_url=os.environ.get("FASTMCP_SERVER_AUTH_GOOGLE_BASE_URL", "http://localhost:8000"),
         required_scopes=[s.strip() for s in scopes.split(",") if s.strip()],
-        client_storage=storage,
+        client_storage=DiskStore(directory=storage_dir),
         require_authorization_consent=False,
     )
     jwt_key = os.environ.get("JWT_SIGNING_KEY")
@@ -73,8 +49,14 @@ SERVER_INSTRUCTIONS = (
     "...) for common rolling windows. When both are given, the explicit dates win. "
     "Pull whatever window the user actually asked for; do NOT limit yourself to the "
     "presets. Dates resolve in the account's reporting time zone.\n\n"
-    "ACCOUNTS: metrics are only available on client accounts. Manager (MCC) accounts "
-    "return no metrics -- use list_accounts and query a client account ID."
+    "ACCOUNTS — READ THIS FIRST: the real data lives on the CLIENT accounts, not the "
+    "manager. Most OnlineMinds brands sit as client accounts UNDER a manager (MCC) "
+    "account. Manager accounts return NO metrics. Always call list_accounts first: it "
+    "now walks each accessible manager and returns the client (leaf) accounts you can "
+    "actually pull data from. Each row gives a `customer_id` and the `login_customer_id` "
+    "(the manager to send as the login-customer-id header) — pass BOTH to the other "
+    "tools. Never report 'no data' from a manager ID without first expanding to its "
+    "client accounts."
 )
 
 _auth = _build_auth()
@@ -98,12 +80,91 @@ from gads_mcp.ads import get_ad_groups, create_text_ad  # noqa: E402
 from gads_mcp.keywords import get_keywords, update_keyword_bid  # noqa: E402
 
 
+# Fields available on customer_client. Used to walk a manager's whole subtree.
+_CUSTOMER_CLIENT_QUERY = """
+    SELECT customer_client.id,
+           customer_client.descriptive_name,
+           customer_client.manager,
+           customer_client.level,
+           customer_client.currency_code,
+           customer_client.time_zone,
+           customer_client.status
+    FROM customer_client
+    WHERE customer_client.status = 'ENABLED'
+"""
+
+
 @handle_errors
-def list_accounts():
-    """List every Google Ads account your Google sign-in can access."""
+def list_accounts() -> list:
+    """List every Google Ads CLIENT account you can pull data from.
+
+    Google's list_accessible_customers only returns the accounts your login is
+    DIRECTLY linked to — for an agency/MCC setup that's the manager account(s)
+    plus any standalone accounts, NOT the brand client accounts under a manager.
+    Metrics only exist on the client accounts, so this tool walks each accessible
+    account's tree (via customer_client) and returns the client (leaf) accounts.
+
+    Each row is a dict:
+      * customer_id        — the 10-digit ID to pass as customer_id to other tools
+      * descriptive_name   — the account name (e.g. "Printumo", "Rentumo.dk")
+      * login_customer_id  — the manager ID to pass as login_customer_id when
+                             querying this client (null for standalone accounts)
+      * currency_code, time_zone — account settings
+      * manager            — always False here (manager nodes are excluded; they
+                             carry no metrics)
+
+    Pass each row's customer_id together with its login_customer_id to
+    get_performance / get_campaigns / get_search_terms etc.
+    """
     client = get_client()
     svc = client.get_service("CustomerService")
-    return [n.split("/")[-1] for n in svc.list_accessible_customers().resource_names]
+    accessible = [
+        n.split("/")[-1] for n in svc.list_accessible_customers().resource_names
+    ]
+
+    seen: dict[str, dict] = {}
+    for top in accessible:
+        try:
+            # Log in *through* this account so we can read its whole subtree.
+            tree_client = get_client(login_customer_id=top)
+            ga = tree_client.get_service("GoogleAdsService")
+            rows = list(ga.search(customer_id=top, query=_CUSTOMER_CLIENT_QUERY))
+        except Exception:  # noqa: BLE001 — one bad root shouldn't kill the list
+            # Couldn't read it as a tree root — surface it bare so it's not lost.
+            seen.setdefault(
+                top,
+                {
+                    "customer_id": top,
+                    "descriptive_name": None,
+                    "login_customer_id": None,
+                    "currency_code": None,
+                    "time_zone": None,
+                    "manager": None,
+                },
+            )
+            continue
+
+        for row in rows:
+            cc = row.customer_client
+            cid = str(cc.id)
+            if cc.manager:
+                # Manager nodes (incl. the root itself) have no metrics — skip.
+                continue
+            seen.setdefault(
+                cid,
+                {
+                    "customer_id": cid,
+                    "descriptive_name": cc.descriptive_name or None,
+                    # The account you authenticate THROUGH to query this client.
+                    # None when the client is itself directly accessible.
+                    "login_customer_id": None if cid == top else top,
+                    "currency_code": cc.currency_code or None,
+                    "time_zone": cc.time_zone or None,
+                    "manager": False,
+                },
+            )
+
+    return list(seen.values())
 
 
 @handle_errors
