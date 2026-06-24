@@ -26,8 +26,8 @@ Every connector is **per-user OAuth** — Claude acts as the signed-in marketer 
 | Capability | How to add it | Sign in with |
 |---|---|---|
 | Mad Minds Drive Hub | Built-in Connectors catalog → **Google Drive** | `@onlineminds.io` |
-| Google Search Console | Add custom connector → `https://onlineminds-gsc-mcp.fly.dev/mcp` | Google |
-| Google Ads | Add custom connector → `https://onlineminds-gads-mcp.fly.dev/mcp` | Google |
+| Google Search Console | Add custom connector → `https://gsc.tail40453d.ts.net/mcp` | Google |
+| Google Ads | Add custom connector → `https://gads.tail40453d.ts.net/mcp` | Google |
 | Meta Ads — onlineminds.io | Add custom connector → `https://meta-onlineminds.tail40453d.ts.net/mcp` | Facebook |
 | Meta Ads — Rentumo | Add custom connector → `https://meta-rentumo.tail40453d.ts.net/mcp` | Facebook |
 
@@ -57,8 +57,8 @@ COWORK-SETUP-RUNBOOK.md, BUILD-HUB-RUNBOOK.md
 
 Google Ads, Search Console, and Meta Ads run as small [FastMCP](https://gofastmcp.com) servers in this repo, so there's no per-marketer API-key or developer-token setup — each marketer just signs in with their own Google/Facebook account.
 
-- **Google Search Console / Google Ads** — on Fly.io. See [`GSC-SELF-HOST-RUNBOOK.md`](./GSC-SELF-HOST-RUNBOOK.md) / [`GADS-SELF-HOST-RUNBOOK.md`](./GADS-SELF-HOST-RUNBOOK.md).
-- **Meta Ads** — on our Hetzner box via [`mcp-stack/`](./mcp-stack/) (Docker Compose + Tailscale Funnel, no domain/root needed). Deploy guide: [`META-SELF-HOST-RUNBOOK.md`](./META-SELF-HOST-RUNBOOK.md); server internals: [`meta-ads-mcp/NOTICE.md`](./meta-ads-mcp/NOTICE.md).
+- **Google Search Console / Google Ads** — on our Hetzner box via [`mcp-stack/compose.google.yaml`](./mcp-stack/) (Docker Compose + Tailscale Funnel, each its own container). See [`GSC-SELF-HOST-RUNBOOK.md`](./GSC-SELF-HOST-RUNBOOK.md) / [`GADS-SELF-HOST-RUNBOOK.md`](./GADS-SELF-HOST-RUNBOOK.md).
+- **Meta Ads** — on the same box via [`mcp-stack/compose.yaml`](./mcp-stack/) (Tailscale Funnel, no domain/root needed). Deploy guide: [`META-SELF-HOST-RUNBOOK.md`](./META-SELF-HOST-RUNBOOK.md); server internals: [`meta-ads-mcp/NOTICE.md`](./meta-ads-mcp/NOTICE.md).
 
 All writes are gated by the `/ad-actions` Tier 1 / Tier 2 spend-gate **and** a server-side `READONLY_MODE` flag that simulates writes until you flip it.
 

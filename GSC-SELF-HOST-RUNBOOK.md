@@ -10,6 +10,96 @@
 
 > Everything below is done **once, by you.** Total time ~30 min. Colleagues do nothing until the final "what marketers see" section.
 
+> **Deploy target (current): the Hetzner box.** GSC runs on the box
+> (`mcp@37.27.23.202`) as a Docker Compose service in `mcp-stack/compose.google.yaml`
+> (project `madminds-google`) behind Tailscale Funnel — its own container, disk-backed
+> token storage at `/data`. Live URL: `https://gsc.tail40453d.ts.net/mcp`. See
+> **"Deploy on the box"** just below. The **Vercel** section (Redis/KV storage) and
+> the **Fly.io** steps further down are documented **alternatives**; the server code
+> auto-selects token storage from env vars.
+
+---
+
+## Deploy on the box (current path)
+
+GSC + Google Ads share `mcp-stack/compose.google.yaml` (project `madminds-google`),
+separate from Meta's `madminds-mcp`. Each MCP has its own Tailscale Funnel sidecar
+(`tailscale-gsc` → `gsc.<tailnet>`).
+
+```bash
+cd ~/Mad-Minds/mcp-stack
+# gsc.env: FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_ID/SECRET/SCOPES (webmasters.readonly),
+#   FASTMCP_SERVER_AUTH_GOOGLE_BASE_URL=https://gsc.tail40453d.ts.net,
+#   CLIENT_STORAGE_DIR=/data, JWT_SIGNING_KEY
+docker compose -f compose.google.yaml up -d --build
+docker compose -f compose.google.yaml exec -T tailscale-gsc tailscale funnel status
+curl -s https://gsc.tail40453d.ts.net/health
+```
+Add `https://gsc.tail40453d.ts.net/auth/callback` as a redirect URI on the Google
+OAuth client (Step 1).
+
+---
+
+## Deploy to Vercel (alternative)
+
+One serverless project; token storage in Vercel KV (Upstash Redis), so no volume.
+Steps 1 (Google OAuth client) and the env-var values are identical to the Fly
+path below — only the host changes.
+
+### V1. Create the Vercel project
+In [vercel.com/new](https://vercel.com/new), import `Nikolaj-Storm/Mad-Minds`:
+- **Project name** → `onlineminds-gsc-mcp` (→ `https://onlineminds-gsc-mcp.vercel.app`)
+- **Root Directory** → `gsc-mcp` (where `vercel.json` lives)
+- Framework preset → **Other** (Vercel detects `@vercel/python` from `vercel.json`)
+
+### V2. Attach a Vercel KV store
+**Storage → Create → KV** (Upstash Redis), name it `kv-gsc`. Vercel auto-injects
+`KV_REST_API_URL` + `KV_REST_API_TOKEN`. Use a **separate** KV store per server.
+
+### V3. Set environment variables (Settings → Environment Variables)
+Same values as the Fly `secrets set` in Step 2, **minus** `CLIENT_STORAGE_DIR`,
+with the base URL on the Vercel domain:
+```ini
+FASTMCP_SERVER_AUTH=fastmcp.server.auth.providers.google.GoogleProvider
+FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_ID=YOUR_ID.apps.googleusercontent.com
+FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_SECRET=GOCSPX-YOUR_SECRET
+FASTMCP_SERVER_AUTH_GOOGLE_REQUIRED_SCOPES=openid,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/webmasters.readonly
+# Set AFTER the first deploy so you know the exact URL, then redeploy:
+FASTMCP_SERVER_AUTH_GOOGLE_BASE_URL=https://onlineminds-gsc-mcp.vercel.app
+JWT_SIGNING_KEY=<output of: openssl rand -hex 32>
+# KV_REST_API_URL and KV_REST_API_TOKEN are injected automatically by Vercel KV.
+```
+Keep `JWT_SIGNING_KEY` stable across redeploys or everyone has to re-Connect.
+
+### V4. Update the Google OAuth client redirect URI
+In the OAuth client (Step 1), add:
+- **Authorized redirect URI:** `https://onlineminds-gsc-mcp.vercel.app/auth/callback`
+- **JS origin:** `https://onlineminds-gsc-mcp.vercel.app`
+
+Keep the `…fly.dev` URIs until the Fly app is gone. The **Internal** consent
+screen means a `*.vercel.app` redirect needs no domain verification.
+
+### V5. Deploy + verify
+```bash
+curl -s https://onlineminds-gsc-mcp.vercel.app/health
+curl -s https://onlineminds-gsc-mcp.vercel.app/.well-known/oauth-authorization-server | python3 -m json.tool
+npx @modelcontextprotocol/inspector https://onlineminds-gsc-mcp.vercel.app/mcp
+```
+In Inspector: sign in with Google → `list_sites` should return your properties.
+
+### V6. Wire into the plugin
+In `onlineminds-marketing/.mcp.json`, update the `_custom_connectors_note` GSC
+URL to `https://onlineminds-gsc-mcp.vercel.app/mcp`, bump the plugin version,
+commit + push. CONNECTORS.md is already updated.
+
+<a name="decommissioning-fly"></a>
+### V7. Decommission the Fly app (after the Vercel connector is verified)
+```bash
+fly apps destroy onlineminds-gsc-mcp   # also removes the gsc_data volume
+```
+Remove the old `…fly.dev` redirect URI from the OAuth client. `gsc-mcp/fly.toml`
++ `Dockerfile` stay in the repo as the disk-storage / container fallback.
+
 ---
 
 ## Maintainer prerequisites

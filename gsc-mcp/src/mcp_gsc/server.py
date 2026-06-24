@@ -9,22 +9,39 @@ from mcp_gsc import prompts, resources, tools
 
 
 def _build_auth():
-    """Build the Google OAuth-proxy provider.
+    """Build the Google OAuth-proxy provider with persistent storage.
 
-    If CLIENT_STORAGE_DIR is set (a persistent disk, e.g. a Fly volume), we
-    construct the GoogleProvider explicitly with persistent client storage +
-    a stable JWT signing key so registered OAuth clients and issued tokens
-    SURVIVE restarts and redeploys -- i.e. marketers sign in once, ever, and
-    are never logged out by a deploy. Without it, we fall back to FastMCP's
+    Storage backend is selected automatically so the same code runs on Vercel
+    and on a Docker/VPS host. Persisting the registered OAuth clients + issued
+    tokens means marketers sign in once, ever, and are never logged out by a
+    redeploy:
+    - Vercel / stateless: set KV_REST_API_URL + KV_REST_API_TOKEN (Vercel KV) or
+      UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (manual Upstash).
+    - Docker / VPS / Fly: set CLIENT_STORAGE_DIR to a mounted volume path.
+    Without a client_id OR any storage backend, we fall back to FastMCP's
     env-var auto-config (in-memory; fine for local/dev).
     """
-    storage_dir = os.environ.get("CLIENT_STORAGE_DIR")
     client_id = os.environ.get("FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_ID")
-    if not storage_dir or not client_id:
+    redis_url = os.environ.get("KV_REST_API_URL") or os.environ.get("UPSTASH_REDIS_REST_URL")
+    redis_token = os.environ.get("KV_REST_API_TOKEN") or os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    storage_dir = os.environ.get("CLIENT_STORAGE_DIR")
+
+    if not client_id or not ((redis_url and redis_token) or storage_dir):
         return None  # fall back to env auto-config (in-memory)
 
     from fastmcp.server.auth.providers.google import GoogleProvider
-    from key_value.aio.stores.disk import DiskStore
+
+    # Redis (Vercel KV / Upstash) takes priority; fall back to disk for Docker/Fly.
+    if redis_url and redis_token:
+        from mcp_gsc.redis_store import RedisStore
+        storage = RedisStore(
+            url=redis_url,
+            token=redis_token,
+            prefix=os.environ.get("REDIS_KEY_PREFIX", ""),
+        )
+    else:
+        from key_value.aio.stores.disk import DiskStore
+        storage = DiskStore(directory=storage_dir)
 
     scopes = os.environ.get(
         "FASTMCP_SERVER_AUTH_GOOGLE_REQUIRED_SCOPES",
@@ -36,7 +53,7 @@ def _build_auth():
         client_secret=os.environ["FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_SECRET"],
         base_url=os.environ.get("FASTMCP_SERVER_AUTH_GOOGLE_BASE_URL", "http://localhost:8000"),
         required_scopes=[s.strip() for s in scopes.split(",") if s.strip()],
-        client_storage=DiskStore(directory=storage_dir),
+        client_storage=storage,
         # Skip FastMCP's extra /consent interstitial. It adds a hop/click that
         # native connectors (Drive/Notion) don't have, and it was timing out the
         # MCP client's localhost callback listener -> "No OAuth flow is in progress".

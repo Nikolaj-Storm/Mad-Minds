@@ -11,3 +11,7 @@ google-auth-httplib2>=0.2.0
 # pinned explicitly here so the disk backend is guaranteed present.
 py-key-value-aio>=0.3.0
 diskcache>=5.6.0
+# Upstash Redis HTTP client — used by RedisStore for Vercel / stateless deploys
+# (Vercel filesystem is ephemeral, so the disk store can't persist tokens there).
+# Harmless on a Docker/VPS path (CLIENT_STORAGE_DIR).
+upstash-redis>=1.0.0

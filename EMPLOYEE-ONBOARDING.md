@@ -93,8 +93,8 @@ Add these three, in order:
 
 | Connector | URL to paste | Sign in with |
 |---|---|---|
-| **Google Search Console** | `https://onlineminds-gsc-mcp.fly.dev/mcp` | the Google account that has your Search Console properties (read-only organic data) |
-| **Google Ads** | `https://onlineminds-gads-mcp.fly.dev/mcp` | the Google account with your brand's Google Ads access (via the OnlineMinds Manager / MCC) |
+| **Google Search Console** | `https://gsc.tail40453d.ts.net/mcp` | the Google account that has your Search Console properties (read-only organic data) |
+| **Google Ads** | `https://gads.tail40453d.ts.net/mcp` | the Google account with your brand's Google Ads access (via the OnlineMinds Manager / MCC) |
 | **Meta Ads — onlineminds** | `https://meta-onlineminds.tail40453d.ts.net/mcp` | your **Facebook** account with onlineminds.io ad-account access |
 | **Meta Ads — Rentumo** | `https://meta-rentumo.tail40453d.ts.net/mcp` | your **Facebook** account with Rentumo ad-account access |
 

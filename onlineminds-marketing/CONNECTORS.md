@@ -34,13 +34,13 @@ Claude desktop's built-in **Customize → Connectors** (the top-level one, not t
 | Mad Minds Drive Hub | Google Drive | Read/write the shared Hub. Sign in with `@onlineminds.io`. |
 
 ### C. Self-hosted connectors added as CUSTOM CONNECTORS (the working path)
-Google Search Console and Google Ads are self-hosted (`gsc-mcp/`, `gads-mcp/` on Fly.io), per-user Google OAuth, persistent (sign in once). They are **deliberately NOT in `.mcp.json`** and **not** authenticated through the plugin/in-session flow — that flow is broken in Claude desktop (the localhost OAuth callback listener doesn't run → "no flow in progress"; and the panel errors with "a server with this URL already exists"). Each marketer instead adds them as a **custom connector**, which uses Claude's hosted callback (`claude.ai/api/mcp/auth_callback`) and works.
+Google Search Console and Google Ads are self-hosted (`gsc-mcp/`, `gads-mcp/` on the Hetzner box via Docker Compose `mcp-stack/compose.google.yaml` + Tailscale Funnel — each its own container), per-user Google OAuth, persistent (sign in once — tokens on a disk volume at `/data`). They are **deliberately NOT in `.mcp.json`** and **not** authenticated through the plugin/in-session flow — that flow is broken in Claude desktop (the localhost OAuth callback listener doesn't run → "no flow in progress"; and the panel errors with "a server with this URL already exists"). Each marketer instead adds them as a **custom connector**, which uses Claude's hosted callback (`claude.ai/api/mcp/auth_callback`) and works.
 
 | Capability | Add as custom connector — URL | Notes |
 |---|---|---|
-| Google Search Console | `https://onlineminds-gsc-mcp.fly.dev/mcp` | Read-only organic search data. Sign in with the Google account that owns the properties. |
-| Google Ads | `https://onlineminds-gads-mcp.fly.dev/mcp` | Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. Shared developer token is a server secret. |
-| Meta Ads — onlineminds | `https://meta-onlineminds.tail40453d.ts.net/mcp` | Self-hosted (`meta-ads-mcp/` on our Hetzner box, Tailscale Funnel). **Facebook login**, per-user OAuth. The **onlineminds.io** Meta business. Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. |
+| Google Search Console | `https://gsc.tail40453d.ts.net/mcp` | Read-only organic search data. Sign in with the Google account that owns the properties. |
+| Google Ads | `https://gads.tail40453d.ts.net/mcp` | Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. Shared developer token is a server secret. |
+| Meta Ads — onlineminds | `https://meta-onlineminds.tail40453d.ts.net/mcp` | Self-hosted (`meta-ads-mcp/` on Vercel). **Facebook login**, per-user OAuth. The **onlineminds.io** Meta business. Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. |
 | Meta Ads — Rentumo | `https://meta-rentumo.tail40453d.ts.net/mcp` | Same, for the **Rentumo ApS** Meta business. Add whichever area(s) you manage; per-user — you only see accounts your Facebook can access. |
 
 Steps (per marketer, once each): **Customize → Connectors → Add custom connector** → paste the URL → leave Advanced settings empty (the servers support DCR, so no Client ID/Secret) → **Add** → **Connect** → sign in with Google. A new session may be needed for the tools to appear. Per-user — each marketer only sees accounts/properties they already have.
@@ -72,7 +72,7 @@ The `/setup-marketing` skill walks through the lists in order:
 - **GA4 / Google Tag Manager / Merchant Center** — not wired.
 
 ## Meta Ads — self-hosted, two business areas
-Meta Ads uses **our own self-hosted MCP** (`meta-ads-mcp/`, on our Hetzner box behind a Tailscale Funnel — see `META-SELF-HOST-RUNBOOK.md` and `mcp-stack/`), mirroring the Google Ads connector. Auth is **per-user Facebook OAuth** — each marketer signs in with their own Facebook account and only touches ad accounts they already manage. OnlineMinds runs **two Meta business areas**, each with its own Facebook app + MCP instance, so there are **two connectors**:
+Meta Ads uses **our own self-hosted MCP** (`meta-ads-mcp/`, on the Hetzner box via `mcp-stack/compose.yaml` + Tailscale Funnel — see `META-SELF-HOST-RUNBOOK.md`), mirroring the Google Ads connector. Auth is **per-user Facebook OAuth** — each marketer signs in with their own Facebook account and only touches ad accounts they already manage. OnlineMinds runs **two Meta business areas**, each with its own Facebook app + MCP instance, so there are **two connectors**:
 - onlineminds.io → `https://meta-onlineminds.tail40453d.ts.net/mcp`
 - Rentumo ApS → `https://meta-rentumo.tail40453d.ts.net/mcp`
 

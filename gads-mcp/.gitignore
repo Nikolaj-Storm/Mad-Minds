@@ -3,3 +3,5 @@ __pycache__/
 .env
 .venv/
 google-ads.yaml
+data/
+.vercel/
