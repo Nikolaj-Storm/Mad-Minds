@@ -126,7 +126,7 @@ Send silas, frederik, caroline, nilas, banin, karina, jacob, julius the install 
 ## Updating later
 
 - **In-house skill edit:** edit → bump `version` in both `.claude-plugin/marketplace.json` and `onlineminds-marketing/.claude-plugin/plugin.json` → commit + push. Marketers pick it up on next Cowork refresh.
-- **Self-hosted MCP change** (`meta-ads-mcp/`, `gads-mcp/`, `gsc-mcp/`): edit → on the box `git pull && docker compose up -d --build` (Meta, see `mcp-stack/`) or redeploy to Fly (GSC/Google Ads).
+- **Self-hosted MCP change** (`meta-ads-mcp/`, `gads-mcp/`, `gsc-mcp/`): edit → on the box `cd ~/Mad-Minds/mcp-stack && git pull && docker compose -f <file> up -d --build` (Meta = `compose.yaml`; Google Ads + GSC = `compose.google.yaml`).
 - **Sync vendored `claude-ads/`:** `bash scripts/sync-claude-ads.sh` → review diff → bump that plugin's version → commit + push.
 
 ## Updating `account-conventions-live`

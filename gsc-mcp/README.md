@@ -5,7 +5,7 @@ Maintainer infrastructure (not part of the distributed plugin). Deploy this once
 - **What it is:** a corrected, version-pinned copy of damupi/mcp-gsc-oauth (FastMCP Google OAuth-proxy). See `NOTICE.md` for the fixes and what was verified.
 - **How to deploy:** follow [`../GSC-SELF-HOST-RUNBOOK.md`](../GSC-SELF-HOST-RUNBOOK.md).
 - **Auth model:** the server holds the Google client secret (env file on the box) and brokers OAuth for every marketer. Each marketer signs in with their own Google account and only ever sees their own Search Console properties. Read-only (`webmasters.readonly`).
-- **Deploy target (current):** the Hetzner box via Docker Compose `mcp-stack/compose.google.yaml` (project `madminds-google`) behind Tailscale Funnel — its own container, disk-backed token storage at `/data`. Live URL: `https://gsc.tail40453d.ts.net/mcp`. A `vercel.json` + `api/index.py` (Vercel serverless, Redis/KV storage) and `fly.toml` ship as alternatives.
+- **Deploy target (current):** the Hetzner box via Docker Compose `mcp-stack/compose.google.yaml` (project `madminds-google`) behind Tailscale Funnel — its own container, disk-backed token storage at `/data`. Live URL: `https://gsc.tail40453d.ts.net/mcp`. A `vercel.json` + `api/index.py` (Vercel serverless, Redis/KV storage) ships as an alternative.
 
 ## TL;DR deploy (on the box)
 ```bash

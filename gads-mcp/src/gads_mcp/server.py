@@ -19,7 +19,7 @@ def _build_auth():
     and on a Docker/VPS host:
     - Vercel / stateless: set KV_REST_API_URL + KV_REST_API_TOKEN (Vercel KV) or
       UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (manual Upstash).
-    - Docker / VPS / Fly: set CLIENT_STORAGE_DIR to a mounted volume path.
+    - Docker / VPS: set CLIENT_STORAGE_DIR to a mounted volume path.
     Without a client_id OR any storage backend, auth is disabled (so /health and
     server_status still answer for diagnosis).
     """
@@ -33,7 +33,7 @@ def _build_auth():
 
     from fastmcp.server.auth.providers.google import GoogleProvider
 
-    # Redis (Vercel KV / Upstash) takes priority; fall back to disk for Docker/Fly.
+    # Redis (Vercel KV / Upstash) takes priority; fall back to disk for Docker/VPS.
     if redis_url and redis_token:
         from gads_mcp.redis_store import RedisStore
         storage = RedisStore(

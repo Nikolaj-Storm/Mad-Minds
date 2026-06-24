@@ -1,4 +1,4 @@
-# Google Search Console MCP — corrected, pinned build for Fly.io / Render.
+# Google Search Console MCP — corrected, pinned build (Docker Compose on the box; Vercel alt via api/index.py).
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -11,6 +11,6 @@ COPY src/ ./src/
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app/src
 
-# HTTP transport on 8000 (must match fly.toml internal_port)
+# HTTP transport on 8000 (the compose tunnel sidecar proxies to this port)
 EXPOSE 8000
 CMD ["fastmcp", "run", "src/mcp_gsc/server.py", "--transport", "http", "--host", "0.0.0.0", "--port", "8000"]

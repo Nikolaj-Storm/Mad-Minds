@@ -6,7 +6,7 @@ google-api-python-client>=2.0.0
 google-auth>=2.0.0
 google-auth-oauthlib>=1.0.0
 google-auth-httplib2>=0.2.0
-# Persistent OAuth client/token storage (DiskStore on a Fly volume) so marketers
+# Persistent OAuth client/token storage (DiskStore on a disk volume) so marketers
 # sign in once and survive restarts/redeploys. py-key-value-aio ships with fastmcp,
 # pinned explicitly here so the disk backend is guaranteed present.
 py-key-value-aio>=0.3.0
