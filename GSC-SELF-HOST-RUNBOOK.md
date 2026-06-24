@@ -11,7 +11,7 @@
 > Everything below is done **once, by you.** Total time ~30 min. Colleagues do nothing until the final "what marketers see" section.
 
 > **Deploy target (current): the Hetzner box.** GSC runs on the box
-> (`mcp@37.27.23.202`) as a Docker Compose service in `mcp-stack/compose.google.yaml`
+> (`<maintainer>@<box-ip>`) as a Docker Compose service in `mcp-stack/compose.google.yaml`
 > (project `madminds-google`) behind Tailscale Funnel — its own container, disk-backed
 > token storage at `/data`. Live URL: `https://gsc.tail40453d.ts.net/mcp`. See
 > **"Deploy on the box"** just below. The **Vercel** section (Redis/KV storage) and

@@ -5,7 +5,7 @@ Same pattern as GSC: **you host it once**, marketers click **Connect → sign in
 **The one prerequisite that gates real data:** a Google Ads API **developer token** at **Basic Access** (yours or a colleague's — one covers the whole org). You can deploy and connect *before* it's approved; reads/writes just won't return live data until the token is in.
 
 > **Deploy target (current): the Hetzner box.** Google Ads runs on the box
-> (`mcp@37.27.23.202`) as a Docker Compose service in `mcp-stack/compose.google.yaml`
+> (`<maintainer>@<box-ip>`) as a Docker Compose service in `mcp-stack/compose.google.yaml`
 > (project `madminds-google`) behind Tailscale Funnel — its own container, disk-backed
 > token storage at `/data`. Live URL: `https://gads.tail40453d.ts.net/mcp`. See
 > **"Deploy on the box"** just below. The **Vercel** section (Redis/KV storage) and

@@ -1,7 +1,7 @@
 # Mad Minds MCP stack
 
-Runs the self-hosted MCP servers on our Hetzner box (`mcp@37.27.23.202`, hostname
-`Openclaw` — a KVM VM with **rootless** Docker and **no sudo** for the `mcp` user).
+Runs the self-hosted MCP servers on our Hetzner box (`<maintainer>@<box-ip>`, hostname
+`<box-hostname>` — a KVM VM with **rootless** Docker and **no sudo** for the `mcp` user).
 
 OnlineMinds has **two Meta business areas**, each with its own Meta business +
 Facebook app, so Meta runs as **two MCP instances** (each server is wired to one
@@ -24,7 +24,7 @@ stack; each MCP and each tunnel is its own container.
 
 ## Prerequisites
 
-1. **Docker works as `mcp`** (it does on Openclaw — rootless, no sudo to build/run).
+1. **Docker works as `mcp`** (it does on <box-hostname> — rootless, no sudo to build/run).
 2. **A free Tailscale account** (just you — marketers never touch it).
 3. **Two Facebook Apps** — one per business area — for the two `META_APP_ID` /
    `META_APP_SECRET` pairs. See `../META-SELF-HOST-RUNBOOK.md` Step 1 (incl. the
@@ -87,7 +87,7 @@ docker compose up -d --build
 docker compose ps                 # 4 services Up: 2x meta-ads, 2x tailscale
 ```
 
-`restart: unless-stopped` + lingering (already on, on Openclaw) brings it all
+`restart: unless-stopped` + lingering (already on, on <box-hostname>) brings it all
 back on reboot.
 
 ## 5. Confirm both Funnels + verify
@@ -146,7 +146,7 @@ Named volumes survive (token stores + Tailscale identities), so no one re-Connec
 - **Meta `190`** → marketer's Facebook sign-in expired (~60d); re-Connect.
   `(#200)`/permission → not on that ad account / Business Manager.
 - **Didn't survive reboot** (rootless) → `loginctl show-user mcp -p Linger` is `yes`
-  on Openclaw; if ever not, root runs `loginctl enable-linger mcp`.
+  on <box-hostname>; if ever not, root runs `loginctl enable-linger mcp`.
 
 ---
 
@@ -156,4 +156,4 @@ Named volumes survive (token stores + Tailscale identities), so no one re-Connec
   domain on Cloudflare.
 - **`compose.caddy.yaml`** — Caddy + Let's Encrypt on 80/443; needs a domain (A
   record) and control of ports 80/443 (rootful, or rootless after root sets
-  `net.ipv4.ip_unprivileged_port_start=80`). Not usable on Openclaw as-is.
+  `net.ipv4.ip_unprivileged_port_start=80`). Not usable on <box-hostname> as-is.
