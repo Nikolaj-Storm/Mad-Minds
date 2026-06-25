@@ -25,19 +25,16 @@ It wraps each market's `GET /api/admin/charts`, reads `.totals`, and surfaces
 
 ---
 
-## Step 1 — Gather the two server-side inputs
+## Step 1 — The one secret you need
 
-Neither is committed (both are gitignored).
+**`RENTUMO_BEARER_TOKEN`** — the shared admin bearer. It's the same token the
+`spotlight-refresh` project keeps in `secrets.json` under `RENTUMO_BEARER_TOKEN`,
+and the same one used in the Make/Integromat "Marketing dashboard data flow"
+blueprint (the `Authorization: Bearer …` header on the Rentumo backend API call).
 
-1. **`RENTUMO_BEARER_TOKEN`** — the shared admin bearer. It's the same token the
-   `spotlight-refresh` project keeps in `secrets.json` under `RENTUMO_BEARER_TOKEN`.
-2. **`markets.json`** — the 26 market codes + admin domains. Build it from the
-   spotlight-refresh account maps (`meta-accounts.json` / `google-accounts.json`).
-   Schema (see [`rentumo-trials-mcp/markets.example.json`](./rentumo-trials-mcp/markets.example.json)):
-   ```json
-   { "markets": [ { "code": "NL", "domain": "<rentumo NL admin domain>", "name": "Netherlands" } ] }
-   ```
-   `name` is optional. Do **not** guess domains — paste the real values.
+The **26 market domains are already bundled** in the image
+(`rentumo-trials-mcp/src/rentumo_trials_mcp/markets.json`, public domains, no
+secrets) — nothing to seed.
 
 ---
 
@@ -50,15 +47,8 @@ RENTUMO_BEARER_TOKEN=<shared admin bearer>
 # RENTUMO_MAX_CONCURRENCY=12
 # RENTUMO_REQUEST_TIMEOUT=30
 ```
-
-The markets list is **not** an env var — it's a file mounted at `/data/markets.json`
-on the `rentumo_data` volume. Seed it once:
-```bash
-# from the box, with the compose project up (or use `docker compose cp`):
-docker compose -f compose.rentumo.yaml cp markets.json rentumo-trials-mcp:/data/markets.json
-docker compose -f compose.rentumo.yaml restart rentumo-trials-mcp
-```
-(Or write `markets.json` straight onto the named volume before first `up`.)
+That's the whole file. (To override the bundled market list without rebuilding,
+put a `markets.json` on the `/data` volume and add `RENTUMO_MARKETS_FILE=/data/markets.json`.)
 
 ---
 
@@ -82,8 +72,10 @@ ask "list Rentumo markets" then "how many new subscribers did Rentumo get last w
 
 - **Rotate the bearer:** edit `rentumo.env`, then
   `docker compose -f compose.rentumo.yaml up -d` (no rebuild needed).
-- **Add/change a market:** update `markets.json` on the volume (Step 2) and
-  `restart rentumo-trials-mcp`.
+- **Add/change a market:** edit the bundled
+  `rentumo-trials-mcp/src/rentumo_trials_mcp/markets.json`, commit, then
+  `git pull && docker compose -f compose.rentumo.yaml up -d --build`. (Or override
+  via a `/data/markets.json` + `RENTUMO_MARKETS_FILE` with just a `restart`.)
 - **If the public URL ever changes:** bump the `onlineminds-marketing` plugin version
   and update the `rentumo-trials` entry in `onlineminds-marketing/.mcp.json` +
   `CONNECTORS.md` so marketers get the new URL.

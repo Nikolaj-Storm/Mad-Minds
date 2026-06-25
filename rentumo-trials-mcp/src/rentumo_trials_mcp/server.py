@@ -26,10 +26,11 @@ from fastmcp import FastMCP
 
 RENTUMO_BEARER_TOKEN = os.environ.get("RENTUMO_BEARER_TOKEN", "")
 
-# Markets are loaded from a JSON file the maintainer fills in (never committed —
-# see markets.example.json for the schema). Default path matches the disk volume
-# the Docker deploy mounts at /data.
-MARKETS_FILE = os.environ.get("RENTUMO_MARKETS_FILE", "/data/markets.json")
+# Markets (code + public admin domain) ship bundled next to this module — they
+# contain no secrets. To swap the list without rebuilding the image, mount an
+# override file and point RENTUMO_MARKETS_FILE at it (e.g. /data/markets.json).
+_DEFAULT_MARKETS_FILE = os.path.join(os.path.dirname(__file__), "markets.json")
+MARKETS_FILE = os.environ.get("RENTUMO_MARKETS_FILE", _DEFAULT_MARKETS_FILE)
 
 # Cap concurrent upstream calls so a portfolio-wide pull can't open 26+ sockets at
 # once. The original batch job used many threads; async with a semaphore is plenty.

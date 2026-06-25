@@ -7,14 +7,13 @@
 #   https://rentumo-trials.<tailnet>.ts.net/sse -> rentumo-trials-mcp:8000
 #
 # Auth model = shared bearer (like Thribee), NOT per-user OAuth: the admin token
-# (RENTUMO_BEARER_TOKEN in rentumo.env) is a server-side secret, and the 26 market
-# domains live in markets.json on the rentumo_data volume at /data/markets.json.
-# Read-only — no write path, no spend-gate surface. Reuses the same reusable
-# TS_AUTHKEY in tailscale.env that the Meta/Google stacks use.
+# (RENTUMO_BEARER_TOKEN in rentumo.env) is the only secret. The 26 market domains
+# are BUNDLED in the image (no seeding); the /data volume is only for an optional
+# markets.json override (RENTUMO_MARKETS_FILE). Read-only — no write path, no
+# spend-gate surface. Reuses the same reusable TS_AUTHKEY as the Meta/Google stacks.
 #
 # Deploy (see README in ../rentumo-trials-mcp):
-#   cp rentumo.env.example rentumo.env   # paste RENTUMO_BEARER_TOKEN
-#   # seed the real markets.json onto the rentumo_data volume (see runbook)
+#   cp rentumo.env.example rentumo.env   # paste RENTUMO_BEARER_TOKEN — that's it
 #   docker compose -f compose.rentumo.yaml up -d --build
 name: madminds-rentumo
 

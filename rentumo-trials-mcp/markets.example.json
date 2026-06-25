@@ -1,7 +1,0 @@
-{
-  "_comment": "Template for markets.json (the real file is gitignored and mounted at /data/markets.json on the box). Fill in the real 26 market codes + admin domains from the spotlight-refresh project's meta-accounts.json / google-accounts.json. These rows are EXAMPLES showing the schema only — do NOT ship guessed domains. 'name' is optional (defaults to the code).",
-  "markets": [
-    { "code": "XX", "domain": "EXAMPLE-fill-in-real-domain.example", "name": "Example Market" },
-    { "code": "YY", "domain": "EXAMPLE-another-domain.example" }
-  ]
-}

@@ -34,15 +34,16 @@ Dates are ISO `YYYY-MM-DD`; the server converts to the admin API's quirky
 
 ## Configuration
 
-Two server-side inputs, neither committed:
+Only **one** thing to set — the bearer. The market list is bundled.
 
 | Input | How | Notes |
 |---|---|---|
-| `RENTUMO_BEARER_TOKEN` | env var (`rentumo.env`) | The shared admin bearer. Rotate by redeploying. |
-| `markets.json` | mounted at `/data/markets.json` | The 26 market codes + admin domains. See `markets.example.json` for the schema; pull real values from the spotlight-refresh project's account maps. |
+| `RENTUMO_BEARER_TOKEN` | env var (`rentumo.env`) | The shared admin bearer (the only secret). Rotate by redeploying. **Never committed.** |
+| markets | bundled `src/rentumo_trials_mcp/markets.json` | The 26 market codes + public admin domains. Committed (no secrets). Edit + rebuild to change, or override at runtime. |
 
-Optional tuning: `RENTUMO_MARKETS_FILE` (default `/data/markets.json`),
-`RENTUMO_MAX_CONCURRENCY` (default `12`), `RENTUMO_REQUEST_TIMEOUT` (default `30`).
+Optional tuning: `RENTUMO_MARKETS_FILE` (override the bundled list with a file path,
+e.g. `/data/markets.json`), `RENTUMO_MAX_CONCURRENCY` (default `12`),
+`RENTUMO_REQUEST_TIMEOUT` (default `30`).
 
 ## Deploy (Hetzner box, Docker Compose + Tailscale Funnel)
 
@@ -51,8 +52,7 @@ the Meta / Google / Thribee containers.
 
 ```bash
 cd ~/Mad-Minds/mcp-stack
-cp rentumo.env.example rentumo.env     # paste RENTUMO_BEARER_TOKEN
-# put the real markets.json on the rentumo_data volume (see runbook)
+cp rentumo.env.example rentumo.env     # paste RENTUMO_BEARER_TOKEN — that's the only step
 docker compose -f compose.rentumo.yaml up -d --build
 ```
 
@@ -64,6 +64,6 @@ Local smoke test:
 
 ```bash
 pip install -r requirements.txt
-RENTUMO_BEARER_TOKEN=xxx RENTUMO_MARKETS_FILE=./markets.json \
+RENTUMO_BEARER_TOKEN=xxx \
   fastmcp run src/rentumo_trials_mcp/server.py --transport sse --port 8000
 ```
