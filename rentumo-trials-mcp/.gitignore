@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+# Real config — never commit. markets.example.json is the committed template.
+markets.json
+data/
