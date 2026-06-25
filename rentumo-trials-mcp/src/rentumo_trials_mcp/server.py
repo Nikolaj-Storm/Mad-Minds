@@ -24,7 +24,17 @@ from fastmcp import FastMCP
 
 # --- Config (server-side secrets / data) -------------------------------------
 
-RENTUMO_BEARER_TOKEN = os.environ.get("RENTUMO_BEARER_TOKEN", "")
+def _clean_secret(v: str) -> str:
+    """Strip control chars and surrounding whitespace from a credential read from
+    the environment. Pasting a token through nano/SSH can inject a trailing
+    newline, a \\r, or stray spaces — which sail past a non-empty check but make
+    the upstream API reject every request with 401. Mirrors meta-ads-mcp.
+    """
+    return "".join(ch for ch in (v or "") if ch >= " ").strip()
+
+
+_RAW_BEARER_TOKEN = os.environ.get("RENTUMO_BEARER_TOKEN", "")
+RENTUMO_BEARER_TOKEN = _clean_secret(_RAW_BEARER_TOKEN)
 
 # Markets (code + public admin domain) ship bundled next to this module — they
 # contain no secrets. To swap the list without rebuilding the image, mount an
@@ -108,6 +118,10 @@ async def health_check(request):
             "service": "Rentumo Trials MCP",
             "markets_loaded": len(MARKETS),
             "token_present": bool(RENTUMO_BEARER_TOKEN),
+            # Diagnostics — never the secret itself. token_was_dirty=true means the
+            # env value had whitespace/control chars we stripped (a likely 401 cause).
+            "token_len": len(RENTUMO_BEARER_TOKEN),
+            "token_was_dirty": _RAW_BEARER_TOKEN != RENTUMO_BEARER_TOKEN,
         }
     )
 
