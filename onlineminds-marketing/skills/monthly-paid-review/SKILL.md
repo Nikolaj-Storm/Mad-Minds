@@ -25,7 +25,8 @@ User runs `/monthly-paid-review`, names a brand, or asks for a monthly paid-medi
 3. **Live pull:** if connectors are authenticated, query Google Ads and Meta Ads for the month. Pull per-channel: spend, impressions, clicks, CTR, CPC, conversions, conversion value, CPA, ROAS. Pull the prior month too for comparison.
    - For Google Ads, pass the **exact month as `start_date`/`end_date`** (e.g. `start_date=2026-05-01`, `end_date=2026-05-31`). The connector supports any custom range, so you are not limited to presets like `LAST_MONTH` — pull whichever month or quarter was asked for, no matter how far back it is.
 4. **Thribee live pull:** call `thribee_get_spend` (or `thribee_get_all_spend` for portfolio reviews) for the month and prior month. Thribee returns spend in native market currencies — convert to the house reporting currency using the currency map (UK=GBP, SE/AT=EUR, BR=BRL, all others=USD). Include in the blended and per-channel views.
-5. **Fallback:** if no connector data is available, ask the user to paste the numbers.
+5. **Rentumo new subscribers (Rentumo only):** call `rentumo_get_all_trials` (or `rentumo_get_trials` for a single market) for the month and prior month, passing ISO dates. This is the new-subscriber (trial) outcome — divide total spend by `total_new_subscriptions` for a blended **cost-per-new-subscriber**, the headline efficiency metric for Rentumo. Report the count, the per-market breakdown, and cost-per-new-subscriber vs prior month. Skip for non-Rentumo brands.
+6. **Fallback:** if no connector data is available, ask the user to paste the numbers.
 
 Always record which source was used and the exact date range, and state it at the top of the report.
 

@@ -25,6 +25,7 @@ These load automatically when the `onlineminds-marketing` plugin installs. Each 
 | Vercel | Vendor MCP | Per-user / org | Already in use. Deployment + scheduled-job inspection. |
 | Slack | Vendor MCP | Per-user OAuth | Optional. Share finished reports. |
 | Thribee | Self-hosted VPS MCP (SSE, port 3456) | Shared bearer token (pre-wired — no marketer action needed) | Read-only ad spend across 22 markets. Tools: `thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`. See `Mad Minds Thribee MCP/README.md` for infra + token rotation. |
+| Rentumo Trials | Self-hosted Hetzner MCP (SSE, Tailscale Funnel) | Shared admin bearer token (pre-wired — no marketer action needed) | **Read-only** new-subscriber (trial) data across all Rentumo markets. Tools: `rentumo_list_markets`, `rentumo_get_trials`, `rentumo_get_all_trials`. No write path (so no spend-gate surface). See `rentumo-trials-mcp/README.md` for infra + token/markets config. |
 
 ### B. Native Claude desktop catalog
 Claude desktop's built-in **Customize → Connectors** (the top-level one, not the per-plugin one). For OnlineMinds we use exactly one connector from here:
@@ -67,6 +68,7 @@ The `/setup-marketing` skill walks through the lists in order:
    - Rentumo ApS: `https://meta-ads-rentumo.vercel.app/mcp`
 5. **Optional plugin connectors:** Notion, Slack, Supabase, Vercel
 6. **Thribee** — pre-wired (no marketer action), verify with "list Thribee markets"
+7. **Rentumo Trials** — pre-wired (no marketer action), verify with "list Rentumo markets" or "how many new subscribers did Rentumo get last week"
 
 **Coming (NOT part of setup yet):**
 - **GA4 / Google Tag Manager / Merchant Center** — not wired.

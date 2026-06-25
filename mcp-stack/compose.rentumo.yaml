@@ -1,0 +1,50 @@
+# Mad Minds MCP stack — Rentumo Trials, Tailscale Funnel.
+#
+# A SEPARATE compose project (`madminds-rentumo`) from Meta's `madminds-mcp`
+# (compose.yaml) and Google's `madminds-google` (compose.google.yaml), with its
+# own network, so `up`/`down` here never recreates or touches the other stacks.
+#
+#   https://rentumo-trials.<tailnet>.ts.net/sse -> rentumo-trials-mcp:8000
+#
+# Auth model = shared bearer (like Thribee), NOT per-user OAuth: the admin token
+# (RENTUMO_BEARER_TOKEN in rentumo.env) is the only secret. The 26 market domains
+# are BUNDLED in the image (no seeding); the /data volume is only for an optional
+# markets.json override (RENTUMO_MARKETS_FILE). Read-only — no write path, no
+# spend-gate surface. Reuses the same reusable TS_AUTHKEY as the Meta/Google stacks.
+#
+# Deploy (see README in ../rentumo-trials-mcp):
+#   cp rentumo.env.example rentumo.env   # paste RENTUMO_BEARER_TOKEN — that's it
+#   docker compose -f compose.rentumo.yaml up -d --build
+name: madminds-rentumo
+
+services:
+  rentumo-trials-mcp:
+    build: ../rentumo-trials-mcp
+    image: madminds/rentumo-trials-mcp:latest
+    restart: unless-stopped
+    networks: [rnet]
+    expose: ["8000"]
+    env_file: ./rentumo.env
+    volumes: [ rentumo_data:/data ]
+
+  tailscale-rentumo-trials:
+    image: tailscale/tailscale:latest
+    restart: unless-stopped
+    env_file: ./tailscale.env            # same reusable TS_AUTHKEY as the other stacks
+    networks: [rnet]
+    environment:
+      TS_HOSTNAME: rentumo-trials         # -> https://rentumo-trials.<tailnet>.ts.net
+      TS_USERSPACE: "true"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./tailscale/serve-rentumo-trials.json:/config/serve.json:ro
+      - ts_rentumo_trials_state:/var/lib/tailscale
+    depends_on: [rentumo-trials-mcp]
+
+networks:
+  rnet:
+
+volumes:
+  rentumo_data:
+  ts_rentumo_trials_state:

@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+# NOTE: markets.json (code + public domain, no secrets) IS committed at
+# src/rentumo_trials_mcp/markets.json. The only secret is RENTUMO_BEARER_TOKEN,
+# which lives in the environment / rentumo.env on the box — never in the repo.
+data/

@@ -1,0 +1,31 @@
+{
+  "_comment": "Real Rentumo market map for the Trials connector: market code + admin domain (and a readable name). Domains are public; this file contains NO secrets. The admin bearer token is NOT here — it is the RENTUMO_BEARER_TOKEN env var, server-side only. To change markets without rebuilding the image, mount an override file and set RENTUMO_MARKETS_FILE to its path.",
+  "markets": [
+    { "code": "BE",  "domain": "rentumo.be",     "name": "Belgium" },
+    { "code": "NL",  "domain": "rentumo.nl",     "name": "Netherlands" },
+    { "code": "UK",  "domain": "rentumo.co.uk",  "name": "United Kingdom" },
+    { "code": "FR",  "domain": "rentumo.fr",     "name": "France" },
+    { "code": "PL",  "domain": "rentumo.pl",     "name": "Poland" },
+    { "code": "DE",  "domain": "rentumo.de",     "name": "Germany" },
+    { "code": "IE",  "domain": "rentumo.ie",     "name": "Ireland" },
+    { "code": "DK",  "domain": "rentumo.dk",     "name": "Denmark" },
+    { "code": "AU",  "domain": "rentumo.au",     "name": "Australia" },
+    { "code": "COM", "domain": "rentumo.com",    "name": "Global (.com)" },
+    { "code": "SE",  "domain": "rentumo.se",     "name": "Sweden" },
+    { "code": "CH",  "domain": "rentumo.ch",     "name": "Switzerland" },
+    { "code": "AT",  "domain": "rentumo.at",     "name": "Austria" },
+    { "code": "NZ",  "domain": "rentumo.nz",     "name": "New Zealand" },
+    { "code": "ES",  "domain": "rentumo.es",     "name": "Spain" },
+    { "code": "PT",  "domain": "rentumo.pt",     "name": "Portugal" },
+    { "code": "IT",  "domain": "rentumo.it",     "name": "Italy" },
+    { "code": "BR",  "domain": "rentumo.com.br", "name": "Brazil" },
+    { "code": "GR",  "domain": "rentumo.gr",     "name": "Greece" },
+    { "code": "CZ",  "domain": "rentumo.cz",     "name": "Czechia" },
+    { "code": "MX",  "domain": "rentumo.mx",     "name": "Mexico" },
+    { "code": "HU",  "domain": "rentumo.hu",     "name": "Hungary" },
+    { "code": "RO",  "domain": "rentumo.ro",     "name": "Romania" },
+    { "code": "SK",  "domain": "rentumo.sk",     "name": "Slovakia" },
+    { "code": "MY",  "domain": "rentumo.my",     "name": "Malaysia" },
+    { "code": "CA",  "domain": "rentumo.ca",     "name": "Canada" }
+  ]
+}
