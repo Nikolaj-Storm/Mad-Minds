@@ -24,7 +24,23 @@ from fastmcp import FastMCP
 
 # --- Config (server-side secrets / data) -------------------------------------
 
-RENTUMO_BEARER_TOKEN = os.environ.get("RENTUMO_BEARER_TOKEN", "")
+def _clean_secret(v: str) -> str:
+    """Normalize a credential read from the environment. Editing the env over
+    nano/SSH is error-prone, and a dirty value sails past a non-empty check but
+    makes the upstream API reject every request with 401. Two failure modes seen
+    in practice (both fixed here):
+      * trailing newline / \\r / stray spaces -> stripped (mirrors meta-ads-mcp);
+      * the line's own 'RENTUMO_BEARER_TOKEN=' prefix typed twice, so docker
+        compose (splitting on the first '=') keeps a second copy in the value.
+    """
+    v = "".join(ch for ch in (v or "") if ch >= " ").strip()
+    if v.startswith("RENTUMO_BEARER_TOKEN="):
+        v = v[len("RENTUMO_BEARER_TOKEN="):].strip()
+    return v
+
+
+_RAW_BEARER_TOKEN = os.environ.get("RENTUMO_BEARER_TOKEN", "")
+RENTUMO_BEARER_TOKEN = _clean_secret(_RAW_BEARER_TOKEN)
 
 # Markets (code + public admin domain) ship bundled next to this module — they
 # contain no secrets. To swap the list without rebuilding the image, mount an
@@ -108,6 +124,10 @@ async def health_check(request):
             "service": "Rentumo Trials MCP",
             "markets_loaded": len(MARKETS),
             "token_present": bool(RENTUMO_BEARER_TOKEN),
+            # Diagnostics — never the secret itself. token_was_dirty=true means the
+            # env value had whitespace/control chars we stripped (a likely 401 cause).
+            "token_len": len(RENTUMO_BEARER_TOKEN),
+            "token_was_dirty": _RAW_BEARER_TOKEN != RENTUMO_BEARER_TOKEN,
         }
     )
 
