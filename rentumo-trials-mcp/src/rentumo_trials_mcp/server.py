@@ -25,12 +25,18 @@ from fastmcp import FastMCP
 # --- Config (server-side secrets / data) -------------------------------------
 
 def _clean_secret(v: str) -> str:
-    """Strip control chars and surrounding whitespace from a credential read from
-    the environment. Pasting a token through nano/SSH can inject a trailing
-    newline, a \\r, or stray spaces — which sail past a non-empty check but make
-    the upstream API reject every request with 401. Mirrors meta-ads-mcp.
+    """Normalize a credential read from the environment. Editing the env over
+    nano/SSH is error-prone, and a dirty value sails past a non-empty check but
+    makes the upstream API reject every request with 401. Two failure modes seen
+    in practice (both fixed here):
+      * trailing newline / \\r / stray spaces -> stripped (mirrors meta-ads-mcp);
+      * the line's own 'RENTUMO_BEARER_TOKEN=' prefix typed twice, so docker
+        compose (splitting on the first '=') keeps a second copy in the value.
     """
-    return "".join(ch for ch in (v or "") if ch >= " ").strip()
+    v = "".join(ch for ch in (v or "") if ch >= " ").strip()
+    if v.startswith("RENTUMO_BEARER_TOKEN="):
+        v = v[len("RENTUMO_BEARER_TOKEN="):].strip()
+    return v
 
 
 _RAW_BEARER_TOKEN = os.environ.get("RENTUMO_BEARER_TOKEN", "")
