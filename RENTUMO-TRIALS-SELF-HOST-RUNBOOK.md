@@ -1,8 +1,9 @@
 # Rentumo Trials — self-hosted connector runbook (maintainer only)
 
-**Goal:** one read-only connector that surfaces **new subscribers (trials) per Rentumo
-market** inside Mad Minds, so the team can read subscriber growth next to ad spend.
-It is **pre-wired** in the plugin — marketers do nothing, the same as Thribee.
+**Goal:** one read-only connector that surfaces Rentumo admin KPIs **per market — new
+subscribers (trials) and revenue** — inside Mad Minds, so the team can read subscriber
+growth and gross revenue next to ad spend. It is **pre-wired** in the plugin —
+marketers do nothing, the same as Thribee.
 
 **How it works (the important part):** unlike Google/Meta (per-user OAuth), Rentumo's
 admin API uses a **single shared admin bearer token that works across every market's
@@ -12,9 +13,12 @@ the connector ships pre-wired in `onlineminds-marketing/.mcp.json`. The server i
 spend-gate.
 
 **What we deploy:** the FastMCP server in this repo at [`rentumo-trials-mcp/`](./rentumo-trials-mcp/).
-It wraps each market's `GET /api/admin/charts`, reads `.totals`, and surfaces
-`new_subscriptions`. Three tools: `rentumo_list_markets`, `rentumo_get_trials`
-(one market), `rentumo_get_all_trials` (all markets in parallel + portfolio total).
+It wraps each market's `GET /api/admin/charts`, reads `.totals`, and surfaces its KPIs
+as first-class fields: `new_subscriptions` (trials), `revenue_gross`, and the chargeback
+figures (`charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid`). Money
+fields are in each market's **local currency**, so the all-markets tool sums only the
+subscriber count, never revenue. Three tools: `rentumo_list_markets`, `rentumo_get_trials`
+(one market), `rentumo_get_all_trials` (all markets in parallel + portfolio total subs).
 
 > **Where it runs:** the Hetzner box as a Docker Compose service in
 > `mcp-stack/compose.rentumo.yaml` (project `madminds-rentumo`) behind **Tailscale

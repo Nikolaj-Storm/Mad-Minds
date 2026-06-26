@@ -6,9 +6,19 @@ API and stays a server-side secret, so the connector is pre-wired in the plugin
 (.mcp.json) and needs no marketer action — exactly like Thribee.
 
 Each market is a Rentumo domain exposing `GET /api/admin/charts`. We read the full
-`.totals` object (new_subscriptions and whatever else the endpoint returns) so the
-connector stays useful for other Rentumo KPIs, while surfacing new_subscriptions —
-the "new subscribers" / trials figure — as a first-class field.
+`.totals` object and surface every KPI it currently returns as a first-class field:
+  * new_subscriptions    — the "new subscribers" / trials count;
+  * revenue_gross        — gross revenue IN THE MARKET'S OWN LOCAL CURRENCY;
+  * charge_back_amount, chargeback_money_lost, chargeback_debts_paid — chargeback KPIs,
+    also in the market's local currency.
+The full `totals` object is still passed through untouched, so any field the endpoint
+adds later keeps flowing even before this server knows its name.
+
+CURRENCY CAVEAT: revenue/chargeback amounts are denominated in EACH market's local
+currency (e.g. SEK for Sweden, HUF for Hungary, EUR for the euro markets). Counts
+(new_subscriptions) are unitless and safe to sum across markets; money amounts are
+NOT — the all-markets tool deliberately sums only subscriptions and leaves money
+per-market so callers never accidentally add SEK to EUR.
 
 Read-only: this server only ever issues GET requests. There is no write path and no
 spend-gate surface here.
@@ -97,18 +107,24 @@ def _to_rentumo_date(iso_date: str) -> str:
 
 
 SERVER_INSTRUCTIONS = (
-    "Rentumo new-subscriber (trial) data across all markets, read-only.\n\n"
-    "WHAT IT RETURNS: each market's admin `/api/admin/charts` totals for a date "
-    "range. `new_subscriptions` is the new-subscribers / trials figure surfaced as a "
-    "first-class field; the full `totals` object is also returned for any other KPIs "
-    "the endpoint exposes.\n\n"
+    "Rentumo admin KPIs across all markets, read-only. New subscribers (trials) AND "
+    "revenue.\n\n"
+    "WHAT IT RETURNS: each market's admin `/api/admin/charts` totals for a date range, "
+    "surfaced as first-class fields: new_subscriptions (the new-subscribers / trials "
+    "count), revenue_gross (gross revenue), and the chargeback KPIs charge_back_amount, "
+    "chargeback_money_lost, chargeback_debts_paid. The full `totals` object is also "
+    "returned for any other KPIs the endpoint exposes.\n\n"
+    "CURRENCY: revenue and chargeback amounts are in EACH market's local currency "
+    "(e.g. SEK for Sweden, HUF for Hungary, EUR for euro markets) — so do NOT sum them "
+    "across markets without converting. Subscriber counts are unitless and safe to sum; "
+    "rentumo_get_all_trials sums only subscriptions for that reason.\n\n"
     "DATE RANGES: pass start_date and end_date as ISO YYYY-MM-DD. The range is "
     "inclusive. Dates resolve in each market's admin timezone.\n\n"
     "TOOLS: call rentumo_list_markets first to see the market codes. "
     "rentumo_get_trials(market, start, end) pulls one market; "
     "rentumo_get_all_trials(start, end) pulls every market in parallel and returns "
-    "the per-market breakdown plus the portfolio total new_subscriptions. There is no "
-    "write path — this connector is reporting only."
+    "the per-market breakdown (incl. revenue) plus the portfolio total new_subscriptions. "
+    "There is no write path — this connector is reporting only."
 )
 
 mcp = FastMCP(name="Rentumo Trials", instructions=SERVER_INSTRUCTIONS)
@@ -162,7 +178,13 @@ async def _fetch_market_totals(client: httpx.AsyncClient, market: dict,
         "code": market["code"],
         "name": market["name"],
         "domain": domain,
+        # First-class KPIs (counts are unitless; money is in the market's local currency).
         "new_subscriptions": totals.get("new_subscriptions"),
+        "revenue_gross": totals.get("revenue_gross"),
+        "charge_back_amount": totals.get("charge_back_amount"),
+        "chargeback_money_lost": totals.get("chargeback_money_lost"),
+        "chargeback_debts_paid": totals.get("chargeback_debts_paid"),
+        # Full passthrough so any future field still reaches the caller.
         "totals": totals,
     }
 
@@ -191,14 +213,16 @@ def rentumo_list_markets() -> dict:
 
 @mcp.tool
 async def rentumo_get_trials(market: str, start_date: str, end_date: str) -> dict:
-    """Get new subscribers (trials) for ONE market over a date range.
+    """Get admin KPIs (new subscribers + revenue) for ONE market over a date range.
 
     Args:
         market: Market code from rentumo_list_markets (e.g. "NL"). Case-insensitive.
         start_date: Inclusive start, ISO YYYY-MM-DD.
         end_date: Inclusive end, ISO YYYY-MM-DD.
 
-    Returns the market's new_subscriptions and the full admin `totals` object.
+    Returns the market's new_subscriptions (trial count), revenue_gross, the three
+    chargeback KPIs (charge_back_amount, chargeback_money_lost, chargeback_debts_paid),
+    and the full admin `totals` object. Money fields are in the market's LOCAL currency.
     """
     err = _require_config()
     if err:
@@ -215,14 +239,19 @@ async def rentumo_get_trials(market: str, start_date: str, end_date: str) -> dic
 
 @mcp.tool
 async def rentumo_get_all_trials(start_date: str, end_date: str) -> dict:
-    """Get new subscribers (trials) for EVERY market over a date range, in parallel.
+    """Get admin KPIs (new subscribers + revenue) for EVERY market, in parallel.
 
     Args:
         start_date: Inclusive start, ISO YYYY-MM-DD.
         end_date: Inclusive end, ISO YYYY-MM-DD.
 
-    Returns a per-market breakdown, the portfolio total new_subscriptions (summing
-    markets that returned a number), and any per-market errors.
+    Returns a per-market breakdown (each with new_subscriptions, revenue_gross and the
+    chargeback KPIs), the portfolio total new_subscriptions (summing markets that
+    returned a number), and any per-market errors.
+
+    Revenue is intentionally NOT summed into a portfolio figure: each market's
+    revenue_gross is in its own local currency, so a single total would mix currencies.
+    Read revenue per market from `markets`, or convert to a common currency first.
     """
     err = _require_config()
     if err:
@@ -247,6 +276,9 @@ async def rentumo_get_all_trials(start_date: str, end_date: str) -> dict:
         "start_date": start_date,
         "end_date": end_date,
         "total_new_subscriptions": total_new,
+        # Revenue is per-market local currency — see docstring; not summed on purpose.
+        "revenue_note": "revenue_gross is per-market in each market's local currency; "
+                        "not summed to avoid mixing currencies.",
         "markets_ok": len(ok),
         "markets_failed": len(errors),
         "markets": ok,

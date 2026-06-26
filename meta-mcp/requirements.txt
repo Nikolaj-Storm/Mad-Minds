@@ -1,0 +1,9 @@
+# Pinned for the deployed Meta Ads MCP. Exact pins for reproducible Docker
+# builds; verified importing + constructing the server on these versions
+# (fastmcp 2.14.7 pulls a compatible mcp/pydantic/starlette/uvicorn).
+# Bump deliberately and re-run the test suite.
+fastmcp==2.14.7
+httpx==0.28.1
+python-dotenv==1.2.2
+py-key-value-aio==0.3.0
+diskcache==5.6.3

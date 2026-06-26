@@ -1,7 +1,8 @@
 # Rentumo Trials MCP
 
-A small, read-only MCP server that reports **new subscribers (trials)** per Rentumo
-market, so Mad Minds can track subscriber growth alongside ad spend.
+A small, read-only MCP server that reports Rentumo admin KPIs per market —
+**new subscribers (trials)** *and* **revenue** — so Mad Minds can track subscriber
+growth and gross revenue alongside ad spend.
 
 It wraps each market's admin endpoint:
 
@@ -10,8 +11,22 @@ GET https://{domain}/api/admin/charts?start_date={D. M. YYYY}&end_date={D. M. YY
 Authorization: Bearer {RENTUMO_BEARER_TOKEN}
 ```
 
-and reads `.totals` — surfacing `new_subscriptions` as a first-class field while
-returning the full `totals` object for any other KPIs the endpoint exposes.
+and reads `.totals`, surfacing every KPI it returns as a first-class field:
+
+| Field | Meaning | Unit |
+|---|---|---|
+| `new_subscriptions` | New subscribers / trials | count (sums across markets) |
+| `revenue_gross` | Gross revenue | **market's local currency** |
+| `charge_back_amount` | Chargebacks raised | market's local currency |
+| `chargeback_money_lost` | Chargeback money lost | market's local currency |
+| `chargeback_debts_paid` | Chargeback debts recovered | market's local currency |
+
+The full `totals` object is still returned untouched, so any field the endpoint adds
+later keeps flowing through.
+
+> **Currency caveat:** revenue/chargeback amounts are in each market's own currency
+> (SEK, HUF, EUR, …). Counts are unitless and safe to sum; **money is not** — so
+> `rentumo_get_all_trials` sums only `new_subscriptions` and leaves revenue per-market.
 
 ## Auth model — shared bearer (like Thribee, NOT per-user OAuth)
 
@@ -26,8 +41,8 @@ spend-gate.
 | Tool | What it does |
 |---|---|
 | `rentumo_list_markets` | List market codes + admin domains. Call first. |
-| `rentumo_get_trials(market, start_date, end_date)` | New subscribers for one market. |
-| `rentumo_get_all_trials(start_date, end_date)` | All markets in parallel → per-market breakdown + portfolio total. |
+| `rentumo_get_trials(market, start_date, end_date)` | Subscribers + revenue + chargebacks for one market. |
+| `rentumo_get_all_trials(start_date, end_date)` | All markets in parallel → per-market breakdown (incl. revenue) + portfolio total subscriptions. |
 
 Dates are ISO `YYYY-MM-DD`; the server converts to the admin API's quirky
 `"25. 6. 2026"` format and URL-encodes it.

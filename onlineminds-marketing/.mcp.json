@@ -29,7 +29,7 @@
     "rentumo-trials": {
       "type": "sse",
       "url": "https://rentumo-trials.tail40453d.ts.net/sse",
-      "_comment": "Rentumo new-subscriber (trial) data across all markets. Self-hosted on the Hetzner box (rentumo-trials-mcp/, compose.rentumo.yaml, project madminds-rentumo). Same auth model as Thribee — shared admin bearer (RENTUMO_BEARER_TOKEN) stays server-side, no per-user OAuth. READ-ONLY (GET only — no write path, no spend-gate surface). Reads each market's /api/admin/charts .totals and surfaces new_subscriptions. Tools: rentumo_list_markets, rentumo_get_trials (single market + ISO date range), rentumo_get_all_trials (all markets in parallel + portfolio total new_subscriptions). See rentumo-trials-mcp/README.md."
+      "_comment": "Rentumo admin KPIs across all markets — new subscribers (trials) AND revenue. Self-hosted on the Hetzner box (rentumo-trials-mcp/, compose.rentumo.yaml, project madminds-rentumo). Same auth model as Thribee — shared admin bearer (RENTUMO_BEARER_TOKEN) stays server-side, no per-user OAuth. READ-ONLY (GET only — no write path, no spend-gate surface). Reads each market's /api/admin/charts .totals and surfaces five first-class fields: new_subscriptions, revenue_gross, charge_back_amount, chargeback_money_lost, chargeback_debts_paid. CURRENCY: revenue/chargeback amounts are in each market's LOCAL currency, so never sum revenue across markets — rentumo_get_all_trials sums only new_subscriptions. Tools: rentumo_list_markets, rentumo_get_trials (single market + ISO date range), rentumo_get_all_trials (all markets in parallel + per-market revenue + portfolio total new_subscriptions). See rentumo-trials-mcp/README.md."
     }
   },
   "_pending_connectors": {

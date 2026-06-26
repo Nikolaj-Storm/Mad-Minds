@@ -59,6 +59,8 @@ For each connector: say what it's for in one sentence, test it with a trivial re
 
 - **Thribee** (plugin connector — pre-wired, no setup needed) — ad spend data across 22 markets. This is already included in the plugin's `.mcp.json` with a shared bearer token, so it connects automatically when the plugin loads. No action required from the marketer. Verify it's working by asking "list Thribee markets" — it should return the 22 configured markets.
 
+- **Rentumo Trials** (plugin connector — pre-wired, no setup needed) — **Rentumo only**: new subscribers (trials) **and revenue** across all 26 Rentumo markets, read-only. Each market returns `new_subscriptions`, `revenue_gross`, and chargeback figures. Pre-wired with a shared bearer token, so no marketer login. Revenue is in each market's **local currency** (never summed across markets). Verify by asking "how many new subscribers and how much revenue did Rentumo get last month".
+
 Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional plugin connectors.
 
 Not available yet (don't walk through; if asked, say they're coming): **GA4**, **Google Tag Manager**, **Google Merchant Center**. For organic search, use Google Search Console.
@@ -107,6 +109,7 @@ Show them this — verbatim layout, headings exactly as shown:
 > Act (live ad accounts, with safety gates)
 > - `/ad-actions <brand> <change>` — pause/enable, budget/bid changes, add negatives, create ads/campaigns on Google + Meta, edit GTM. **Spend increases require you to type back a verbatim confirmation phrase** (Tier 1). Pauses and budget decreases are quick yes (Tier 2). GTM changes affecting conversion tracking are Tier 1.
 > - **Thribee** is pre-wired (no login needed) — ask "show Thribee spend for DK last month" to pull cross-market spend data across all 22 markets.
+> - **Rentumo Trials** is pre-wired (Rentumo only) — ask "how many new subscribers and how much revenue did Rentumo get last month" to pull trials + revenue per market. Revenue is in each market's local currency.
 >
 > Document
 > - `/report-builder` — assemble any of the above into a stakeholder-ready report

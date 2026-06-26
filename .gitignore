@@ -1,2 +1,6 @@
 .DS_Store
 *.log
+
+# Local staging of the separate machine repo (lives in its own GitHub repo)
+Mad-Minds-Machine/
+Mad-Minds-Machine-repo/

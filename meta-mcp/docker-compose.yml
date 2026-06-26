@@ -1,0 +1,38 @@
+# Meta Ads MCP — plain Docker deployment (e.g. a private Hetzner server).
+#
+# This file is PROXY-AGNOSTIC. The container listens on plain HTTP on 8000 and is
+# bound to localhost only (127.0.0.1:8000). Claude desktop's custom connector
+# needs a PUBLIC HTTPS URL, so you MUST put a TLS-terminating reverse proxy
+# (Caddy, nginx + certbot, Traefik, a Cloudflare Tunnel, ...) in front and route
+# it to 127.0.0.1:8000. See META-SELF-HOST-RUNBOOK.md for a minimal example.
+#
+# Persisted OAuth/session state lives in the named volume `meta_data` (mounted at
+# /data), so marketers sign in once and survive container restarts — the same
+# role the Fly volume plays for gads-mcp.
+
+services:
+  meta-mcp:
+    build: .
+    image: onlineminds/meta-mcp:latest
+    container_name: meta-mcp
+    restart: unless-stopped
+    # Bind to localhost only; the reverse proxy is the only thing that should
+    # reach it. Change to "8000:8000" only if you deliberately want it exposed.
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    environment:
+      # CLIENT_STORAGE_DIR must point inside the mounted volume so sign-ins persist.
+      CLIENT_STORAGE_DIR: /data
+    volumes:
+      - meta_data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  meta_data:
