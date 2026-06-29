@@ -1,78 +1,56 @@
-# ga4-mcp — Google Analytics (GA4) connector for marketers
+# ga4-mcp — Google Analytics (GA4) connector
 
-The Analytics sibling of the marketer `gads-mcp`. Humans use it through Claude
-(Desktop or the Mad-Minds stack). Auth is **each marketer's own Google sign-in**
-(OAuth, scope `analytics.readonly`). GA4 is reporting-only, so every tool is
-**read-only** — there are no write/mutate tools.
-
-> Counterpart: the `mad-minds-machine` repo has `ga4-ro`, the same tools but for
-> autonomous "robot"/cron use behind a service account + shared bearer. This one is
-> the human, per-user-OAuth version.
+The Analytics sibling of `gads-mcp` and `gsc-mcp`. Per-user Google OAuth via
+FastMCP's `GoogleProvider` (marketers sign in once; tokens persist on the `/data`
+volume). Reached at `https://ga4.<tailnet>.ts.net/mcp`. GA4 is reporting-only, so
+every tool is **read-only**.
 
 ## Tools
 
-| Tool | What it returns |
+| Tool | Returns |
 |---|---|
-| `list_properties` | GA4 properties your Google account can read (numeric `property_id`s) |
+| `list_properties` | GA4 properties the signed-in account can read (numeric `property_id`s) |
 | `get_traffic` | sessions / users / engagement by channel, source/medium, country, device, date… |
 | `get_top_pages` | most-viewed pages with users + engagement time |
 | `get_conversions` | key events by event name (count + revenue) |
 | `get_report` | arbitrary dimensions + metrics (escape hatch) |
 | `get_realtime` | activity in the last ~30 minutes |
-| `server_status` | non-sensitive config health check |
 
 Dates accept ISO `YYYY-MM-DD` or GA4 relative tokens (`today`, `yesterday`,
 `NdaysAgo`, e.g. `28daysAgo`). Default window is the last 28 days.
 
-## Auth wiring (important)
+## Layout
 
-`src/ga4_mcp/client.py::get_credentials()` builds Google OAuth `Credentials` from
-env vars (`GA4_OAUTH_CLIENT_ID`, `GA4_OAUTH_CLIENT_SECRET`, `GA4_OAUTH_REFRESH_TOKEN`)
-so it runs standalone out of the box. **If Mad-Minds already injects each marketer's
-Google token through a shared OAuth helper** (the way `gads-mcp` / the Google
-connector do), replace the body of `get_credentials()` with a call into that helper
-and keep everything else. Scope needed: `https://www.googleapis.com/auth/analytics.readonly`.
-
-## Run it
-
-**Claude Desktop (stdio).** Add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "google-analytics": {
-      "command": "python",
-      "args": ["-m", "ga4_mcp"],
-      "env": {
-        "PYTHONPATH": "/abs/path/to/ga4-mcp/src",
-        "GA4_OAUTH_CLIENT_ID": "...apps.googleusercontent.com",
-        "GA4_OAUTH_CLIENT_SECRET": "...",
-        "GA4_OAUTH_REFRESH_TOKEN": "...",
-        "GA4_PROPERTY_ID": "123456789"
-      }
-    }
-  }
-}
+```
+ga4-mcp/
+  Dockerfile
+  requirements.txt
+  src/mcp_ga4/
+    __init__.py
+    server.py     # FastMCP app; auth auto-loaded from FASTMCP_SERVER_AUTH_* env
+    run.py        # ASGI entrypoint: mcp.http_app(path="/mcp")
+    tools.py      # the read-only reporting tools (async, FastMCP Context)
+    service.py    # wraps the per-user OAuth token in google-auth Credentials
+    utils.py      # date/name validation, error formatting
 ```
 
-**HTTP (Mad-Minds stack), like the other connectors:**
+## Wiring (already done in this repo)
 
-```bash
-pip install -r requirements.txt
-PYTHONPATH=src uvicorn ga4_mcp.run:app --host 0.0.0.0 --port 8000
-# or: docker build -t madminds/ga4-mcp . && docker run -p 8000:8000 --env-file .env madminds/ga4-mcp
-```
+- Service `ga4-mcp` + `tailscale-ga4` sidecar added to `mcp-stack/compose.google.yaml`.
+- `mcp-stack/tailscale/serve-ga4.json` funnels `https://ga4.<tailnet>.ts.net` → `ga4-mcp:8000`.
+- `mcp-stack/google.env.example` documents the GA4 scope line.
 
-Wire it into the stack the same way `gads-mcp` is registered (compose service +
-whatever plugin/connector manifest lists the marketer servers). If marketer
-connectors sit behind a shared auth middleware, pass it in `run.py`'s
-`mcp.http_app(..., middleware=[...])`.
+## Deploy (on the server, as `mcp`)
 
-## Setup checklist
-
-- [ ] Enable the **Analytics Data API** and **Analytics Admin API** in the Google
-      Cloud project behind the OAuth client.
-- [ ] OAuth consent scope includes `analytics.readonly`.
-- [ ] The signed-in Google account has at least **Viewer** on the GA4 properties.
-- [ ] Verify: `server_status` → tokens present; `list_properties` → IDs; `get_traffic`
-      → data.
+1. **Google Cloud** (the OAuth client behind this server):
+   - Enable the **Analytics Data API** and **Analytics Admin API**.
+   - Add redirect URI `https://ga4.<your-tailnet>.ts.net/auth/callback`.
+2. `cd ~/Mad-Minds/mcp-stack && cp google.env.example ga4.env`, then in `ga4.env`:
+   - `FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_ID` / `_CLIENT_SECRET`
+   - `FASTMCP_SERVER_AUTH_GOOGLE_REQUIRED_SCOPES=openid,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/analytics.readonly`
+   - `FASTMCP_SERVER_AUTH_GOOGLE_BASE_URL=https://ga4.<your-tailnet>.ts.net`
+   - `CLIENT_STORAGE_DIR=/data`, `JWT_SIGNING_KEY=<openssl rand -hex 32>`
+   - delete the `GOOGLE_ADS_*` / `READONLY_MODE` lines (Ads-only).
+3. `docker compose -f compose.google.yaml up -d --build ga4-mcp tailscale-ga4`
+4. Marketers connect to `https://ga4.<your-tailnet>.ts.net/mcp` and sign in with Google once.
+   Verify with `list_properties` → `get_traffic`.
