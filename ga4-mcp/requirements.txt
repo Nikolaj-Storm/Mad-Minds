@@ -1,0 +1,9 @@
+# Google Analytics (GA4) marketer MCP — Analytics Data + Admin APIs via
+# per-user Google OAuth.
+fastmcp>=2.12,<3
+google-analytics-data>=0.18.0
+google-analytics-admin>=0.22.0
+google-auth>=2.30.0
+google-auth-oauthlib>=1.2.0
+python-dotenv>=1.0.0
+uvicorn[standard]>=0.30
