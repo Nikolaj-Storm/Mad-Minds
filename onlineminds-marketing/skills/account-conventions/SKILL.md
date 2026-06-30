@@ -194,6 +194,8 @@ Use these definitions consistently across all reports so numbers are comparable 
 
 **Rentumo revenue source.** For Rentumo, gross revenue is available live from the Rentumo Trials connector (`revenue_gross`, per market, in each market's local currency) — use it for revenue-based KPIs like ROAS/MER instead of estimating, and state the currency. It is **not** ad-attributed revenue: it's total gross admin revenue per market, so a revenue/spend ratio built from it is a blended MER, not a platform ROAS. Chargeback fields (`charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid`) are available alongside it for net-revenue context. Never sum revenue across markets without converting to one currency first.
 
+**Rentumo conversion attribution (per channel).** For "how many conversions / how much value did `<channel>` drive" questions, the source of truth is the **Rentumo Conversions** connector — see the dedicated section "Conversions by channel (Rentumo)" below for the default routing rule, the canonical channel mapping, and how organic is counted. Do not make the user name a datasource; this routing is automatic.
+
 ## Thribee spend currency (per market) — non-overridable mapping
 
 Thribee reports ad spend in a **fixed currency per market**, and for several markets that currency is **not** the market's own local currency. In particular SE, PL, CH, CZ, HU, RO, and MX are all reported by Thribee in **EUR** — not SEK, PLN, CHF, CZK, HUF, RON, or MXN. Always interpret a Thribee spend figure using the table below; never assume it matches the local currency (unlike Rentumo Trials revenue, which *is* local), and never silently relabel or convert it.
@@ -212,6 +214,52 @@ This is the complete 22-market Thribee set returned by `thribee_list_markets`. R
 - The 16 EUR markets share one currency, so their EUR spend can be summed directly. The GBP / DKK / BRL / USD markets are different currencies and **must be converted to the house reporting currency before being added into any blended or portfolio total**.
 - `thribee_get_all_spend` returns per-market figures in these mixed currencies. Convert each non-house-currency market to the house reporting currency (see "Reporting currency" above) before summing. **Never sum raw Thribee spend across currencies.**
 - When a market's Thribee currency differs from the currency the same market reports elsewhere (e.g. Rentumo Trials revenue for SE is in SEK while Thribee spend for SE is in EUR), convert both to one currency before computing any cross-source ratio (cost-per-subscriber, ROAS/MER).
+
+## Conversions by channel (Rentumo) — default attribution model
+
+When anyone asks "how many conversions / how much value did `<channel>` drive for `<brand>` in `<market>`" — or any per-channel attribution question — use this model **by default. The marketer should NOT have to say which datasource to look at; route it automatically.**
+
+### Which source answers what (don't make the user pick)
+
+- **Per-channel conversions & value → Rentumo Conversions connector.** This is OnlineMinds' OWN attribution system, keyed on `utm_source`. Tools: `conversions_get_attribution` (conversion COUNTS by a UTM dimension, first vs last touch), `conversions_get_offline_summary` (counts + VALUE by source), `conversions_get_source` (one channel across both feeds at once). **Rentumo brand only.**
+- **Total conversions / trials for a market (no channel split) → Rentumo Trials connector** (`new_subscriptions`). This is the denominator the per-channel counts should add up toward.
+- **Spend for a channel → Thribee / Google Ads / Meta Ads.** **Thribee is the SPEND side of the Lifull-connect channel** — there is no `utm_source = "thribee"`; that channel appears as `Lifull-connect` in the conversions feed, and Thribee gives its cost. Google/Meta report their own platform spend.
+- **GA4 / platform-reported conversions = secondary, a cross-check only.** Google's and Meta's self-attributed conversions (and GA4's channel grouping) overlap and double-count; never sum them with the Rentumo Conversions numbers, and don't present them as unified attribution. GA4 is not wired yet.
+
+Default to **first-touch** unless the user asks for last-touch (first-touch credits what *introduced* the customer, last-touch what *closed* them — they differ a lot for channels like Lifull-connect).
+
+### Canonical channel mapping (always normalize the raw `utm_source`)
+
+The raw `utm_source` is messy — casing variants, typos, and campaign IDs that leaked into the field. Always fold raw values into these canonical channels before reporting per-channel numbers:
+
+| Canonical channel | Raw `utm_source` values to map in | Spend source |
+|---|---|---|
+| **Google** | `google` | Google Ads |
+| **Meta** | `fb`, `ig`, `instagram`, `facebook`, `fb-post` | Meta Ads |
+| **Lifull-connect** | `Lifull-connect` | **Thribee** |
+| **Bing / Microsoft** | `bing` (rows carrying `msclkid`) | Microsoft Ads |
+| **TikTok / Snapchat** | `tiktok` / `snapchat` | resp. platform |
+| **Email / search-agent** | `search_agent_mailer`, `SAM`, `email`, `alert` | own (no ad spend) |
+| **Affiliate** | `huurwoningkoning*` (NL), `daisycon`, `blue`, and any row with `utm_medium=affiliate` — keep the specific affiliate name as a sub-label | affiliate payout |
+| **Organic / Direct (untagged)** | blank `utm_source` with no paid medium (the residual) | — |
+| **Other / untagged** | numeric campaign IDs, `{{site_source_name}}`, anything unrecognized | — |
+
+Affiliate channels are **market-specific** — e.g. **`huurwoningkoning` is NL-only.** The canonical per-market affiliate list and the exact conversion definition (trial vs paid sub) are brand/market values: read them from `01_Knowledge_Base/account-conventions-live`; if not filled, ask once and write them in. **Never invent affiliate names or assume a channel exists in a market without checking the feed.**
+
+### Organic conversions = the residual (this is the right framing)
+
+"Organic" conversions are the ones **no paid/affiliate/email source claims** — the blank-`utm_source` residual already present in the Rentumo Conversions feed. So the organic conversion **count comes from that residual**, not from a separate tool. Corroborate its size/trend with:
+
+- **Google Search Console** — organic-search clicks/impressions/queries (traffic context only; **GSC has no conversion or revenue data**, so it can size organic *traffic* but not organic *conversions*).
+- **GA4** — organic-channel conversions, once wired (treat as secondary).
+
+The blank-source bucket mixes genuine organic/direct with paid clicks that lost their UTM, so label it "Organic / Direct (untagged)" and flag it as approximate.
+
+### Reconciliation & guardrails
+
+- Per-channel conversions (paid + affiliate + email + organic) for a market/range should **roughly reconcile to that market's Rentumo Trials total** — use it as a sanity check and report any gap.
+- **Currency:** offline conversion VALUE is in each market's local currency (from the feed); Thribee spend is the fixed Thribee currency for that market (see the table above — often EUR, not local). Convert both to the house reporting currency before any per-channel CPA/ROAS, and never sum value across markets.
+- **Brand scope:** this own-attribution system is **Rentumo only.** For other brands there is no equivalent yet — say so plainly (GA4 would be the cross-brand path once wired); do **not** silently substitute platform self-reported numbers as if they were unified attribution.
 
 ## Brand voice
 
@@ -239,6 +287,7 @@ Each brand's voice, tone, banned/preferred terms, and positioning live in `01_Kn
 | Product feeds | Google Merchant Center | **Write-capable.** Read feed health and product-level performance; edit attributes, supplemental feeds, promotions. Powers Google Shopping, PMax product groups, YouTube Shopping. Only needed for brands running feed-based campaigns (ecom/marketplace); skip for service brands. Tier 2 for most edits; Tier 1 when enabling new spending or publishing live promotions. |
 | Paid — Thribee | Thribee (plugin MCP, shared bearer token) | Read-only spend data across 22 markets (`thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`). Pre-wired in the plugin — no per-user auth needed. Use alongside Google/Meta for markets where Thribee is the primary spend source. **Currency:** each market reports spend in a fixed currency (mostly EUR; UK=GBP, DK=DKK, BR=BRL, AU/CA/MY=USD) — see "Thribee spend currency (per market)" above; convert before summing across currencies. |
 | Subscribers + revenue — Rentumo | Rentumo Trials (plugin MCP, shared bearer token) | Read-only Rentumo admin KPIs across all markets (`rentumo_list_markets`, `rentumo_get_trials`, `rentumo_get_all_trials`): new-subscriber (trial) counts **and revenue + chargebacks** — each market returns `new_subscriptions`, `revenue_gross`, `charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid`. Pre-wired — no per-user auth. Pair subscribers with Google/Meta/Thribee spend for cost-per-new-subscriber, and revenue for ROAS/MER. Pass ISO dates; `rentumo_get_all_trials` sums **only** subscriptions across markets and returns revenue per-market. **Currency:** revenue/chargeback amounts are in each market's **local currency** (SEK, HUF, EUR, …) — never sum revenue across markets without converting first. Rentumo only. |
+| Conversion attribution by channel — Rentumo | Rentumo Conversions (plugin MCP, no auth — public feeds) | Read-only per-channel conversion attribution (`conversions_list_markets`, `conversions_get_attribution`, `conversions_get_offline_summary`, `conversions_get_source`). OnlineMinds' OWN attribution system, keyed on `utm_source` (Google / Meta / Lifull-connect / email / affiliates like NL-only `huurwoningkoning` / organic residual). Counts (first vs last touch) + per-channel VALUE. **This is the default source for any "conversions for X channel in X market" question — see "Conversions by channel (Rentumo)" above for the canonical channel mapping, organic-as-residual rule, and reconciliation to Rentumo Trials. Rentumo only.** Value is per-market local currency — never sum across markets. |
 | Optional | Slack, Supabase, Vercel | See `CONNECTORS.md`. |
 
 ### Excluded connectors — never use
