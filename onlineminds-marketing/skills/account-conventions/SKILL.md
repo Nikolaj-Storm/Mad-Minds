@@ -194,6 +194,25 @@ Use these definitions consistently across all reports so numbers are comparable 
 
 **Rentumo revenue source.** For Rentumo, gross revenue is available live from the Rentumo Trials connector (`revenue_gross`, per market, in each market's local currency) — use it for revenue-based KPIs like ROAS/MER instead of estimating, and state the currency. It is **not** ad-attributed revenue: it's total gross admin revenue per market, so a revenue/spend ratio built from it is a blended MER, not a platform ROAS. Chargeback fields (`charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid`) are available alongside it for net-revenue context. Never sum revenue across markets without converting to one currency first.
 
+## Thribee spend currency (per market) — non-overridable mapping
+
+Thribee reports ad spend in a **fixed currency per market**, and for several markets that currency is **not** the market's own local currency. In particular SE, PL, CH, CZ, HU, RO, and MX are all reported by Thribee in **EUR** — not SEK, PLN, CHF, CZK, HUF, RON, or MXN. Always interpret a Thribee spend figure using the table below; never assume it matches the local currency (unlike Rentumo Trials revenue, which *is* local), and never silently relabel or convert it.
+
+| Thribee currency | Markets |
+|---|---|
+| **EUR** | FR, NL, DE, BE, IE, ES, PT, IT, AT, SE, PL, CH, CZ, HU, RO, MX |
+| **GBP** | UK |
+| **DKK** | DK |
+| **BRL** | BR |
+| **USD** | AU, CA, MY |
+
+This is the complete 22-market Thribee set returned by `thribee_list_markets`. Rules:
+
+- **A Thribee spend value already carries the currency above** — read it in that currency and state the currency next to every Thribee figure you report.
+- The 16 EUR markets share one currency, so their EUR spend can be summed directly. The GBP / DKK / BRL / USD markets are different currencies and **must be converted to the house reporting currency before being added into any blended or portfolio total**.
+- `thribee_get_all_spend` returns per-market figures in these mixed currencies. Convert each non-house-currency market to the house reporting currency (see "Reporting currency" above) before summing. **Never sum raw Thribee spend across currencies.**
+- When a market's Thribee currency differs from the currency the same market reports elsewhere (e.g. Rentumo Trials revenue for SE is in SEK while Thribee spend for SE is in EUR), convert both to one currency before computing any cross-source ratio (cost-per-subscriber, ROAS/MER).
+
 ## Brand voice
 
 Each brand's voice, tone, banned/preferred terms, and positioning live in `01_Knowledge_Base/brand/<brand>/brand-voice.md`. Read the relevant one before writing any customer-facing copy. Defaults across the portfolio: [FILL IN: e.g. clear, concrete, no hype, Scandinavian-direct]. Danish-language output for DK-market assets; English otherwise unless specified.
@@ -218,7 +237,7 @@ Each brand's voice, tone, banned/preferred terms, and positioning live in `01_Kn
 | Organic search | Google Search Console | Clicks, impressions, positions per query/page. |
 | Tracking config | Google Tag Manager | **Write-capable.** Diagnose tracking gaps; create/edit tags, triggers, variables; publish container versions. Changes that affect conversion counts are Tier 1 in the spend-gate (bad tracking = fake spend signals). |
 | Product feeds | Google Merchant Center | **Write-capable.** Read feed health and product-level performance; edit attributes, supplemental feeds, promotions. Powers Google Shopping, PMax product groups, YouTube Shopping. Only needed for brands running feed-based campaigns (ecom/marketplace); skip for service brands. Tier 2 for most edits; Tier 1 when enabling new spending or publishing live promotions. |
-| Paid — Thribee | Thribee (plugin MCP, shared bearer token) | Read-only spend data across 22 markets (`thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`). Pre-wired in the plugin — no per-user auth needed. Use alongside Google/Meta for markets where Thribee is the primary spend source. |
+| Paid — Thribee | Thribee (plugin MCP, shared bearer token) | Read-only spend data across 22 markets (`thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`). Pre-wired in the plugin — no per-user auth needed. Use alongside Google/Meta for markets where Thribee is the primary spend source. **Currency:** each market reports spend in a fixed currency (mostly EUR; UK=GBP, DK=DKK, BR=BRL, AU/CA/MY=USD) — see "Thribee spend currency (per market)" above; convert before summing across currencies. |
 | Subscribers + revenue — Rentumo | Rentumo Trials (plugin MCP, shared bearer token) | Read-only Rentumo admin KPIs across all markets (`rentumo_list_markets`, `rentumo_get_trials`, `rentumo_get_all_trials`): new-subscriber (trial) counts **and revenue + chargebacks** — each market returns `new_subscriptions`, `revenue_gross`, `charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid`. Pre-wired — no per-user auth. Pair subscribers with Google/Meta/Thribee spend for cost-per-new-subscriber, and revenue for ROAS/MER. Pass ISO dates; `rentumo_get_all_trials` sums **only** subscriptions across markets and returns revenue per-market. **Currency:** revenue/chargeback amounts are in each market's **local currency** (SEK, HUF, EUR, …) — never sum revenue across markets without converting first. Rentumo only. |
 | Optional | Notion, Slack, Supabase, Vercel | See `CONNECTORS.md`. |
 
