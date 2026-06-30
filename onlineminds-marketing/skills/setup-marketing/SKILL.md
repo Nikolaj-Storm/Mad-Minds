@@ -1,6 +1,6 @@
 ---
 name: setup-marketing
-description: First-session onboarding for a new marketer in the Mad Minds project. Walks them through authorizing every required connector (Google Drive, Google Search Console, Google Ads, Meta Ads), verifies Drive access to Mad Minds, asks their first name and confirms their personal folder, and ends with a capabilities overview of every skill they can run. Triggered automatically by CLAUDE.md on first session, or manually as /setup-marketing whenever a marketer wants to re-verify their setup. Use whenever a marketer is new, says "hi" / "what can you do" / "I just installed this", or asks to check their connectors.
+description: First-session onboarding for a new marketer in the Mad Minds project. Walks them through authorizing every required connector (Google Drive, Google Search Console, Google Analytics/GA4, Google Ads, Meta Ads), verifies Drive access to Mad Minds, asks their first name and confirms their personal folder, and ends with a capabilities overview of every skill they can run. Triggered automatically by CLAUDE.md on first session, or manually as /setup-marketing whenever a marketer wants to re-verify their setup. Use whenever a marketer is new, says "hi" / "what can you do" / "I just installed this", or asks to check their connectors.
 argument-hint: "(no args — runs interactively)"
 ---
 
@@ -46,26 +46,29 @@ The marketer's personal workspace lives at `Mad Minds/07_People/<lowercase-first
 
 ### Step 3 — Connect the tools (Customize → Connectors)
 
-All connecting happens in **Customize → Connectors** (the top-level panel). Google Drive is in Claude's built-in catalog; **Google Search Console, Google Ads, and Meta Ads are added as *custom connectors*** (paste a URL). The custom-connector path uses Claude's hosted sign-in, which is the reliable one.
+All connecting happens in **Customize → Connectors** (the top-level panel). Google Drive is in Claude's built-in catalog; **Google Search Console, Google Analytics (GA4), Google Ads, and Meta Ads are added as *custom connectors*** (paste a URL). The custom-connector path uses Claude's hosted sign-in, which is the reliable one.
 
-> IMPORTANT: Do NOT authenticate Google Search Console, Google Ads, or Meta Ads through an in-session sign-in link (a `localhost` URL). Claude desktop's plugin/in-session OAuth listener is unreliable — it fails with "no flow in progress" and the tools never register. Always use the **Add custom connector** path below. (There is no `authenticate` tool to call for these now — they aren't plugin servers anymore.)
+> IMPORTANT: Do NOT authenticate Google Search Console, GA4, Google Ads, or Meta Ads through an in-session sign-in link (a `localhost` URL). Claude desktop's plugin/in-session OAuth listener is unreliable — it fails with "no flow in progress" and the tools never register. Always use the **Add custom connector** path below. (There is no `authenticate` tool to call for these now — they aren't plugin servers anymore.)
 
 For each connector: say what it's for in one sentence, test it with a trivial read, and if it isn't connected give the exact steps and wait for "done" before re-testing. If one won't connect after two tries, note it and move on — don't block onboarding.
 
 - **Google Drive** (built-in catalog) — the Mad Minds Hub. Steps: Customize → Connectors → **Google Drive → Connect** → sign in with `@onlineminds.io`.
 - **Google Search Console** (custom connector) — organic clicks/impressions/positions; read-only; they see only their own verified properties. Steps: Customize → Connectors → **Add custom connector** → URL `https://gsc.tail40453d.ts.net/mcp` → leave Advanced settings empty → **Add** → **Connect** → sign in with the Google account that has their Search Console. (After connecting, a new session may be needed for the tools to appear.)
+- **Google Analytics (GA4)** (custom connector) — on-site sessions/users by channel & source, conversions (key events), top pages, realtime; read-only; per-user (they see only properties they can read). Steps: Customize → Connectors → **Add custom connector** → URL `https://ga4.tail40453d.ts.net/mcp` → leave Advanced settings empty → **Add** → **Connect** → sign in with the Google account that has their Google Analytics. (After connecting, a new session may be needed for the tools to appear.)
 - **Google Ads** (custom connector) — campaign reporting + management (read+write); per-user; they see only accounts they can access; writes simulate (READONLY_MODE) until enabled and route through `/ad-actions`. Steps: Customize → Connectors → **Add custom connector** → URL `https://gads.tail40453d.ts.net/mcp` → leave Advanced settings empty → **Add** → **Connect** → sign in with the Google account that has their Google Ads.
-- **Meta Ads** (custom connector(s) — self-hosted, like Google Ads) — Facebook/Instagram reporting + management (read+write); per-user; they see only ad accounts they can access; writes simulate (READONLY_MODE) until enabled and route through `/ad-actions`. **Two Meta business areas → two connectors; add the one(s) the marketer manages:** onlineminds.io → `https://meta-onlineminds.tail40453d.ts.net/mcp` ; Rentumo → `https://meta-rentumo.tail40453d.ts.net/mcp`. Steps: Customize → Connectors → **Add custom connector** → the URL → leave Advanced settings empty → **Add** → **Connect** → sign in with their **Facebook** account. (After connecting, a new session may be needed for the tools to appear. The marketer's Facebook must hold a role in the relevant ad accounts; if Meta returns a permission error, they're not added to that account/Business Manager yet.)
+- **Meta Ads** (custom connector(s) — self-hosted, like Google Ads) — Facebook/Instagram reporting + management (read+write); per-user; they see only ad accounts they can access; writes simulate (READONLY_MODE) until enabled and route through `/ad-actions`. **Two Meta business areas → two connectors; add the one(s) the marketer manages:** onlineminds.io → `https://meta-ads-onlineminds.vercel.app/mcp` ; Rentumo → `https://meta-ads-rentumo.vercel.app/mcp`. Steps: Customize → Connectors → **Add custom connector** → the URL → leave Advanced settings empty → **Add** → **Connect** → sign in with their **Facebook** account. (After connecting, a new session may be needed for the tools to appear. The marketer's Facebook must hold a role in the relevant ad accounts; if Meta returns a permission error, they're not added to that account/Business Manager yet.)
 
 - **Thribee** (plugin connector — pre-wired, no setup needed) — ad spend data across 22 markets. This is already included in the plugin's `.mcp.json` with a shared bearer token, so it connects automatically when the plugin loads. No action required from the marketer. Verify it's working by asking "list Thribee markets" — it should return the 22 configured markets.
 
 - **Rentumo Trials** (plugin connector — pre-wired, no setup needed) — **Rentumo only**: new subscribers (trials) **and revenue** across all 26 Rentumo markets, read-only. Each market returns `new_subscriptions`, `revenue_gross`, and chargeback figures. Pre-wired with a shared bearer token, so no marketer login. Revenue is in each market's **local currency** (never summed across markets). Verify by asking "how many new subscribers and how much revenue did Rentumo get last month".
 
+- **Rentumo Conversions** (plugin connector — pre-wired, no setup needed) — **Rentumo only**: per-channel conversion attribution across the Rentumo markets, read-only, no login (it reads public feeds). Tells you which channel drove conversions — Google, Meta, Lifull-connect, email, affiliates (e.g. NL-only huurwoningkoning), and an organic/direct residual — by first vs last touch, plus conversion **value** per channel (per-market local currency). This is the default source for "conversions per channel" questions. Verify by asking "how many conversions did Lifull-connect drive for Rentumo FR last month, and what were they worth".
+
 Skip Slack / Supabase / Vercel unless the marketer asks — those are optional plugin connectors.
 
 **Never set up or use Notion, Ahrefs, or AirOps.** They are intentionally out of scope for Mad Minds — Notion was removed from `.mcp.json`, and Ahrefs/AirOps are not part of this setup. If a marketer has them connected at the desktop level, do not use them; for organic/SEO data use Google Search Console instead. (See the "Excluded connectors" rule in `account-conventions`.)
 
-Not available yet (don't walk through; if asked, say they're coming): **GA4**, **Google Tag Manager**, **Google Merchant Center**. For organic search, use Google Search Console.
+Not available yet (don't walk through; if asked, say they're coming): **Google Tag Manager**, **Google Merchant Center**. For organic search, use Google Search Console.
 
 If a connector fails to authorize twice in a row, note it in the summary and continue. Do not block the whole onboarding on one connector.
 
@@ -75,6 +78,7 @@ As the connectors come online, capture what this person can actually reach, and 
 
 Gather (from the connectors that connected):
 - **Google Search Console** — call `list_sites`; record each property URL and its permission level (e.g. siteFullUser vs siteUnverifiedUser).
+- **Google Analytics (GA4)** — call `list_properties`; record the GA4 property IDs they can read (+ mapped brand/market where known).
 - **Google Ads** — call `list_accounts`; record the account IDs, and where `account-conventions-live` maps an ID to a brand, note the brand too.
 - **Meta Ads** — if connected, list the ad accounts they can access (via the Meta connector's account-listing tool) and record them + mapped brands/company.
 - **Google Drive** — their personal folder, plus any shared Hub folders they can open.
@@ -109,9 +113,13 @@ Show them this — verbatim layout, headings exactly as shown:
 > - `/campaign-plan <brand> <goal>` — full campaign brief with channels, content, KPIs
 >
 > Act (live ad accounts, with safety gates)
-> - `/ad-actions <brand> <change>` — pause/enable, budget/bid changes, add negatives, create ads/campaigns on Google + Meta, edit GTM. **Spend increases require you to type back a verbatim confirmation phrase** (Tier 1). Pauses and budget decreases are quick yes (Tier 2). GTM changes affecting conversion tracking are Tier 1.
+> - `/ad-actions <brand> <change>` — pause/enable, budget/bid changes, add negatives, create ads/campaigns on Google + Meta. **Spend increases require you to type back a verbatim confirmation phrase** (Tier 1). Pauses and budget decreases are quick yes (Tier 2).
+>
+> Pull data (read-only, ask in plain English)
+> - **GA4** — "which channels drove the most sessions and conversions on rentumo.de last 28 days?" (on-site traffic, engagement, conversions).
 > - **Thribee** is pre-wired (no login needed) — ask "show Thribee spend for DK last month" to pull cross-market spend data across all 22 markets.
 > - **Rentumo Trials** is pre-wired (Rentumo only) — ask "how many new subscribers and how much revenue did Rentumo get last month" to pull trials + revenue per market. Revenue is in each market's local currency.
+> - **Rentumo Conversions** is pre-wired (Rentumo only) — ask "how many conversions did Lifull-connect drive for Rentumo FR last month, and what were they worth" or "break down Rentumo NL conversions by channel including organic" to get per-channel attribution + value.
 >
 > Document
 > - `/report-builder` — assemble any of the above into a stakeholder-ready report
