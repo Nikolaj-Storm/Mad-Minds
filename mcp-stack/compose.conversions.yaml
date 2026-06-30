@@ -1,0 +1,57 @@
+# Mad Minds MCP stack — Rentumo Conversions, Tailscale Funnel.
+#
+# A SEPARATE compose project (`madminds-conversions`) from Meta's `madminds-mcp`
+# (compose.yaml), Google's `madminds-google` (compose.google.yaml) and the
+# Rentumo Trials `madminds-rentumo` (compose.rentumo.yaml), with its own network,
+# so `up`/`down` here never recreates or touches the other stacks.
+#
+#   https://rentumo-conversions.<tailnet>.ts.net/sse -> rentumo-conversions-mcp:8000
+#
+# RENTUMO ONLY. Reports Rentumo conversion / UTM-attribution data per market.
+#
+# Auth model = NONE. The feeds it reads are PUBLIC S3 objects (kuhamia bucket),
+# so unlike Thribee / Rentumo Trials there is not even a shared bearer — there is
+# no secret to set. Read-only (GET only): no write path, no spend-gate surface.
+# The 26 market codes + feed slugs are BUNDLED in the image (no seeding); the
+# /data volume is only for an optional markets.json override
+# (RENTUMO_CONV_MARKETS_FILE). Reuses the same reusable TS_AUTHKEY as the other
+# stacks.
+#
+# Deploy (see ../rentumo-conversions-mcp/README.md):
+#   docker compose -f compose.conversions.yaml up -d --build
+name: madminds-conversions
+
+services:
+  rentumo-conversions-mcp:
+    build: ../rentumo-conversions-mcp
+    image: madminds/rentumo-conversions-mcp:latest
+    restart: unless-stopped
+    networks: [cnet]
+    expose: ["8000"]
+    # No env_file: there is no secret. Uncomment to override defaults if ever needed.
+    # environment:
+    #   RENTUMO_CONV_CACHE_TTL: "900"
+    #   RENTUMO_CONV_MARKETS_FILE: /data/markets.json
+    volumes: [ conversions_data:/data ]
+
+  tailscale-rentumo-conversions:
+    image: tailscale/tailscale:latest
+    restart: unless-stopped
+    env_file: ./tailscale.env            # same reusable TS_AUTHKEY as the other stacks
+    networks: [cnet]
+    environment:
+      TS_HOSTNAME: rentumo-conversions    # -> https://rentumo-conversions.<tailnet>.ts.net
+      TS_USERSPACE: "true"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./tailscale/serve-rentumo-conversions.json:/config/serve.json:ro
+      - ts_rentumo_conversions_state:/var/lib/tailscale
+    depends_on: [rentumo-conversions-mcp]
+
+networks:
+  cnet:
+
+volumes:
+  conversions_data:
+  ts_rentumo_conversions_state:
