@@ -27,11 +27,14 @@ Every connector is **per-user OAuth** — Claude acts as the signed-in marketer 
 |---|---|---|
 | Mad Minds Drive Hub | Built-in Connectors catalog → **Google Drive** | `@onlineminds.io` |
 | Google Search Console | Add custom connector → `https://gsc.tail40453d.ts.net/mcp` | Google |
+| Google Analytics (GA4) | Add custom connector → `https://ga4.tail40453d.ts.net/mcp` | Google |
 | Google Ads | Add custom connector → `https://gads.tail40453d.ts.net/mcp` | Google |
-| Meta Ads — onlineminds.io | Add custom connector → `https://meta-onlineminds.tail40453d.ts.net/mcp` | Facebook |
-| Meta Ads — Rentumo | Add custom connector → `https://meta-rentumo.tail40453d.ts.net/mcp` | Facebook |
+| Meta Ads — onlineminds.io | Add custom connector → `https://meta-ads-onlineminds.vercel.app/mcp` | Facebook |
+| Meta Ads — Rentumo | Add custom connector → `https://meta-ads-rentumo.vercel.app/mcp` | Facebook |
 
-Google Ads, Search Console, and Meta Ads are **self-hosted** in this repo (`gads-mcp/`, `gsc-mcp/`, `meta-ads-mcp/`). Meta runs as **two connectors** because OnlineMinds has two Meta business areas (onlineminds.io + Rentumo ApS); add the one(s) you manage. GA4 / Tag Manager / Merchant Center aren't wired yet. (No Composio — an earlier draft used it; removed.)
+Google Ads, Search Console, GA4, and Meta Ads are **self-hosted** in this repo (`gads-mcp/`, `gsc-mcp/`, `ga4-mcp/`, `meta-ads-mcp/`). Meta runs as **two connectors** because OnlineMinds has two Meta business areas (onlineminds.io + Rentumo ApS); add the one(s) you manage. Tag Manager / Merchant Center aren't wired yet. (No Composio — an earlier draft used it; removed.)
+
+Three read-only data MCPs are **pre-wired** in the plugin (no marketer setup): **Thribee** (ad spend), **Rentumo Trials** (Rentumo subscribers + revenue + chargebacks), and **Rentumo Conversions** (Rentumo per-channel conversion attribution — which channel drove conversions and what they were worth).
 
 ## Repo layout
 
