@@ -1,5 +1,5 @@
 {
-  "_comment": "Plugin MCP wiring (vendor MCPs only). The write-capable ad platforms (Google Ads + Meta Ads) are NOT wired here -- they are SELF-HOSTED custom connectors with per-user OAuth: gads-mcp/, gsc-mcp/, and meta-ads-mcp/ on our Hetzner box (Docker Compose + Tailscale Funnel). The marketer clicks Connect and signs in with their own Google/Meta account, which is the true per-user auth the spend-gate relies on. See _custom_connectors_note below, CONNECTORS.md, GADS-SELF-HOST-RUNBOOK.md and META-SELF-HOST-RUNBOOK.md. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). GA4 / Search Console / Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md).",
+  "_comment": "Plugin MCP wiring (vendor MCPs only). The write-capable ad platforms (Google Ads + Meta Ads) are NOT wired here -- they are SELF-HOSTED custom connectors with per-user OAuth: gads-mcp/, gsc-mcp/, ga4-mcp/, and meta-ads-mcp/ on our Hetzner box (Docker Compose + Tailscale Funnel). The marketer clicks Connect and signs in with their own Google/Meta account, which is the true per-user auth the spend-gate relies on. See _custom_connectors_note below, CONNECTORS.md, GADS-SELF-HOST-RUNBOOK.md and META-SELF-HOST-RUNBOOK.md. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). GA4 and Search Console ARE wired now, as custom connectors (ga4-mcp/, gsc-mcp/ — see _custom_connectors_note). Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md).",
   "_excluded_connectors_note": "Notion, Ahrefs, and AirOps are deliberately NOT wired and must NOT be used. Notion was removed from this file; Ahrefs and AirOps are Claude-desktop custom connectors outside this repo (see MACHINE-ACCESS-GAMEPLAN.md — remove them at the desktop level). Even if any of the three is present in a marketer's session, Mad Minds must never call its tools. This exclusion is enforced in skills/account-conventions/SKILL.md ('Excluded connectors').",
   "mcpServers": {
     "supabase": {
@@ -34,16 +34,7 @@
     }
   },
   "_pending_connectors": {
-    "_comment": "NOT wired yet - do NOT ship guessed URLs. Each needs a verified OAuth MCP endpoint chosen and tested before team rollout.",
-    "google-analytics": {
-      "status": "needs-verified-oauth-mcp",
-      "purpose": "GA4 sessions, conversions, funnel data (read-only).",
-      "candidates": [
-        "Cogny managed GA4 MCP (cogny.com)",
-        "Stape hosted GA4 MCP (stape.io)",
-        "self-hosted google-analytics-mcp with Advanced-settings OAuth client ID"
-      ]
-    },
+    "_comment": "NOT wired yet - do NOT ship guessed URLs. Each needs a verified OAuth MCP endpoint chosen and tested before team rollout. (GA4 is no longer here — it is wired as the self-hosted ga4-mcp custom connector; see _custom_connectors_note.)",
     "google-tag-manager": {
       "status": "needs-verified-oauth-mcp",
       "purpose": "WRITE-CAPABLE: read containers/tags/triggers, create/edit, publish versions. Conversion-tracking changes are Tier 1 in the spend-gate.",
@@ -54,5 +45,5 @@
       "purpose": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed."
     }
   },
-  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers — Claude desktop's plugin/in-session OAuth flow is buggy. Marketers add them as CUSTOM CONNECTORS. URLs: GSC = https://gsc.tail40453d.ts.net/mcp ; Google Ads = https://gads.tail40453d.ts.net/mcp . Both support DCR, so no Client ID/Secret to paste. Meta Ads is ALSO a custom connector, deployed to Vercel (TWO projects, one per Meta business area: https://meta-ads-onlineminds.vercel.app/mcp and https://meta-ads-rentumo.vercel.app/mcp) — Facebook login, per-user OAuth, writes gated by /ad-actions + READONLY_MODE. Token storage is Upstash Redis (shared DB, namespaced by REDIS_KEY_PREFIX). See META-SELF-HOST-RUNBOOK.md for the full setup."
+  "_custom_connectors_note": "Google Search Console, Google Ads, and GA4 are NOT plugin servers — Claude desktop's plugin/in-session OAuth flow is buggy. Marketers add them as CUSTOM CONNECTORS. URLs: GSC = https://gsc.tail40453d.ts.net/mcp ; Google Ads = https://gads.tail40453d.ts.net/mcp ; GA4 = https://ga4.tail40453d.ts.net/mcp . All support DCR, so no Client ID/Secret to paste. GA4 and GSC are read-only; Google Ads is read+write (gated). Meta Ads is ALSO a custom connector, deployed to Vercel (TWO projects, one per Meta business area: https://meta-ads-onlineminds.vercel.app/mcp and https://meta-ads-rentumo.vercel.app/mcp) — Facebook login, per-user OAuth, writes gated by /ad-actions + READONLY_MODE. Token storage is Upstash Redis (shared DB, namespaced by REDIS_KEY_PREFIX). See META-SELF-HOST-RUNBOOK.md for the full setup."
 }

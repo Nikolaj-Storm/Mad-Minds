@@ -6,7 +6,7 @@ Every skill reads inputs from and writes outputs to the shared **Mad Minds** Goo
 
 ## Connector model
 
-- **Google Drive** comes from Claude desktop's built-in Connectors catalog. **Google Search Console, Google Ads, and Meta Ads are self-hosted MCPs in this repo** (`gsc-mcp/`, `gads-mcp/`, `meta-ads-mcp/`), added as **custom connectors** (one URL each — Meta has two, one per business area). All **per-user OAuth**: each marketer signs in with their own Google/Facebook account once, and Claude acts as that person. GA4 / Tag Manager / Merchant Center aren't wired yet. (No Composio.)
+- **Google Drive** comes from Claude desktop's built-in Connectors catalog. **Google Search Console, Google Ads, GA4, and Meta Ads are self-hosted MCPs in this repo** (`gsc-mcp/`, `gads-mcp/`, `ga4-mcp/`, `meta-ads-mcp/`), added as **custom connectors** (one URL each — Meta has two, one per business area; GSC + GA4 are read-only). All **per-user OAuth**: each marketer signs in with their own Google/Facebook account once, and Claude acts as that person. Tag Manager / Merchant Center aren't wired yet. (No Composio.)
 - **Vendor-native MCPs (Supabase, Vercel, Slack)** are pre-wired in `.mcp.json` and load automatically when the plugin installs.
 - **Notion, Ahrefs, and AirOps are out of scope** — Mad Minds must never use them. Notion was removed from `.mcp.json`; Ahrefs/AirOps are not wired by this repo. See the "Excluded connectors" rule in `skills/account-conventions/SKILL.md`.
 - The `/setup-marketing` skill walks each marketer through both lists on their first session.
