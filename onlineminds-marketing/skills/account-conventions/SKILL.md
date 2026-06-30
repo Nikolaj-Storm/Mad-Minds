@@ -239,7 +239,15 @@ Each brand's voice, tone, banned/preferred terms, and positioning live in `01_Kn
 | Product feeds | Google Merchant Center | **Write-capable.** Read feed health and product-level performance; edit attributes, supplemental feeds, promotions. Powers Google Shopping, PMax product groups, YouTube Shopping. Only needed for brands running feed-based campaigns (ecom/marketplace); skip for service brands. Tier 2 for most edits; Tier 1 when enabling new spending or publishing live promotions. |
 | Paid — Thribee | Thribee (plugin MCP, shared bearer token) | Read-only spend data across 22 markets (`thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`). Pre-wired in the plugin — no per-user auth needed. Use alongside Google/Meta for markets where Thribee is the primary spend source. **Currency:** each market reports spend in a fixed currency (mostly EUR; UK=GBP, DK=DKK, BR=BRL, AU/CA/MY=USD) — see "Thribee spend currency (per market)" above; convert before summing across currencies. |
 | Subscribers + revenue — Rentumo | Rentumo Trials (plugin MCP, shared bearer token) | Read-only Rentumo admin KPIs across all markets (`rentumo_list_markets`, `rentumo_get_trials`, `rentumo_get_all_trials`): new-subscriber (trial) counts **and revenue + chargebacks** — each market returns `new_subscriptions`, `revenue_gross`, `charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid`. Pre-wired — no per-user auth. Pair subscribers with Google/Meta/Thribee spend for cost-per-new-subscriber, and revenue for ROAS/MER. Pass ISO dates; `rentumo_get_all_trials` sums **only** subscriptions across markets and returns revenue per-market. **Currency:** revenue/chargeback amounts are in each market's **local currency** (SEK, HUF, EUR, …) — never sum revenue across markets without converting first. Rentumo only. |
-| Optional | Notion, Slack, Supabase, Vercel | See `CONNECTORS.md`. |
+| Optional | Slack, Supabase, Vercel | See `CONNECTORS.md`. |
+
+### Excluded connectors — never use
+
+**Mad Minds must never call Notion, Ahrefs, or AirOps tools.** These are not part of the OnlineMinds marketing setup:
+
+- **Notion** has been removed from the plugin's `.mcp.json`. **Ahrefs** and **AirOps** are not wired by this repo at all — if they appear in a session they come from a marketer's own Claude-desktop custom connectors, not from Mad Minds.
+- Even when one of these three connectors is present and authorized in the session, **do not use it.** Do not read from it, write to it, or route any task through it, and do not suggest it as a follow-up. For SEO/organic data use **Google Search Console**; for paid/analytics use the Google Ads, Meta Ads, GA4, Thribee, and Rentumo connectors above; for documents use the **Google Drive** Hub.
+- If a marketer explicitly asks Mad Minds to use Notion, Ahrefs, or AirOps, tell them those connectors are intentionally out of scope for Mad Minds and point them to the equivalent supported connector instead.
 
 For new marketer onboarding, run `/setup-marketing` — it walks through each of the above in order, tests authorization, and ends with a capabilities tour.
 

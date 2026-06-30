@@ -106,7 +106,7 @@ A few notes:
 
 **Not wired yet** (coming later — don't go looking for them): GA4, Google Tag Manager, Google Merchant Center. For organic search today, use Google Search Console.
 
-Skip Notion / Slack / Supabase / Vercel unless you actually use them — those are optional.
+Skip Slack / Supabase / Vercel unless you actually use them — those are optional. **Notion, Ahrefs, and AirOps are not part of Mad Minds — don't connect or use them.**
 
 > Prefer to be walked through it? Step 6's `/setup-marketing` connects all of these interactively and verifies each one, so you can skip ahead and let it guide you.
 
