@@ -1,0 +1,31 @@
+{
+  "_comment": "Rentumo-ONLY market map for the Conversions connector. This datasource covers the Rentumo brand exclusively — NOT Adsumo, Printumo, Bidumo, Monetumo, Photumo, or JLA. Each entry maps a market code to the feed slug used in the public S3 URLs (utm-feed-rentumo-<feed>.json and google-ads-offline-conversions-feed-rentumo-<feed>.csv on the kuhamia bucket). The feeds are PUBLIC (no auth / no secret). The feed slug is the lowercased market code. Markets whose feed is not yet generated upstream (currently UK, BR) will surface a per-market 'feed not available' error rather than failing the whole call. To change this list without rebuilding the image, mount an override file and set RENTUMO_CONV_MARKETS_FILE to its path.",
+  "markets": [
+    { "code": "BE",  "feed": "be",  "name": "Belgium" },
+    { "code": "NL",  "feed": "nl",  "name": "Netherlands" },
+    { "code": "UK",  "feed": "uk",  "name": "United Kingdom" },
+    { "code": "FR",  "feed": "fr",  "name": "France" },
+    { "code": "PL",  "feed": "pl",  "name": "Poland" },
+    { "code": "DE",  "feed": "de",  "name": "Germany" },
+    { "code": "IE",  "feed": "ie",  "name": "Ireland" },
+    { "code": "DK",  "feed": "dk",  "name": "Denmark" },
+    { "code": "AU",  "feed": "au",  "name": "Australia" },
+    { "code": "COM", "feed": "com", "name": "Global (.com)" },
+    { "code": "SE",  "feed": "se",  "name": "Sweden" },
+    { "code": "CH",  "feed": "ch",  "name": "Switzerland" },
+    { "code": "AT",  "feed": "at",  "name": "Austria" },
+    { "code": "NZ",  "feed": "nz",  "name": "New Zealand" },
+    { "code": "ES",  "feed": "es",  "name": "Spain" },
+    { "code": "PT",  "feed": "pt",  "name": "Portugal" },
+    { "code": "IT",  "feed": "it",  "name": "Italy" },
+    { "code": "BR",  "feed": "br",  "name": "Brazil" },
+    { "code": "GR",  "feed": "gr",  "name": "Greece" },
+    { "code": "CZ",  "feed": "cz",  "name": "Czechia" },
+    { "code": "MX",  "feed": "mx",  "name": "Mexico" },
+    { "code": "HU",  "feed": "hu",  "name": "Hungary" },
+    { "code": "RO",  "feed": "ro",  "name": "Romania" },
+    { "code": "SK",  "feed": "sk",  "name": "Slovakia" },
+    { "code": "MY",  "feed": "my",  "name": "Malaysia" },
+    { "code": "CA",  "feed": "ca",  "name": "Canada" }
+  ]
+}
