@@ -67,7 +67,7 @@ Then add each brand's voice into the `brand-voice` docs in the Hub.
 1. **The repo** is at https://github.com/Nikolaj-Storm/Mad-Minds (**public**), so marketers can install the plugin without any GitHub access — nothing to grant.
 2. **Plugin install path (each marketer, one-time):** Customize → Plugins → + Add marketplace → From repository → paste the URL above → Install.
 3. **Connector model.** Every connector is **per-user OAuth** (Claude acts as the signed-in marketer). Google Drive is in Claude desktop's built-in Connectors catalog; **Google Search Console, Google Ads, and Meta Ads are self-hosted in this repo and added as *custom connectors*** (one URL each — see `onlineminds-marketing/CONNECTORS.md`; Meta has two, one per business area). GA4 / Tag Manager / Merchant Center aren't wired yet. The plugin's `/setup-marketing` skill walks marketers through this on first session.
-4. **Pre-wired vendor MCPs** in `onlineminds-marketing/.mcp.json` (Notion, Supabase, Vercel, Slack) load automatically when the plugin installs. Each marketer authorizes those on first use (vendor OAuth).
+4. **Pre-wired vendor MCPs** in `onlineminds-marketing/.mcp.json` (Supabase, Vercel, Slack) load automatically when the plugin installs. Each marketer authorizes those on first use (vendor OAuth). **Notion, Ahrefs, and AirOps are deliberately excluded** — Notion was removed from `.mcp.json` and Ahrefs/AirOps are not wired by this repo; Mad Minds must not use them (see the "Excluded connectors" rule in `onlineminds-marketing/skills/account-conventions/SKILL.md`).
 
 ---
 

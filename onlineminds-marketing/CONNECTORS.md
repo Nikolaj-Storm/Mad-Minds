@@ -20,7 +20,6 @@ These load automatically when the `onlineminds-marketing` plugin installs. Each 
 
 | Capability | Server (in `.mcp.json`) | Auth model | Notes |
 |---|---|---|---|
-| Notion | Vendor MCP | Per-user OAuth | Optional. Briefs/playbooks. |
 | Supabase | Vendor MCP | Per-user / org | Already in use. Portfolio-site data. |
 | Vercel | Vendor MCP | Per-user / org | Already in use. Deployment + scheduled-job inspection. |
 | Slack | Vendor MCP | Per-user OAuth | Optional. Share finished reports. |
@@ -58,6 +57,11 @@ These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not
 
 > Why not put these in the native Claude desktop catalog instead? On individual Pro/Max seats they aren't in the built-in catalog. The Connect-button MCP approach above is how we deliver per-user connectors with no per-marketer dashboard work.
 
+## Excluded connectors — never use
+**Notion, Ahrefs, and AirOps are intentionally out of scope.** They are not part of the OnlineMinds marketing setup and Mad Minds must never call their tools.
+- **Notion** was removed from `.mcp.json` (it is no longer pre-wired). **Ahrefs** and **AirOps** are not wired by this repo at all — if they show up in a session they are a marketer's own Claude-desktop custom connectors, not Mad Minds (see `MACHINE-ACCESS-GAMEPLAN.md` for removing them at the desktop level).
+- Even when one of these three is present and authorized, do not read from it, write to it, route a task through it, or suggest it. Use **Google Search Console** for organic/SEO data, the Google/Meta/GA4/Thribee/Rentumo connectors for paid + analytics, and the **Google Drive** Hub for documents. The runtime rule lives in `skills/account-conventions/SKILL.md` ("Excluded connectors — never use").
+
 ## Onboarding flow
 The `/setup-marketing` skill walks through the lists in order:
 **Live today (what setup walks through):**
@@ -67,7 +71,7 @@ The `/setup-marketing` skill walks through the lists in order:
 4. **Custom connector(s):** Meta Ads — add the one(s) for the business area(s) you manage → Connect (Facebook login):
    - onlineminds.io: `https://meta-ads-onlineminds.vercel.app/mcp`
    - Rentumo ApS: `https://meta-ads-rentumo.vercel.app/mcp`
-5. **Optional plugin connectors:** Notion, Slack, Supabase, Vercel
+5. **Optional plugin connectors:** Slack, Supabase, Vercel
 6. **Thribee** — pre-wired (no marketer action), verify with "list Thribee markets"
 7. **Rentumo Trials** — pre-wired (no marketer action), verify with "list Rentumo markets" or "how many new subscribers and how much revenue did Rentumo get last week" (returns trials + revenue per market)
 8. **Rentumo Conversions** — pre-wired (no marketer action), Rentumo-only, verify with "list Rentumo conversion markets" or "how many conversions did Lifull-connect drive for Rentumo FR last month, and what were they worth"

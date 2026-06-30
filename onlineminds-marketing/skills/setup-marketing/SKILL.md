@@ -61,7 +61,9 @@ For each connector: say what it's for in one sentence, test it with a trivial re
 
 - **Rentumo Trials** (plugin connector — pre-wired, no setup needed) — **Rentumo only**: new subscribers (trials) **and revenue** across all 26 Rentumo markets, read-only. Each market returns `new_subscriptions`, `revenue_gross`, and chargeback figures. Pre-wired with a shared bearer token, so no marketer login. Revenue is in each market's **local currency** (never summed across markets). Verify by asking "how many new subscribers and how much revenue did Rentumo get last month".
 
-Skip Notion / Slack / Supabase / Vercel unless the marketer asks — those are optional plugin connectors.
+Skip Slack / Supabase / Vercel unless the marketer asks — those are optional plugin connectors.
+
+**Never set up or use Notion, Ahrefs, or AirOps.** They are intentionally out of scope for Mad Minds — Notion was removed from `.mcp.json`, and Ahrefs/AirOps are not part of this setup. If a marketer has them connected at the desktop level, do not use them; for organic/SEO data use Google Search Console instead. (See the "Excluded connectors" rule in `account-conventions`.)
 
 Not available yet (don't walk through; if asked, say they're coming): **GA4**, **Google Tag Manager**, **Google Merchant Center**. For organic search, use Google Search Console.
 

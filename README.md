@@ -39,7 +39,7 @@ Google Ads, Search Console, and Meta Ads are **self-hosted** in this repo (`gads
 .claude-plugin/marketplace.json   ← lists both plugins
 onlineminds-marketing/            ← in-house plugin
   .claude-plugin/plugin.json
-  .mcp.json                       ← vendor-native MCPs (Notion, Supabase, etc.)
+  .mcp.json                       ← vendor-native MCPs (Supabase, Vercel, Slack)
   skills/                         ← 9 skills incl. /ad-actions, /setup-marketing
   CONNECTORS.md                   ← the live connector list + auth model
 claude-ads/                       ← vendored upstream plugin (MIT)
