@@ -219,6 +219,8 @@ This is the complete 22-market Thribee set returned by `thribee_list_markets`. R
 
 When anyone asks "how many conversions / how much value did `<channel>` drive for `<brand>` in `<market>`" — or any per-channel attribution question — use this model **by default. The marketer should NOT have to say which datasource to look at; route it automatically.**
 
+> **"Thribee" = "Lifull-connect" — same channel, treat as synonyms.** Thribee is the platform OnlineMinds uses to buy that traffic; in the conversions feed it shows up as `utm_source = Lifull-connect`. So **"Thribee conversions / attribution / ROAS / CPA" means the `Lifull-connect` channel** — look it up with `conversions_get_source(source="Lifull-connect")` (or the `Lifull-connect` row of a breakdown). Only "Thribee **spend**" goes to the Thribee spend connector. If a marketer says either name, silently resolve to the same channel; don't tell them there's "no Thribee data."
+
 ### Which source answers what (don't make the user pick)
 
 - **Per-channel conversions & value → Rentumo Conversions connector.** This is OnlineMinds' OWN attribution system, keyed on `utm_source`. Tools: `conversions_get_attribution` (conversion COUNTS by a UTM dimension, first vs last touch), `conversions_get_offline_summary` (counts + VALUE by source), `conversions_get_source` (one channel across both feeds at once). **Rentumo brand only.**
@@ -236,7 +238,7 @@ The raw `utm_source` is messy — casing variants, typos, and campaign IDs that 
 |---|---|---|
 | **Google** | `google` | Google Ads |
 | **Meta** | `fb`, `ig`, `instagram`, `facebook`, `fb-post` | Meta Ads |
-| **Lifull-connect** | `Lifull-connect` | **Thribee** |
+| **Lifull-connect** (a.k.a. **Thribee** — same channel) | `Lifull-connect` | **Thribee** |
 | **Bing / Microsoft** | `bing` (rows carrying `msclkid`) | Microsoft Ads |
 | **TikTok / Snapchat** | `tiktok` / `snapchat` | resp. platform |
 | **Email / search-agent** | `search_agent_mailer`, `SAM`, `email`, `alert` | own (no ad spend) |
@@ -297,7 +299,7 @@ This is the **complete, current list** of the data sources Mad Minds connects to
   - **Retrieves:** campaigns, ad sets, ads, performance (spend/impressions/clicks/conversions/…). **Writes:** pause/enable, budgets. (Meta has no keywords/search-terms report.)
   - **Tools:** `list_ad_accounts`, `get_campaigns`, `get_ad_sets`, `get_ads`, `get_performance`, `pause_entity`, `enable_entity`, `update_budget`.
 - **Thribee** — *pre-wired plugin MCP*, shared server-side bearer, **read-only** (no marketer Connect step).
-  - **Scope:** **ad spend only**, across **22 markets**. It is the spend side of the Lifull-connect / portal channel — **not** a conversions source.
+  - **Scope:** **ad spend only**, across **22 markets**. It is the spend side of the **Lifull-connect** channel (**"Thribee" and "Lifull-connect" are the same channel** — see "Conversions by channel"). Thribee itself is **not** a conversions source: for Thribee/Lifull-connect *conversions*, use Rentumo Conversions' `Lifull-connect` channel.
   - **Currency:** **fixed per market** (often EUR even where the local currency differs; UK=GBP, DK=DKK, BR=BRL, AU/CA/MY=USD) — see the Thribee currency table above; convert before summing across currencies.
   - **Retrieves:** spend per market + date range. **Tools:** `thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`.
 

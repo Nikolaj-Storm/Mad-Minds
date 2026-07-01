@@ -94,6 +94,13 @@ GROUPABLE_FIELDS = (
 NONE_LABEL = "(none)"
 OTHER_LABEL = "(other)"
 
+# Channel-name synonyms → the canonical utm_source used in the feeds. "Thribee" is
+# the platform OnlineMinds buys that traffic through; in the feeds it appears as
+# utm_source "Lifull-connect", so a request for "Thribee" conversions resolves here.
+SOURCE_ALIASES = {
+    "thribee": "lifull-connect",
+}
+
 
 def _load_markets():
     """Return [{code, feed, name}, ...] from MARKETS_FILE (empty list if absent)."""
@@ -138,6 +145,10 @@ SERVER_INSTRUCTIONS = (
     "Emails are never returned — output is always aggregated.\n\n"
     "FOCUS HELPER: conversions_get_source(market, source, start, end) pulls one channel "
     "(e.g. 'Lifull-connect') across BOTH feeds at once.\n\n"
+    "SYNONYM: 'Thribee' and 'Lifull-connect' are the SAME channel — Thribee is the platform "
+    "used to buy that traffic; in these feeds it appears as utm_source 'Lifull-connect'. So a "
+    "request for 'Thribee conversions / attribution' means the Lifull-connect channel; "
+    "conversions_get_source accepts source='thribee' and resolves it to 'Lifull-connect'.\n\n"
     "DATES: pass start_date and end_date as ISO YYYY-MM-DD; the range is inclusive and "
     "filters on each record's conversion timestamp (in the feed's local +0200-style offset).\n\n"
     "CURRENCY: offline-conversion value is in each market's own currency (read from the "
@@ -488,9 +499,13 @@ async def conversions_get_source(
     utm_source is case-insensitive. Use this to answer "how many conversions /
     how much value did <channel> drive for Rentumo <market> in this range?".
 
+    SYNONYM: "Thribee" and "Lifull-connect" are the same channel — passing
+    source="thribee" is resolved to the "Lifull-connect" utm_source.
+
     Args:
         market: Market code from conversions_list_markets. Case-insensitive.
-        source: utm_source value, e.g. "Lifull-connect", "google", "fb".
+        source: utm_source value, e.g. "Lifull-connect" (or its synonym "Thribee"),
+            "google", "fb".
         start_date: Inclusive start, ISO YYYY-MM-DD.
         end_date: Inclusive end, ISO YYYY-MM-DD.
     """
@@ -503,12 +518,14 @@ async def conversions_get_source(
     except ValueError as exc:
         return {"error": str(exc)}
     want = source.strip().lower()
+    want = SOURCE_ALIASES.get(want, want)  # e.g. "thribee" -> "lifull-connect"
 
     out = {
         "brand": "Rentumo",
         "market": m["code"],
         "market_name": m["name"],
         "source": source,
+        "matched_utm_source": want,  # canonical utm_source matched (synonyms resolved)
         "start_date": start,
         "end_date": end,
     }
