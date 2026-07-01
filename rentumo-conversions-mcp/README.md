@@ -100,7 +100,13 @@ not even a shared bearer — **there is no secret to set**. The connector is
 | `conversions_list_markets` | List Rentumo market codes + feed slugs. Call first. |
 | `conversions_get_attribution(market, start_date, end_date, group_by, touchpoint, top)` | Conversion **counts** by a UTM dimension (`utm_source`/`utm_medium`/`utm_campaign`/`utm_content`/`utm_term`), by `first` or `last` touch. |
 | `conversions_get_offline_summary(market, start_date, end_date, group_by, top)` | Conversion **counts + value** by `utm_source` or `conversion_name`, with the by-name split and currency. |
-| `conversions_get_source(market, source, start_date, end_date)` | One channel (e.g. `Lifull-connect`) across **both** feeds at once: first/last-touch counts + offline count & value. |
+| `conversions_get_source(market, source, start_date, end_date)` | One channel (e.g. `Lifull-connect`) across **both** feeds at once: first/last-touch counts + offline count & value. Accepts the synonym `source="thribee"` and resolves it to `Lifull-connect`. |
+
+> **"Thribee" = "Lifull-connect".** Thribee is the platform OnlineMinds buys that
+> traffic through; in these feeds it appears as `utm_source = Lifull-connect`. So
+> "Thribee conversions / attribution" means the `Lifull-connect` channel —
+> `conversions_get_source` accepts `source="thribee"` and the response echoes the
+> resolved `matched_utm_source`. (The Thribee *spend* connector is separate.)
 
 Dates are ISO `YYYY-MM-DD`, inclusive, filtered on each record's conversion
 timestamp (in the feed's local `+0200`-style offset).
