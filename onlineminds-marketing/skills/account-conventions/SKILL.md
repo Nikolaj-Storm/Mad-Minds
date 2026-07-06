@@ -291,8 +291,8 @@ This is the **complete, current list** of the data sources Mad Minds connects to
 - **Google Ads** — *custom connector* (`gads-mcp`), per-user Google OAuth, **read + write** (writes gated by `/ad-actions` + the Tier 1/2 spend-gate).
   - **Scope / IDs:** all brands' Google accounts the signed-in marketer can access. One **MCC manager → per-brand/per-market client accounts**; metrics live on the *client* accounts (the manager returns none). IDs discovered live via `list_accounts` (returns each `customer_id` + the `login_customer_id` to send) — never hard-coded. See "Google Ads account structure" below.
   - **Currency:** each account's own currency.
-  - **Retrieves:** campaigns, ad groups, keywords, search terms; performance (spend, impressions, clicks, CTR, CPC, conversions, conversion value, CPA, ROAS); budgets, bids. **Writes:** pause/enable, budgets, bids, create text ads.
-  - **Tools:** `list_accounts`, `get_campaigns`, `get_ad_groups`, `get_keywords`, `get_search_terms`, `get_performance`, `create_text_ad`, `pause_entity`, `enable_entity`, `update_budget`, `update_keyword_bid`.
+  - **Retrieves:** campaigns, ad groups, keywords, search terms; performance (spend, impressions, clicks, CTR, CPC, conversions, conversion value, CPA, ROAS), incl. **per-country** performance (split a campaign's spend across the countries it targets — any multi-country campaign type: PMax, Search, Shopping, Demand Gen, …); budgets, bids. **Writes:** pause/enable, budgets, bids, create text ads.
+  - **Tools:** `list_accounts`, `get_campaigns`, `get_ad_groups`, `get_keywords`, `get_search_terms`, `get_performance`, `get_geo_performance`, `create_text_ad`, `pause_entity`, `enable_entity`, `update_budget`, `update_keyword_bid`.
 - **Meta Ads** — **two** *custom connectors* (`meta-ads-mcp`), one per Meta business area: **onlineminds.io** and **Rentumo ApS**. Per-user Facebook OAuth, **read + write** (gated).
   - **Scope / IDs:** ad accounts the marketer's Facebook can access. Hierarchy `act_<digits>` → campaign → ad set → ad. IDs discovered live via `list_ad_accounts`.
   - **Currency:** each ad account's currency, in whole units (e.g. `500` = 500 DKK).
