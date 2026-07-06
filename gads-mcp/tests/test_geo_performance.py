@@ -40,6 +40,11 @@ def _country_row(id_, name, code):
     )
 
 
+def _campaign_cost_row(cost_micros):
+    """A campaign-level row for the reconciliation yardstick query."""
+    return SimpleNamespace(metrics=SimpleNamespace(cost_micros=cost_micros))
+
+
 class _FakeGaService:
     def __init__(self, sink):
         self._sink = sink
@@ -53,6 +58,8 @@ class _FakeGaService:
             return iter(self._sink.get("user_loc_rows", []))
         if "FROM geo_target_constant" in query:
             return iter(self._sink.get("country_rows", []))
+        if "FROM campaign" in query:
+            return iter(self._sink.get("campaign_rows", []))
         return iter([])
 
 
@@ -124,6 +131,35 @@ def test_invalid_location_type_returns_error(captured):
     assert "LOCATION_OF_PRESENCE" in out["allowed"]
 
 
+def test_invalid_source_returns_error(captured):
+    out = get_geo_performance(customer_id="1234567890", source="magic")
+    assert out["error"] == "invalid_source"
+    assert "user_location_view" in out["allowed"]
+
+
+def test_forced_geographic_view_never_falls_back(captured):
+    # geographic_view under-reports vs the campaign total, but source is forced,
+    # so the reconciliation fallback must NOT run.
+    captured["geo_rows"] = [
+        _metric_row(2276, cost_micros=1_000_000, impressions=10, clicks=1),
+    ]
+    captured["campaign_rows"] = [_campaign_cost_row(11_800_000)]
+    captured["country_rows"] = [_country_row(2276, "Germany", "DE")]
+    out = get_geo_performance(customer_id="1234567890", source="geographic_view")
+    assert all(r["source"] == "geographic_view" for r in out)
+    assert not any("FROM user_location_view" in q for q in captured["queries"])
+
+
+def test_forced_user_location_view_skips_geographic_view(captured):
+    captured["user_loc_rows"] = [
+        _metric_row(2036, cost_micros=11_800_000, impressions=500, clicks=40),
+    ]
+    captured["country_rows"] = [_country_row(2036, "Australia", "AU")]
+    out = get_geo_performance(customer_id="1234567890", source="user_location_view")
+    assert out[0]["source"] == "user_location_view"
+    assert not any("FROM geographic_view" in q for q in captured["queries"])
+
+
 # --------------------------------------------------------------------------- #
 # Aggregation, country resolution, and output shape
 # --------------------------------------------------------------------------- #
@@ -138,6 +174,9 @@ def test_aggregates_by_country_and_resolves_names(captured):
         _country_row(2276, "Germany", "DE"),
         _country_row(2208, "Denmark", "DK"),
     ]
+    # geographic_view already accounts for the full campaign spend (11 DKK),
+    # so auto must trust it and not reconcile via user_location_view.
+    captured["campaign_rows"] = [_campaign_cost_row(11_000_000)]
     out = get_geo_performance(customer_id="1234567890")
 
     assert [r["country"] for r in out] == ["Germany", "Denmark"]  # DE=8 DKK first
@@ -152,10 +191,12 @@ def test_aggregates_by_country_and_resolves_names(captured):
     assert de["conversions"] == 3.0
     assert de["cpa"] == round(8.0 / 3, 2)
     assert de["roas"] == round(300 / 8.0, 2)
+    assert not any("FROM user_location_view" in q for q in captured["queries"])
 
 
 def test_falls_back_to_user_location_view_when_geo_empty(captured):
     captured["geo_rows"] = []  # PMax: geographic_view returns nothing
+    captured["campaign_rows"] = [_campaign_cost_row(11_800_000)]  # but spend exists
     captured["user_loc_rows"] = [
         _metric_row(2036, cost_micros=11_800_000, impressions=500, clicks=40, conversions=5, conversions_value=1500),
     ]
@@ -173,6 +214,29 @@ def test_falls_back_to_user_location_view_when_geo_empty(captured):
     user_q = _last(captured, "FROM user_location_view")
     assert "campaign.id = 21782060119" in user_q
     assert "WHERE segments.date DURING LAST_30_DAYS" in user_q
+
+
+def test_mixed_account_reconciles_via_user_location_view(captured):
+    # geographic_view reports Search (5 DKK) but misses the PMax half, so it only
+    # accounts for 5 of the 11.8 DKK campaign-level total. user_location_view
+    # covers both, so auto must switch to it to reconcile.
+    captured["geo_rows"] = [
+        _metric_row(2276, cost_micros=5_000_000, impressions=100, clicks=10),
+    ]
+    captured["campaign_rows"] = [_campaign_cost_row(11_800_000)]
+    captured["user_loc_rows"] = [
+        _metric_row(2276, cost_micros=5_000_000, impressions=100, clicks=10),
+        _metric_row(2036, cost_micros=6_800_000, impressions=400, clicks=30),
+    ]
+    captured["country_rows"] = [
+        _country_row(2276, "Germany", "DE"),
+        _country_row(2036, "Australia", "AU"),
+    ]
+    out = get_geo_performance(customer_id="1234567890")
+
+    assert all(r["source"] == "user_location_view" for r in out)
+    assert round(sum(r["spend"] for r in out), 2) == 11.8  # reconciles to campaign total
+    assert {r["country"] for r in out} == {"Germany", "Australia"}
 
 
 def test_unresolved_country_id_degrades_gracefully(captured):

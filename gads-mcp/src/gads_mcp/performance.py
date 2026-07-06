@@ -9,6 +9,17 @@ ALLOWED_LEVELS = {"campaign", "ad_group", "ad"}
 # For a spend-by-country report you want presence only, or you double-count.
 ALLOWED_LOCATION_TYPES = {"LOCATION_OF_PRESENCE", "AREA_OF_INTEREST"}
 
+# Which resource to segment by country. "auto" picks the one that best reconciles
+# to the campaign-level spend (see get_geo_performance); the others force it.
+ALLOWED_GEO_SOURCES = {"auto", "geographic_view", "user_location_view"}
+
+# In "auto" mode, when geographic_view accounts for at least this share of the
+# campaign-level spend we trust it. Below this, some campaigns didn't report geo
+# rows — the classic Performance Max gap, which also shows up for a MIX of
+# campaign types (e.g. Search reports fine but PMax doesn't) — so we reconcile
+# against user_location_view, which covers every campaign type.
+_GEO_RECONCILE_MIN_SHARE = 0.99
+
 
 def _compute_metrics(cost_micros, impressions, clicks, conversions, conv_value) -> dict:
     """Turn raw metric totals into clean, human-friendly numbers.
@@ -107,6 +118,21 @@ def _aggregate_geo(ga_service, cid: str, query: str, country_id_of) -> dict:
         acc["conversions"] += m.conversions
         acc["conversions_value"] += m.conversions_value
     return totals
+
+
+def _expected_cost_micros(ga_service, cid: str, date_filter: str, campaign_filter: str) -> int:
+    """Campaign-level spend (in micros) for the same window/campaign filter.
+
+    Used as the reconciliation yardstick: it's the total the per-country split
+    should add up to, so "auto" mode can tell when geographic_view is missing a
+    chunk of spend (e.g. a PMax or other campaign that didn't report geo rows).
+    """
+    query = f"""
+        SELECT campaign.id, metrics.cost_micros
+        FROM campaign
+        WHERE {date_filter}{campaign_filter}
+    """
+    return sum(row.metrics.cost_micros for row in ga_service.search(customer_id=cid, query=query))
 
 
 @handle_errors
@@ -212,6 +238,7 @@ def get_geo_performance(
     date_range: str = "LAST_30_DAYS",
     campaign_id: str | None = None,
     location_type: str = "LOCATION_OF_PRESENCE",
+    source: str = "auto",
     customer_id: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
@@ -219,9 +246,11 @@ def get_geo_performance(
 ) -> list | dict:
     """Get Google Ads performance (spend, impressions, clicks, conversions, ROAS) split BY COUNTRY.
 
-    Segments a campaign's metrics across the countries it targets — the one thing
-    get_performance can't do. Ideal for splitting a single Performance Max
-    campaign's spend across the countries it runs in (pass its campaign_id).
+    Segments metrics across the countries a campaign targets — the one thing
+    get_performance can't do. Works for ANY campaign type that splits spend
+    between countries: Performance Max, Search, Shopping, Demand Gen, Display,
+    Video. Pass a campaign_id to break down a single campaign, or omit it to
+    break the whole account down by country.
 
     Countries come back as readable names + ISO codes, not the numeric geo IDs the
     API returns. Rows are aggregated per country and sorted by spend (highest
@@ -233,11 +262,14 @@ def get_geo_performance(
     or anything older than 30 days — or a date_range preset for common rolling
     windows. Explicit dates win when both are given.
 
-    Data source: queries the geographic_view resource. Performance Max geo
-    reporting there can be thin, so when geographic_view returns nothing for a
-    LOCATION_OF_PRESENCE report it automatically falls back to user_location_view
-    (physical-presence only, more reliable for PMax). Each row's "source" field
-    says which resource it came from.
+    Data source (see the `source` arg): "auto" starts from geographic_view, then
+    checks the country split against the campaign-level spend. Performance Max —
+    and any other campaign type — can under-report to geographic_view, so when the
+    split doesn't account for the full spend, it reconciles against
+    user_location_view (physical-presence only, covers every campaign type) and
+    keeps whichever resource reconciles best. This is what makes a MIXED account
+    (e.g. Search + PMax) add up correctly, not just an all-PMax campaign. Each
+    row's "source" field records which resource it came from.
 
     Args:
         date_range: Preset literal for rolling windows — TODAY, YESTERDAY, LAST_7_DAYS,
@@ -249,8 +281,14 @@ def get_geo_performance(
             (where the user physically was; the default, and what you want for a
             spend-by-country report) or "AREA_OF_INTEREST" (what they searched
             about). Counting both double-counts spend, so this picks exactly one.
-            The user_location_view fallback is presence-only and is used only for
-            LOCATION_OF_PRESENCE.
+            user_location_view is presence-only, so AREA_OF_INTEREST always uses
+            geographic_view.
+        source: Which resource to segment by — "auto" (default; reconcile
+            geographic_view against the campaign total and fall back to
+            user_location_view when it under-reports), "geographic_view" (force it,
+            no fallback), or "user_location_view" (force presence-only geo, the
+            most reliable single source for Performance Max). Use a forced source
+            to compare or when you already know which one an account reports to.
         start_date: Custom-range start, "YYYY-MM-DD". Pair with end_date. Takes precedence
             over date_range when both ends are given. Ranges older than 30 days are fine.
         end_date: Custom-range end, "YYYY-MM-DD". Must be paired with start_date.
@@ -269,6 +307,13 @@ def get_geo_performance(
             "message": f"'{location_type}' is not supported.",
             "allowed": sorted(ALLOWED_LOCATION_TYPES),
         }
+    source = (source or "auto").lower()
+    if source not in ALLOWED_GEO_SOURCES:
+        return {
+            "error": "invalid_source",
+            "message": f"'{source}' is not supported.",
+            "allowed": sorted(ALLOWED_GEO_SOURCES),
+        }
 
     client = get_client(login_customer_id)
     cid = resolve_customer_id(customer_id)
@@ -280,39 +325,59 @@ def get_geo_performance(
     )
     campaign_filter = f" AND campaign.id = {int(campaign_id)}" if campaign_id else ""
 
-    # Primary: geographic_view, filtered to the requested location_type so
-    # presence and area-of-interest rows are never summed together.
-    geo_query = f"""
-        SELECT campaign.id, campaign.name,
-               geographic_view.country_criterion_id,
-               geographic_view.location_type,
-               {metric_fields}
-        FROM geographic_view
-        WHERE {date_filter}
-          AND geographic_view.location_type = '{location_type}'{campaign_filter}
-    """
-    totals = _aggregate_geo(
-        ga_service, cid, geo_query,
-        lambda row: row.geographic_view.country_criterion_id,
-    )
-    source = "geographic_view"
+    def run_geographic_view() -> dict:
+        # Filtered to the requested location_type so presence and area-of-interest
+        # rows are never summed together.
+        query = f"""
+            SELECT campaign.id, campaign.name,
+                   geographic_view.country_criterion_id,
+                   geographic_view.location_type,
+                   {metric_fields}
+            FROM geographic_view
+            WHERE {date_filter}
+              AND geographic_view.location_type = '{location_type}'{campaign_filter}
+        """
+        return _aggregate_geo(
+            ga_service, cid, query,
+            lambda row: row.geographic_view.country_criterion_id,
+        )
 
-    # Fallback: geographic_view is often empty for Performance Max. user_location_view
-    # is physical-presence only, so it only substitutes for a LOCATION_OF_PRESENCE
-    # report (it can't answer AREA_OF_INTEREST).
-    if not totals and location_type == "LOCATION_OF_PRESENCE":
-        user_loc_query = f"""
+    def run_user_location_view() -> dict:
+        # Physical-presence only (no location_type segment) — the most reliable
+        # single geo source for Performance Max, and it covers every campaign type.
+        query = f"""
             SELECT campaign.id, campaign.name,
                    user_location_view.country_criterion_id,
                    {metric_fields}
             FROM user_location_view
             WHERE {date_filter}{campaign_filter}
         """
-        totals = _aggregate_geo(
-            ga_service, cid, user_loc_query,
+        return _aggregate_geo(
+            ga_service, cid, query,
             lambda row: row.user_location_view.country_criterion_id,
         )
-        source = "user_location_view"
+
+    def cost_of(totals: dict) -> int:
+        return sum(acc["cost_micros"] for acc in totals.values())
+
+    if source == "geographic_view":
+        totals, used_source = run_geographic_view(), "geographic_view"
+    elif source == "user_location_view":
+        totals, used_source = run_user_location_view(), "user_location_view"
+    elif location_type == "AREA_OF_INTEREST":
+        # Only geographic_view carries area-of-interest; nothing to reconcile against.
+        totals, used_source = run_geographic_view(), "geographic_view"
+    else:
+        # auto + LOCATION_OF_PRESENCE: trust geographic_view only if it accounts
+        # for the campaign-level spend; otherwise reconcile via user_location_view.
+        totals, used_source = run_geographic_view(), "geographic_view"
+        expected = _expected_cost_micros(ga_service, cid, date_filter, campaign_filter)
+        geo_cost = cost_of(totals)
+        if expected > 0 and geo_cost < expected * _GEO_RECONCILE_MIN_SHARE:
+            user_totals = run_user_location_view()
+            # Keep whichever resource lands closest to the campaign-level total.
+            if abs(expected - cost_of(user_totals)) <= abs(expected - geo_cost):
+                totals, used_source = user_totals, "user_location_view"
 
     names = _resolve_countries(ga_service, cid, list(totals.keys()))
 
@@ -325,7 +390,7 @@ def get_geo_performance(
                 "country": info["country"],
                 "country_code": info["country_code"],
                 "location_type": location_type,
-                "source": source,
+                "source": used_source,
                 **_compute_metrics(
                     acc["cost_micros"],
                     acc["impressions"],
