@@ -56,7 +56,16 @@ SERVER_INSTRUCTIONS = (
     "actually pull data from. Each row gives a `customer_id` and the `login_customer_id` "
     "(the manager to send as the login-customer-id header) — pass BOTH to the other "
     "tools. Never report 'no data' from a manager ID without first expanding to its "
-    "client accounts."
+    "client accounts.\n\n"
+    "DAYS TO CONVERSION: get_performance/get_search_terms have NO segment breakdown. "
+    "For 'how many days between click and conversion', 'days to conversion', or a "
+    "cumulative 'landed within N days' curve (matching the Google Ads UI's Segment > "
+    "Conversions > 'Days to conversion' view), use get_conversion_lag instead — it "
+    "queries segments.conversion_lag_bucket directly. Its date window filters the AD "
+    "CLICK date, not the conversion date, so a recent window will show low percentages "
+    "simply because conversions haven't landed yet; that's expected, not a bug. Rentumo "
+    "has one Google Ads account PER MARKET, so call it once per market's customer_id "
+    "for a per-market breakdown — there's no single account with a country segment."
 )
 
 _auth = _build_auth()
@@ -75,7 +84,7 @@ async def health_check(request):
 
 from gads_mcp.client import get_client, handle_errors, is_readonly  # noqa: E402
 from gads_mcp.campaigns import get_campaigns, pause_entity, enable_entity, update_budget  # noqa: E402
-from gads_mcp.performance import get_performance, get_search_terms  # noqa: E402
+from gads_mcp.performance import get_performance, get_search_terms, get_conversion_lag  # noqa: E402
 from gads_mcp.ads import get_ad_groups, create_text_ad  # noqa: E402
 from gads_mcp.keywords import get_keywords, update_keyword_bid  # noqa: E402
 
@@ -193,7 +202,7 @@ def server_status() -> dict:
 for _tool in (
     list_accounts, server_status,
     get_campaigns, get_ad_groups, get_keywords,
-    get_performance, get_search_terms,
+    get_performance, get_search_terms, get_conversion_lag,
     pause_entity, enable_entity, update_budget,
     create_text_ad, update_keyword_bid,
 ):
