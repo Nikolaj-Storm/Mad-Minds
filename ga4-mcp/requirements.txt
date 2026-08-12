@@ -1,0 +1,6 @@
+# Google Analytics (GA4) marketer MCP — per-user Google OAuth (FastMCP GoogleProvider).
+fastmcp>=2.12,<3
+google-analytics-data>=0.18.0
+google-analytics-admin>=0.22.0
+google-auth>=2.30.0
+uvicorn[standard]>=0.30

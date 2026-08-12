@@ -42,7 +42,8 @@ def _build_auth():
 
 SERVER_INSTRUCTIONS = (
     "Google Ads reporting and management via each marketer's own Google sign-in.\n\n"
-    "DATE RANGES: the reporting tools (get_performance, get_search_terms) accept ANY "
+    "DATE RANGES: the reporting tools (get_performance, get_geo_performance, "
+    "get_search_terms) accept ANY "
     "time period. Pass start_date and end_date (YYYY-MM-DD) for an explicit custom "
     "range -- a specific month or quarter, year-to-date, or any window older than 30 "
     "days -- or a date_range preset (LAST_7_DAYS, LAST_30_DAYS, THIS_MONTH, LAST_MONTH, "
@@ -84,7 +85,7 @@ async def health_check(request):
 
 from gads_mcp.client import get_client, handle_errors, is_readonly  # noqa: E402
 from gads_mcp.campaigns import get_campaigns, pause_entity, enable_entity, update_budget  # noqa: E402
-from gads_mcp.performance import get_performance, get_search_terms, get_conversion_lag  # noqa: E402
+from gads_mcp.performance import get_performance, get_geo_performance, get_search_terms, get_conversion_lag  # noqa: E402
 from gads_mcp.ads import get_ad_groups, create_text_ad  # noqa: E402
 from gads_mcp.keywords import get_keywords, update_keyword_bid  # noqa: E402
 
@@ -202,7 +203,7 @@ def server_status() -> dict:
 for _tool in (
     list_accounts, server_status,
     get_campaigns, get_ad_groups, get_keywords,
-    get_performance, get_search_terms, get_conversion_lag,
+    get_performance, get_geo_performance, get_search_terms, get_conversion_lag,
     pause_entity, enable_entity, update_budget,
     create_text_ad, update_keyword_bid,
 ):

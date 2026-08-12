@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+# NOTE: markets.json (market code + public feed slug, no secrets) IS committed at
+# src/rentumo_conversions_mcp/markets.json. This connector has NO secret at all —
+# the S3 feeds it reads are public, so there is no token to keep out of the repo.
+data/

@@ -194,6 +194,75 @@ Use these definitions consistently across all reports so numbers are comparable 
 
 **Rentumo revenue source.** For Rentumo, gross revenue is available live from the Rentumo Trials connector (`revenue_gross`, per market, in each market's local currency) — use it for revenue-based KPIs like ROAS/MER instead of estimating, and state the currency. It is **not** ad-attributed revenue: it's total gross admin revenue per market, so a revenue/spend ratio built from it is a blended MER, not a platform ROAS. Chargeback fields (`charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid`) are available alongside it for net-revenue context. Never sum revenue across markets without converting to one currency first.
 
+**Rentumo conversion attribution (per channel).** For "how many conversions / how much value did `<channel>` drive" questions, the source of truth is the **Rentumo Conversions** connector — see the dedicated section "Conversions by channel (Rentumo)" below for the default routing rule, the canonical channel mapping, and how organic is counted. Do not make the user name a datasource; this routing is automatic.
+
+## Thribee spend currency (per market) — non-overridable mapping
+
+Thribee reports ad spend in a **fixed currency per market**, and for several markets that currency is **not** the market's own local currency. In particular SE, PL, CH, CZ, HU, RO, and MX are all reported by Thribee in **EUR** — not SEK, PLN, CHF, CZK, HUF, RON, or MXN. Always interpret a Thribee spend figure using the table below; never assume it matches the local currency (unlike Rentumo Trials revenue, which *is* local), and never silently relabel or convert it.
+
+| Thribee currency | Markets |
+|---|---|
+| **EUR** | FR, NL, DE, BE, IE, ES, PT, IT, AT, SE, PL, CH, CZ, HU, RO, MX |
+| **GBP** | UK |
+| **DKK** | DK |
+| **BRL** | BR |
+| **USD** | AU, CA, MY |
+
+This is the complete 22-market Thribee set returned by `thribee_list_markets`. Rules:
+
+- **A Thribee spend value already carries the currency above** — read it in that currency and state the currency next to every Thribee figure you report.
+- The 16 EUR markets share one currency, so their EUR spend can be summed directly. The GBP / DKK / BRL / USD markets are different currencies and **must be converted to the house reporting currency before being added into any blended or portfolio total**.
+- `thribee_get_all_spend` returns per-market figures in these mixed currencies. Convert each non-house-currency market to the house reporting currency (see "Reporting currency" above) before summing. **Never sum raw Thribee spend across currencies.**
+- When a market's Thribee currency differs from the currency the same market reports elsewhere (e.g. Rentumo Trials revenue for SE is in SEK while Thribee spend for SE is in EUR), convert both to one currency before computing any cross-source ratio (cost-per-subscriber, ROAS/MER).
+
+## Conversions by channel (Rentumo) — default attribution model
+
+When anyone asks "how many conversions / how much value did `<channel>` drive for `<brand>` in `<market>`" — or any per-channel attribution question — use this model **by default. The marketer should NOT have to say which datasource to look at; route it automatically.**
+
+> **"Thribee" = "Lifull-connect" — same channel, treat as synonyms.** Thribee is the platform OnlineMinds uses to buy that traffic; in the conversions feed it shows up as `utm_source = Lifull-connect`. So **"Thribee conversions / attribution / ROAS / CPA" means the `Lifull-connect` channel** — look it up with `conversions_get_source(source="Lifull-connect")` (or the `Lifull-connect` row of a breakdown). Only "Thribee **spend**" goes to the Thribee spend connector. If a marketer says either name, silently resolve to the same channel; don't tell them there's "no Thribee data."
+
+### Which source answers what (don't make the user pick)
+
+- **Per-channel conversions & value → Rentumo Conversions connector.** This is OnlineMinds' OWN attribution system, keyed on `utm_source`. Tools: `conversions_get_attribution` (conversion COUNTS by a UTM dimension, first vs last touch), `conversions_get_offline_summary` (counts + VALUE by source), `conversions_get_source` (one channel across both feeds at once). **Rentumo brand only.**
+- **Total conversions / trials for a market (no channel split) → Rentumo Trials connector** (`new_subscriptions`). This is the denominator the per-channel counts should add up toward.
+- **Spend for a channel → Thribee / Google Ads / Meta Ads.** **Thribee is the SPEND side of the Lifull-connect channel** — there is no `utm_source = "thribee"`; that channel appears as `Lifull-connect` in the conversions feed, and Thribee gives its cost. Google/Meta report their own platform spend.
+- **GA4 / platform-reported conversions = secondary, a cross-check only.** Google's and Meta's self-attributed conversions (and GA4's channel grouping) overlap and double-count; never sum them with the Rentumo Conversions numbers, and don't present them as unified attribution. GA4 is wired (read-only), but treat its attribution as a corroborating view, not the source of truth.
+
+Default to **first-touch** unless the user asks for last-touch (first-touch credits what *introduced* the customer, last-touch what *closed* them — they differ a lot for channels like Lifull-connect).
+
+### Canonical channel mapping (always normalize the raw `utm_source`)
+
+The raw `utm_source` is messy — casing variants, typos, and campaign IDs that leaked into the field. Always fold raw values into these canonical channels before reporting per-channel numbers:
+
+| Canonical channel | Raw `utm_source` values to map in | Spend source |
+|---|---|---|
+| **Google** | `google` | Google Ads |
+| **Meta** | `fb`, `ig`, `instagram`, `facebook`, `fb-post` | Meta Ads |
+| **Lifull-connect** (a.k.a. **Thribee** — same channel) | `Lifull-connect` | **Thribee** |
+| **Bing / Microsoft** | `bing` (rows carrying `msclkid`) | Microsoft Ads |
+| **TikTok / Snapchat** | `tiktok` / `snapchat` | resp. platform |
+| **Email / search-agent** | `search_agent_mailer`, `SAM`, `email`, `alert` | own (no ad spend) |
+| **Affiliate** | `huurwoningkoning*` (NL), `daisycon`, `blue`, and any row with `utm_medium=affiliate` — keep the specific affiliate name as a sub-label | affiliate payout |
+| **Organic / Direct (untagged)** | blank `utm_source` with no paid medium (the residual) | — |
+| **Other / untagged** | numeric campaign IDs, `{{site_source_name}}`, anything unrecognized | — |
+
+Affiliate channels are **market-specific** — e.g. **`huurwoningkoning` is NL-only.** The canonical per-market affiliate list and the exact conversion definition (trial vs paid sub) are brand/market values: read them from `01_Knowledge_Base/account-conventions-live`; if not filled, ask once and write them in. **Never invent affiliate names or assume a channel exists in a market without checking the feed.**
+
+### Organic conversions = the residual (this is the right framing)
+
+"Organic" conversions are the ones **no paid/affiliate/email source claims** — the blank-`utm_source` residual already present in the Rentumo Conversions feed. So the organic conversion **count comes from that residual**, not from a separate tool. Corroborate its size/trend with:
+
+- **Google Search Console** — organic-search clicks/impressions/queries (traffic context only; **GSC has no conversion or revenue data**, so it can size organic *traffic* but not organic *conversions*).
+- **GA4** — organic-channel conversions (read-only; treat as a secondary corroborating view).
+
+The blank-source bucket mixes genuine organic/direct with paid clicks that lost their UTM, so label it "Organic / Direct (untagged)" and flag it as approximate.
+
+### Reconciliation & guardrails
+
+- Per-channel conversions (paid + affiliate + email + organic) for a market/range should **roughly reconcile to that market's Rentumo Trials total** — use it as a sanity check and report any gap.
+- **Currency:** offline conversion VALUE is in each market's local currency (from the feed); Thribee spend is the fixed Thribee currency for that market (see the table above — often EUR, not local). Convert both to the house reporting currency before any per-channel CPA/ROAS, and never sum value across markets.
+- **Brand scope:** this own-attribution system is **Rentumo only.** For other brands there is no equivalent own-attribution feed yet — say so plainly (GA4 is the cross-brand analytics path, but its attribution is a secondary view); do **not** silently substitute platform self-reported numbers as if they were unified attribution.
+
 ## Brand voice
 
 Each brand's voice, tone, banned/preferred terms, and positioning live in `01_Knowledge_Base/brand/<brand>/brand-voice.md`. Read the relevant one before writing any customer-facing copy. Defaults across the portfolio: [FILL IN: e.g. clear, concrete, no hype, Scandinavian-direct]. Danish-language output for DK-market assets; English otherwise unless specified.
@@ -207,20 +276,74 @@ Each brand's voice, tone, banned/preferred terms, and positioning live in `01_Kn
 - **Don't fabricate.** If data is missing, say so and ask, rather than estimating silently.
 - **Privacy:** never write API keys, secrets, or credentials into any hub file or report.
 
-## Connector inventory (by capability)
+## Data sources & connections — the authoritative tree
 
-| Capability | Live data via | Notes |
-|---|---|---|
-| Shared Hub | Google Drive (Mad Minds) | Reads inputs, writes drafts to `07_People/<name>/`, publishes finals to `04_Reports/` etc. |
-| Paid — Google | Google Ads | Reads + write (pause/enable, budgets, bids, negatives, create campaigns/ads). Tier 1/2 spend-gate applies. |
-| Paid — Meta | Meta Ads | Same; Facebook + Instagram. |
-| Web analytics | GA4 | Read-only sessions, conversions, funnels. |
-| Organic search | Google Search Console | Clicks, impressions, positions per query/page. |
-| Tracking config | Google Tag Manager | **Write-capable.** Diagnose tracking gaps; create/edit tags, triggers, variables; publish container versions. Changes that affect conversion counts are Tier 1 in the spend-gate (bad tracking = fake spend signals). |
-| Product feeds | Google Merchant Center | **Write-capable.** Read feed health and product-level performance; edit attributes, supplemental feeds, promotions. Powers Google Shopping, PMax product groups, YouTube Shopping. Only needed for brands running feed-based campaigns (ecom/marketplace); skip for service brands. Tier 2 for most edits; Tier 1 when enabling new spending or publishing live promotions. |
-| Paid — Thribee | Thribee (plugin MCP, shared bearer token) | Read-only spend data across 22 markets (`thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`). Pre-wired in the plugin — no per-user auth needed. Use alongside Google/Meta for markets where Thribee is the primary spend source. |
-| Subscribers + revenue — Rentumo | Rentumo Trials (plugin MCP, shared bearer token) | Read-only Rentumo admin KPIs across all markets (`rentumo_list_markets`, `rentumo_get_trials`, `rentumo_get_all_trials`): new-subscriber (trial) counts **and revenue + chargebacks** — each market returns `new_subscriptions`, `revenue_gross`, `charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid`. Pre-wired — no per-user auth. Pair subscribers with Google/Meta/Thribee spend for cost-per-new-subscriber, and revenue for ROAS/MER. Pass ISO dates; `rentumo_get_all_trials` sums **only** subscriptions across markets and returns revenue per-market. **Currency:** revenue/chargeback amounts are in each market's **local currency** (SEK, HUF, EUR, …) — never sum revenue across markets without converting first. Rentumo only. |
-| Optional | Notion, Slack, Supabase, Vercel | See `CONNECTORS.md`. |
+This is the **complete, current list** of the data sources Mad Minds connects to, what each one delivers, and how. **When a marketer asks "what are all your connections / data sources", "what data can you pull", or similar — answer from this tree.** Rules for that answer:
+
+- Enumerate the connectors below, grouped by these categories. State each one's auth, scope (brand/market), currency, and how its IDs are found — all captured here.
+- **Account IDs are always discovered live** via the listed `list_*` tool (Google Ads `list_accounts`, Meta `list_ad_accounts`, GA4 `list_properties`, GSC `list_sites`). **Never quote a hard-coded account/manager ID** — discover and state the live one.
+- **Do NOT present Claude-desktop / runtime features as Mad Minds data sources** — computer use, browser/"Claude in Chrome" control, code execution, or a generic "local folder" are not OnlineMinds data connections. The only filesystem data source is the Google Drive "Mad Minds" Hub (below).
+- **Do NOT list the Excluded connectors** (Notion, Ahrefs, AirOps — see next subsection) as available.
+- Mark not-yet-wired connectors (GTM, Merchant Center) as "coming", not live.
+
+### 1. Paid advertising — spend, performance & management
+
+- **Google Ads** — *custom connector* (`gads-mcp`), per-user Google OAuth, **read + write** (writes gated by `/ad-actions` + the Tier 1/2 spend-gate).
+  - **Scope / IDs:** all brands' Google accounts the signed-in marketer can access. One **MCC manager → per-brand/per-market client accounts**; metrics live on the *client* accounts (the manager returns none). IDs discovered live via `list_accounts` (returns each `customer_id` + the `login_customer_id` to send) — never hard-coded. See "Google Ads account structure" below.
+  - **Currency:** each account's own currency.
+  - **Retrieves:** campaigns, ad groups, keywords, search terms; performance (spend, impressions, clicks, CTR, CPC, conversions, conversion value, CPA, ROAS), incl. **per-country** performance (split a campaign's spend across the countries it targets — any multi-country campaign type: PMax, Search, Shopping, Demand Gen, …); budgets, bids. **Writes:** pause/enable, budgets, bids, create text ads.
+  - **Tools:** `list_accounts`, `get_campaigns`, `get_ad_groups`, `get_keywords`, `get_search_terms`, `get_performance`, `get_geo_performance`, `create_text_ad`, `pause_entity`, `enable_entity`, `update_budget`, `update_keyword_bid`.
+- **Meta Ads** — **two** *custom connectors* (`meta-ads-mcp`), one per Meta business area: **onlineminds.io** and **Rentumo ApS**. Per-user Facebook OAuth, **read + write** (gated).
+  - **Scope / IDs:** ad accounts the marketer's Facebook can access. Hierarchy `act_<digits>` → campaign → ad set → ad. IDs discovered live via `list_ad_accounts`.
+  - **Currency:** each ad account's currency, in whole units (e.g. `500` = 500 DKK).
+  - **Retrieves:** campaigns, ad sets, ads, performance (spend/impressions/clicks/conversions/…). **Writes:** pause/enable, budgets. (Meta has no keywords/search-terms report.)
+  - **Tools:** `list_ad_accounts`, `get_campaigns`, `get_ad_sets`, `get_ads`, `get_performance`, `pause_entity`, `enable_entity`, `update_budget`.
+- **Thribee** — *pre-wired plugin MCP*, shared server-side bearer, **read-only** (no marketer Connect step).
+  - **Scope:** **ad spend only**, across **22 markets**. It is the spend side of the **Lifull-connect** channel (**"Thribee" and "Lifull-connect" are the same channel** — see "Conversions by channel"). Thribee itself is **not** a conversions source: for Thribee/Lifull-connect *conversions*, use Rentumo Conversions' `Lifull-connect` channel.
+  - **Currency:** **fixed per market** (often EUR even where the local currency differs; UK=GBP, DK=DKK, BR=BRL, AU/CA/MY=USD) — see the Thribee currency table above; convert before summing across currencies.
+  - **Retrieves:** spend per market + date range. **Tools:** `thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`.
+
+### 2. Analytics & SEO
+
+- **GA4 (Google Analytics 4)** — *custom connector* (`ga4-mcp`, `https://ga4.tail40453d.ts.net/mcp`), per-user Google OAuth, **read-only**.
+  - **Scope / IDs:** GA4 properties the marketer can read; numeric `property_id` discovered live via `list_properties`. **Currency:** revenue in each property's configured currency.
+  - **Retrieves:** traffic (sessions / users / engagement by channel, source/medium, country, device, date), top pages, conversions (key events — count + revenue), realtime (~30 min), arbitrary dimension+metric reports. **GA4's attribution is Google's own view — treat as a secondary cross-check, not the source of truth (see "Conversions by channel").**
+  - **Tools:** `list_properties`, `get_traffic`, `get_top_pages`, `get_conversions`, `get_realtime`, `get_report`.
+- **Google Search Console** — *custom connector* (`gsc-mcp`, `https://gsc.tail40453d.ts.net/mcp`), per-user Google OAuth, **read-only**.
+  - **Scope / IDs:** GSC properties the marketer owns; sites via `list_sites`. **No money and no conversions** — organic *search traffic* only.
+  - **Retrieves:** clicks, impressions, CTR, average position by query / page / country / device; URL inspection; sitemap status.
+  - **Tools:** `list_sites`, `query_search_analytics`, `inspect_url`, `list_sitemaps`, `get_sitemap`, `submit_sitemap`.
+
+### 3. Conversion attribution & subscribers — Rentumo (brand only)
+
+- **Rentumo Trials** — *pre-wired plugin MCP*, shared admin bearer, **read-only**. Rentumo, all 26 markets.
+  - **More than trials:** it reads each market's admin **`/api/admin/charts` `.totals`**, so it returns the full admin KPI totals object. First-class fields: `new_subscriptions` (the trial / new-subscriber count), `revenue_gross`, `charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid` — **plus the entire `totals` object passed through untouched**, so any other admin KPI the endpoint exposes flows through too.
+  - **Currency:** revenue/chargeback in each market's **local currency** — never sum across markets without converting.
+  - **Tools:** `rentumo_list_markets`, `rentumo_get_trials`, `rentumo_get_all_trials`.
+- **Rentumo Conversions** — *pre-wired plugin MCP*, **no auth** (public S3 feeds), **read-only**. Rentumo only.
+  - Two feeds per market: a first/last-touch **UTM attribution** feed (per-channel conversions by `utm_source`/`utm_medium`/`utm_campaign`/`utm_content`/`utm_term`, + `gclid`/`msclkid`; no money, no PII) and a **Google Ads offline-conversions** feed (per-channel conversion **value**, Conversion Name new-sub vs renewal split, `gclid`, and a hashed email that is **never returned**).
+  - **Currency:** offline value in each market's local currency. All output is aggregated.
+  - **Tools:** `conversions_list_markets`, `conversions_get_attribution`, `conversions_get_offline_summary`, `conversions_get_source`. The per-channel routing + canonical channel mapping is in "Conversions by channel (Rentumo)" above.
+
+### 4. Shared storage & workspace
+
+- **Google Drive — the "Mad Minds" Hub** — native Claude-desktop catalog connector (sign in with `@onlineminds.io`; read/write). The source for all inputs and the destination for every deliverable (folder map above). **This is the only filesystem location that counts as a Mad Minds data source** — do not describe a generic local/working folder as one.
+
+### 5. Optional vendor connectors (pre-wired; use only when relevant)
+
+- **Slack** (share finished reports), **Supabase** (portfolio-site product/usage data), **Vercel** (deployment / scheduled-job inspection). Per-user / org auth. See `CONNECTORS.md`.
+
+### Not yet wired (say "coming", not available)
+
+- **Google Tag Manager** (write-capable; conversion-tracking edits are Tier 1) and **Google Merchant Center** (feed-based brands only) — no verified connector yet. Don't promise live data from these.
+
+### Excluded connectors — never use
+
+**Mad Minds must never call Notion, Ahrefs, or AirOps tools.** These are not part of the OnlineMinds marketing setup:
+
+- **Notion** has been removed from the plugin's `.mcp.json`. **Ahrefs** and **AirOps** are not wired by this repo at all — if they appear in a session they come from a marketer's own Claude-desktop custom connectors, not from Mad Minds.
+- Even when one of these three connectors is present and authorized in the session, **do not use it.** Do not read from it, write to it, or route any task through it, and do not suggest it as a follow-up. For SEO/organic data use **Google Search Console**; for paid/analytics use the Google Ads, Meta Ads, GA4, Thribee, and Rentumo connectors above; for documents use the **Google Drive** Hub.
+- If a marketer explicitly asks Mad Minds to use Notion, Ahrefs, or AirOps, tell them those connectors are intentionally out of scope for Mad Minds and point them to the equivalent supported connector instead.
 
 For new marketer onboarding, run `/setup-marketing` — it walks through each of the above in order, tests authorization, and ends with a capabilities tour.
 

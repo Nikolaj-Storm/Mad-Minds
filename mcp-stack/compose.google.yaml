@@ -1,4 +1,5 @@
-# Mad Minds MCP stack — Google Ads + Google Search Console, Tailscale Funnel.
+# Mad Minds MCP stack — Google Ads + Google Search Console + Google Analytics,
+# Tailscale Funnel.
 #
 # A SEPARATE compose project (`madminds-google`) from Meta's `madminds-mcp`
 # (compose.yaml), with its own network, so `up`/`down` here never recreates or
@@ -7,6 +8,7 @@
 #
 #   https://gads.<tailnet>.ts.net/mcp -> gads-mcp:8000  (Google Ads)
 #   https://gsc.<tailnet>.ts.net/mcp  -> gsc-mcp:8000   (Search Console)
+#   https://ga4.<tailnet>.ts.net/mcp  -> ga4-mcp:8000   (Google Analytics / GA4)
 #
 # Per-user Google OAuth (FastMCP GoogleProvider); token storage on a disk volume
 # at CLIENT_STORAGE_DIR=/data so marketers sign in once. Reuses the same reusable
@@ -15,6 +17,7 @@
 # Deploy (as mcp — see GADS-/GSC-SELF-HOST-RUNBOOK.md):
 #   cp google.env.example gads.env   # Google Ads OAuth client + dev token + base URL
 #   cp google.env.example gsc.env    # GSC OAuth client + base URL (webmasters.readonly)
+#   cp google.env.example ga4.env    # GA4 OAuth client + base URL (analytics.readonly)
 #   docker compose -f compose.google.yaml up -d --build
 name: madminds-google
 
@@ -70,11 +73,33 @@ services:
       - ts_gsc_state:/var/lib/tailscale
     depends_on: [gsc-mcp]
 
+  # ---- Google Analytics (GA4) ----
+  ga4-mcp:
+    <<: *google-mcp
+    build: ../ga4-mcp
+    image: madminds/ga4-mcp:latest
+    env_file: ./ga4.env
+    volumes: [ ga4_data:/data ]
+
+  tailscale-ga4:
+    <<: *tailscale
+    environment:
+      TS_HOSTNAME: ga4                # -> https://ga4.<tailnet>.ts.net
+      TS_USERSPACE: "true"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./tailscale/serve-ga4.json:/config/serve.json:ro
+      - ts_ga4_state:/var/lib/tailscale
+    depends_on: [ga4-mcp]
+
 networks:
   gnet:
 
 volumes:
   gads_data:
   gsc_data:
+  ga4_data:
   ts_gads_state:
   ts_gsc_state:
+  ts_ga4_state:

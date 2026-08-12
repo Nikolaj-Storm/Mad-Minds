@@ -47,22 +47,33 @@ A dedicated project keeps Mad Minds work isolated from other Cowork work and let
 ```
 This is the Mad Minds marketing workspace for OnlineMinds ApS.
 
-Mad Minds is a shared Google Drive workspace for the marketing department, at https://drive.google.com/drive/folders/1aLu66XMaCKptC3GEYql20tHsbzDUCCpN. This local Cowork workspace folder is just a session container — all real reads and writes go through the Google Drive connector to that Hub.
+Mad Minds is a shared Google Drive workspace for the marketing department, at https://drive.google.com/drive/folders/1aLu66XMaCKptC3GEYql20tHsbzDUCCpN. This local Cowork workspace folder is just a session container — all real reads and writes go through the Google Drive connector to that Hub. Search broadly for alternate account names (e.g. rentumo.de = "rentumo germany" / "rentumo DE") before saying you can't find something.
 
 Two plugins are installed:
-- onlineminds-marketing: in-house skills, Drive Hub routing, the /ad-actions skill for live ad-account changes (with a non-overridable Tier 1 / Tier 2 spend-gate).
+- onlineminds-marketing: in-house skills, Drive Hub routing, the /ad-actions skill for live ad-account changes (non-overridable Tier 1 / Tier 2 spend-gate).
 - claude-ads: open-source paid-advertising audit toolkit (250+ checks across 8 platforms, Health Score 0–100, industry templates, PDF reports). Analysis-only.
 
+Data sources (all read-only except Google Ads + Meta writes, which go through /ad-actions):
+- Google Ads: brand accounts are CLIENT accounts under the OnlineMinds manager (MCC). For any Google Ads task, query a CLIENT customer_id (the manager returns no metrics) and pass the manager as login_customer_id. Resolve IDs from Mad Minds/01_Knowledge_Base/google-ads-account-map (read it once when a Google Ads task starts); if a market isn't listed, call list_accounts to resolve it live, then proceed.
+- Meta Ads: two connectors — onlineminds.io and Rentumo. Campaign/ad set/ad data + writes (gated). Amounts are in each account's own currency.
+- Google Analytics (GA4): sessions/users by channel & source, top pages, conversions (key events), realtime — for any on-site traffic/engagement/conversion question. Call list_properties first. GA4's attribution is Google's own view: a secondary cross-check, not the source of truth.
+- Google Search Console: organic-search clicks/impressions/queries/positions (no conversions, no revenue).
+- Thribee: ad SPEND per market (read-only). Reported in a fixed per-market currency (often EUR even where the local currency differs) — convert before summing across currencies. It is the spend side of the Lifull-connect / portal channel, not a conversions source.
+- Rentumo Trials: full Rentumo admin KPIs per market (read-only) — new-subscriber/trial counts AND revenue + chargebacks. Money is each market's local currency; never sum across markets without converting. Rentumo only.
+- Rentumo Conversions: per-channel conversion attribution for Rentumo (read-only, Rentumo only). Counts conversions by channel (utm_source: google, meta, Lifull-connect, email/search-agent, affiliates like NL-only huurwoningkoning, plus an organic/direct residual), first vs last touch, AND conversion value per channel. This is the DEFAULT source for "how many conversions / how much value did <channel> drive in <market>" — don't make me name a datasource. Value is per-market local currency.
+- Google Drive: read/write the Hub.
+Do NOT use Notion, Ahrefs, or AirOps — they're intentionally out of scope for Mad Minds even if connected; use the connectors above instead.
+
 House rules (the account-conventions skill loads these automatically, but for context):
-- Load the account-conventions skill at the start of any marketing task. It's the foundational skill with brand portfolio, KPI definitions, Drive map, routing rule, and spend-gate rules.
-- Skill-first routing: At the start of every task — before pulling data or building anything — scan the available skills list for any skill whose description matches the request. This explicitly includes the claude-ads skills (ads-math, ads-google, ads-meta, ads-budget, ads-audit, ads-creative, ads-landing, etc.) and the onlineminds-marketing skills. If one or more are relevant, use them (chain them when several apply) instead of doing the work by hand. If you deliberately skip a clearly-relevant skill, state which one and why in one line.
+- Load the account-conventions skill at the start of any marketing task. It's the foundational skill with the brand portfolio, KPI definitions, the full data-source tree, currency rules, Drive map, routing rule, and spend-gate rules.
+- Skill-first routing: At the start of every task — before pulling data or building anything — scan the available skills (claude-ads: ads-math, ads-google, ads-meta, ads-budget, ads-audit, ads-creative, ads-landing, …; and onlineminds-marketing). If one or more are relevant, use them (chain them when several apply) instead of doing the work by hand. If you deliberately skip a clearly-relevant skill, state which one and why in one line.
 - Brand-specific values (account IDs, KPI targets, currency, conversion definitions, brand voice) live in Mad Minds/01_Knowledge_Base/account-conventions-live (a Drive doc). If you need a value not yet filled in there, ask me once in chat, then write the answer into that doc so nobody gets re-asked.
 - Drafts auto-save to my personal folder: Mad Minds/07_People/<my-name>/, in the matching subfolder (reports/, plans/, data/, notes/). Move to shared folders only when I say "publish this to the team".
-- Ad write-actions go through the /ad-actions skill only. Spend increases require me to type a verbatim accept-phrase that you construct (Tier 1, non-overridable). Lower-risk changes (pause, lower budget, add negatives, GTM non-conversion edits) take a normal yes (Tier 2). I can say "read-only" anytime to lock the session into analysis-only mode.
+- Ad write-actions go through the /ad-actions skill only. Spend increases require me to type a verbatim accept-phrase that you construct (Tier 1, non-overridable). Lower-risk changes (pause, lower budget, add negatives) take a normal yes (Tier 2). I can say "read-only" anytime to lock the session into analysis-only mode.
 - Plain English works — I don't need to type slash commands. For substantial tasks (multi-platform audits, campaign plans, anything that publishes to shared folders or touches money) ask 2–4 clarifying questions before running. For light requests, propose a route and go.
 - Every substantive answer starts with a brief three-block header: Objectives / Tools used / Want to go deeper. Skip the header for short conversational replies, clarifying questions, the typed-phrase exchange, errors, or inside the /setup-marketing flow.
 
-Brands: rentumo, adsumo, printumo, bidumo, monetumo, photumo, jla (Jacob Lund Art). Use "portfolio" for cross-brand work.
+Brands: rentumo, adsumo, printumo, bidumo, monetumo, photumo, jla (Jacob Lund Art). Use "portfolio" for cross-brand work. Note: Rentumo Trials and Rentumo Conversions are Rentumo-only.
 
 On a new session here, greet briefly and ask what I want to do. If I haven't been onboarded (no folder under 07_People with my name), suggest /setup-marketing.
 ```
@@ -90,23 +101,29 @@ They're added in the **top-level** Connectors panel — the same place as Google
 
 > One gotcha: always use **Add custom connector**, which uses Claude's reliable hosted sign-in. If an in-session `localhost` sign-in link ever appears, don't use it — that path is buggy and the tools won't register.
 
-Add these three, in order:
+Add these, in order:
 
 | Connector | URL to paste | Sign in with |
 |---|---|---|
 | **Google Search Console** | `https://gsc.tail40453d.ts.net/mcp` | the Google account that has your Search Console properties (read-only organic data) |
+| **Google Analytics (GA4)** | `https://ga4.tail40453d.ts.net/mcp` | the Google account that can read your GA4 properties (read-only) |
 | **Google Ads** | `https://gads.tail40453d.ts.net/mcp` | the Google account with your brand's Google Ads access (via the OnlineMinds Manager / MCC) |
-| **Meta Ads — onlineminds** | `https://meta-onlineminds.tail40453d.ts.net/mcp` | your **Facebook** account with onlineminds.io ad-account access |
-| **Meta Ads — Rentumo** | `https://meta-rentumo.tail40453d.ts.net/mcp` | your **Facebook** account with Rentumo ad-account access |
+| **Meta Ads — onlineminds** | `https://meta-ads-onlineminds.vercel.app/mcp` | your **Facebook** account with onlineminds.io ad-account access |
+| **Meta Ads — Rentumo** | `https://meta-ads-rentumo.vercel.app/mcp` | your **Facebook** account with Rentumo ad-account access |
 
 A few notes:
 - Each is **per-user** — you only see the accounts/properties you personally have. If Meta returns a permission error, your Facebook isn't added to that ad account / Business Manager yet.
 - After adding a connector, you may need to start a **new session** for its tools to appear.
 - Writes (pause, budgets, etc.) are off or simulated until enabled, and always run through the `/ad-actions` spend-gate — see "How taking actions works" below.
 
-**Not wired yet** (coming later — don't go looking for them): GA4, Google Tag Manager, Google Merchant Center. For organic search today, use Google Search Console.
+**Already wired — nothing for you to connect.** These come with the plugin and just work (no sign-in):
+- **Thribee** — ad spend per market (read-only).
+- **Rentumo Trials** — Rentumo subscribers/trials **and** revenue + chargebacks per market (read-only).
+- **Rentumo Conversions** — Rentumo per-channel conversion attribution (which channel drove conversions — Google, Meta, Lifull-connect, email, affiliates, organic — and what they were worth). Rentumo only, read-only.
 
-Skip Notion / Slack / Supabase / Vercel unless you actually use them — those are optional.
+**Not wired yet** (coming later — don't go looking for them): Google Tag Manager, Google Merchant Center. For organic search today, use Google Search Console.
+
+Skip Slack / Supabase / Vercel unless you actually use them — those are optional. **Notion, Ahrefs, and AirOps are not part of Mad Minds — don't connect or use them.**
 
 > Prefer to be walked through it? Step 6's `/setup-marketing` connects all of these interactively and verifies each one, so you can skip ahead and let it guide you.
 
@@ -127,6 +144,8 @@ That command will:
 Anything in plain English. Examples:
 
 - "Show me Rentumo's spend last week on Google Ads"
+- "How many conversions did Lifull-connect drive for Rentumo FR last month, and what were they worth?"
+- "Break down Rentumo NL conversions by channel last month, including organic"
 - "Do a quick audit on Printumo's paid performance"
 - "How is Jacob Lund Art's organic search trending in DK?"
 - Or use slash commands if you prefer: `/monthly-paid-review rentumo`
@@ -143,7 +162,7 @@ If Claude doesn't know a specific value (like your brand's Google Ads account ID
 
 ## How taking actions works — the safety gate
 
-You can pause campaigns, change budgets, change bids, add negative keywords, create ads on Google + Meta, and edit Google Tag Manager. Claude acts as you, so you can only touch accounts you already have access to.
+You can pause campaigns, change budgets, change bids, add negative keywords, and create ads on Google + Meta. Claude acts as you, so you can only touch accounts you already have access to.
 
 **Spend changes require a typed confirmation phrase.** If you ask for anything that would raise spend (budget up, bid up, enable a campaign, launch an ad, change tracking on a conversion event), Claude shows you a sentence like:
 

@@ -20,12 +20,12 @@ These load automatically when the `onlineminds-marketing` plugin installs. Each 
 
 | Capability | Server (in `.mcp.json`) | Auth model | Notes |
 |---|---|---|---|
-| Notion | Vendor MCP | Per-user OAuth | Optional. Briefs/playbooks. |
 | Supabase | Vendor MCP | Per-user / org | Already in use. Portfolio-site data. |
 | Vercel | Vendor MCP | Per-user / org | Already in use. Deployment + scheduled-job inspection. |
 | Slack | Vendor MCP | Per-user OAuth | Optional. Share finished reports. |
-| Thribee | Self-hosted VPS MCP (SSE, port 3456) | Shared bearer token (pre-wired — no marketer action needed) | Read-only ad spend across 22 markets. Tools: `thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`. See `Mad Minds Thribee MCP/README.md` for infra + token rotation. |
+| Thribee | Self-hosted VPS MCP (SSE, port 3456) | Shared bearer token (pre-wired — no marketer action needed) | Read-only ad spend across 22 markets. Tools: `thribee_list_markets`, `thribee_get_spend`, `thribee_get_all_spend`. **Currency:** each market reports spend in a fixed currency — mostly **EUR** (incl. SE/PL/CH/CZ/HU/RO/MX, *not* their local currency); UK=GBP, DK=DKK, BR=BRL, AU/CA/MY=USD. Convert before summing across currencies — see the per-market table in `account-conventions`. See `Mad Minds Thribee MCP/README.md` for infra + token rotation. |
 | Rentumo Trials | Self-hosted Hetzner MCP (SSE, Tailscale Funnel) | Shared admin bearer token (pre-wired — no marketer action needed) | **Read-only** Rentumo admin KPIs across all markets: new-subscriber (trial) counts **and revenue + chargebacks** (`revenue_gross`, `charge_back_amount`, `chargeback_money_lost`, `chargeback_debts_paid`). Money is in each market's **local currency** — never sum revenue across markets. Tools: `rentumo_list_markets`, `rentumo_get_trials`, `rentumo_get_all_trials`. No write path (so no spend-gate surface). See `rentumo-trials-mcp/README.md` for infra + token/markets config. |
+| Rentumo Conversions | Self-hosted Hetzner MCP (SSE, Tailscale Funnel) | **None** — public S3 feeds, no bearer/OAuth (pre-wired — no marketer action needed) | **Rentumo brand only** (not the other brands). **Read-only** Rentumo conversion + UTM-attribution data per market, from two public feeds: a first/last-touch attribution feed (counts by `utm_source`/`medium`/`campaign`/`content`/`term` — where channels like **Lifull-connect** appear; **"Thribee" is a synonym for the `Lifull-connect` channel**, so Thribee-conversion questions resolve to it) and a Google Ads offline-conversions feed (counts **+ value**, per-market currency, plus the new-sub vs renewal split). **Emails in the source are hashed and never returned — output is always aggregated.** Money is per-market currency — never sum value across markets. Tools: `conversions_list_markets`, `conversions_get_attribution`, `conversions_get_offline_summary`, `conversions_get_source`. No write path (so no spend-gate surface). See `rentumo-conversions-mcp/README.md` + `RENTUMO-CONVERSIONS-SELF-HOST-RUNBOOK.md`. |
 
 ### B. Native Claude desktop catalog
 Claude desktop's built-in **Customize → Connectors** (the top-level one, not the per-plugin one). For OnlineMinds we use exactly one connector from here:
@@ -40,6 +40,7 @@ Google Search Console and Google Ads are self-hosted (`gsc-mcp/`, `gads-mcp/` on
 | Capability | Add as custom connector — URL | Notes |
 |---|---|---|
 | Google Search Console | `https://gsc.tail40453d.ts.net/mcp` | Read-only organic search data. Sign in with the Google account that owns the properties. |
+| GA4 (Google Analytics) | `https://ga4.tail40453d.ts.net/mcp` | Read-only GA4 reporting (`ga4-mcp/`, sibling of gads/gsc on the Hetzner box). Sessions/users by channel & source, conversions (key events: count + revenue), top pages, realtime, arbitrary reports. Sign in with the Google account that can read the properties. Treat its attribution as a secondary view (see account-conventions). |
 | Google Ads | `https://gads.tail40453d.ts.net/mcp` | Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. Shared developer token is a server secret. |
 | Meta Ads — onlineminds | `https://meta-ads-onlineminds.vercel.app/mcp` | Serverless (`meta-ads-mcp/` deployed to Vercel). **Facebook login**, per-user OAuth. The **onlineminds.io** Meta business. Reporting + management (read+write); gated by `/ad-actions`; writes simulate until `READONLY_MODE=false`. |
 | Meta Ads — Rentumo | `https://meta-ads-rentumo.vercel.app/mcp` | Same, for the **Rentumo ApS** Meta business. Add whichever area(s) you manage; per-user — you only see accounts your Facebook can access. |
@@ -51,11 +52,15 @@ These live under `_pending_connectors` in `.mcp.json`. **We deliberately did not
 
 | Capability | Status | Plan |
 |---|---|---|
-| GA4 (Google Analytics) | Needs a verified OAuth MCP | Evaluate a managed GA4 MCP with built-in OAuth (candidates: Cogny, Stape) or self-host `google-analytics-mcp` and register an OAuth client ID in the connector's Advanced settings. Read-only. |
 | Google Tag Manager | Needs a verified OAuth MCP | **Tier-1 tracking edits depend on this.** No Connect-button OAuth MCP confirmed yet; until one is wired and tested, GTM writes via `/ad-actions` stay unavailable. Do not roll out GTM writes until verified. |
 | Google Merchant Center | Needs a verified OAuth MCP | Feed brands only. Fallback: official Google Content API via a self-hosted MCP with an Advanced-settings OAuth client ID. |
 
 > Why not put these in the native Claude desktop catalog instead? On individual Pro/Max seats they aren't in the built-in catalog. The Connect-button MCP approach above is how we deliver per-user connectors with no per-marketer dashboard work.
+
+## Excluded connectors — never use
+**Notion, Ahrefs, and AirOps are intentionally out of scope.** They are not part of the OnlineMinds marketing setup and Mad Minds must never call their tools.
+- **Notion** was removed from `.mcp.json` (it is no longer pre-wired). **Ahrefs** and **AirOps** are not wired by this repo at all — if they show up in a session they are a marketer's own Claude-desktop custom connectors, not Mad Minds (see `MACHINE-ACCESS-GAMEPLAN.md` for removing them at the desktop level).
+- Even when one of these three is present and authorized, do not read from it, write to it, route a task through it, or suggest it. Use **Google Search Console** for organic/SEO data, the Google/Meta/GA4/Thribee/Rentumo connectors for paid + analytics, and the **Google Drive** Hub for documents. The runtime rule lives in `skills/account-conventions/SKILL.md` ("Excluded connectors — never use").
 
 ## Onboarding flow
 The `/setup-marketing` skill walks through the lists in order:
@@ -63,15 +68,17 @@ The `/setup-marketing` skill walks through the lists in order:
 1. **Built-in catalog:** Google Drive → Connect
 2. **Custom connector:** Google Search Console → Add custom connector (URL above) → Connect
 3. **Custom connector:** Google Ads → Add custom connector (URL above) → Connect
-4. **Custom connector(s):** Meta Ads — add the one(s) for the business area(s) you manage → Connect (Facebook login):
+4. **Custom connector:** GA4 (Google Analytics) → Add custom connector (`https://ga4.tail40453d.ts.net/mcp`) → Connect (Google login, read-only)
+5. **Custom connector(s):** Meta Ads — add the one(s) for the business area(s) you manage → Connect (Facebook login):
    - onlineminds.io: `https://meta-ads-onlineminds.vercel.app/mcp`
    - Rentumo ApS: `https://meta-ads-rentumo.vercel.app/mcp`
-5. **Optional plugin connectors:** Notion, Slack, Supabase, Vercel
-6. **Thribee** — pre-wired (no marketer action), verify with "list Thribee markets"
-7. **Rentumo Trials** — pre-wired (no marketer action), verify with "list Rentumo markets" or "how many new subscribers and how much revenue did Rentumo get last week" (returns trials + revenue per market)
+6. **Optional plugin connectors:** Slack, Supabase, Vercel
+7. **Thribee** — pre-wired (no marketer action), verify with "list Thribee markets"
+8. **Rentumo Trials** — pre-wired (no marketer action), verify with "list Rentumo markets" or "how many new subscribers and how much revenue did Rentumo get last week" (returns trials + revenue per market)
+9. **Rentumo Conversions** — pre-wired (no marketer action), Rentumo-only, verify with "list Rentumo conversion markets" or "how many conversions did Lifull-connect drive for Rentumo FR last month, and what were they worth"
 
 **Coming (NOT part of setup yet):**
-- **GA4 / Google Tag Manager / Merchant Center** — not wired.
+- **Google Tag Manager / Merchant Center** — not wired.
 
 ## Meta Ads — Vercel-hosted, two business areas
 Meta Ads uses **our own MCP** (`meta-ads-mcp/`, deployed to Vercel as two serverless projects — see `META-SELF-HOST-RUNBOOK.md`), mirroring the Google Ads connector. Auth is **per-user Facebook OAuth** — each marketer signs in with their own Facebook account and only touches ad accounts they already manage. OnlineMinds runs **two Meta business areas**, each with its own Facebook app + Vercel project, so there are **two connectors**:

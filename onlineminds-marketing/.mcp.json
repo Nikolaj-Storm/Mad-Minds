@@ -1,11 +1,7 @@
 {
-  "_comment": "Plugin MCP wiring (vendor MCPs only). The write-capable ad platforms (Google Ads + Meta Ads) are NOT wired here -- they are SELF-HOSTED custom connectors with per-user OAuth: gads-mcp/, gsc-mcp/, and meta-ads-mcp/ on our Hetzner box (Docker Compose + Tailscale Funnel). The marketer clicks Connect and signs in with their own Google/Meta account, which is the true per-user auth the spend-gate relies on. See _custom_connectors_note below, CONNECTORS.md, GADS-SELF-HOST-RUNBOOK.md and META-SELF-HOST-RUNBOOK.md. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). GA4 / Search Console / Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md).",
+  "_comment": "Plugin MCP wiring (vendor MCPs only). The write-capable ad platforms (Google Ads + Meta Ads) are NOT wired here -- they are SELF-HOSTED custom connectors with per-user OAuth: gads-mcp/, gsc-mcp/, ga4-mcp/, and meta-ads-mcp/ on our Hetzner box (Docker Compose + Tailscale Funnel). The marketer clicks Connect and signs in with their own Google/Meta account, which is the true per-user auth the spend-gate relies on. See _custom_connectors_note below, CONNECTORS.md, GADS-SELF-HOST-RUNBOOK.md and META-SELF-HOST-RUNBOOK.md. Google Drive is NOT wired here - it lives in Claude desktop's native Connectors catalog (Customize -> Connectors -> Google Drive). NOTE on why this is not Composio: Claude desktop's Connect button only performs an OAuth handshake and has no field for an x-api-key / Bearer header (anthropics/claude-ai-mcp #112). GA4 and Search Console ARE wired now, as custom connectors (ga4-mcp/, gsc-mcp/ — see _custom_connectors_note). Tag Manager / Merchant Center do not yet have a verified OAuth MCP wired (see _pending_connectors below and CONNECTORS.md).",
+  "_excluded_connectors_note": "Notion, Ahrefs, and AirOps are deliberately NOT wired and must NOT be used. Notion was removed from this file; Ahrefs and AirOps are Claude-desktop custom connectors outside this repo (see MACHINE-ACCESS-GAMEPLAN.md — remove them at the desktop level). Even if any of the three is present in a marketer's session, Mad Minds must never call its tools. This exclusion is enforced in skills/account-conventions/SKILL.md ('Excluded connectors').",
   "mcpServers": {
-    "notion": {
-      "type": "http",
-      "url": "https://mcp.notion.com/mcp",
-      "_comment": "Optional. Briefs, playbooks in Notion. Vendor-native MCP."
-    },
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp",
@@ -24,25 +20,21 @@
     "thribee": {
       "type": "sse",
       "url": "https://thribee.tail40453d.ts.net/sse",
-      "_comment": "Thribee ad spend data across 22 markets. Self-hosted on VPS (Docker, port 3456). No client auth — Thribee API tokens stay server-side in data/tokens.json. Tools: thribee_list_markets, thribee_get_spend (single market + date range), thribee_get_all_spend (all 22 markets in parallel). See Mad Minds Thribee MCP/README.md for infra details."
+      "_comment": "Thribee ad spend data across 22 markets. Self-hosted on VPS (Docker, port 3456). No client auth — Thribee API tokens stay server-side in data/tokens.json. Tools: thribee_list_markets, thribee_get_spend (single market + date range), thribee_get_all_spend (all 22 markets in parallel). CURRENCY: each market reports spend in a FIXED per-market currency, NOT always the local one — EUR for FR/NL/DE/BE/IE/ES/PT/IT/AT/SE/PL/CH/CZ/HU/RO/MX, GBP for UK, DKK for DK, BRL for BR, USD for AU/CA/MY. Convert to the house reporting currency before summing across currencies. See the per-market table in onlineminds-marketing/skills/account-conventions/SKILL.md. See Mad Minds Thribee MCP/README.md for infra details."
     },
     "rentumo-trials": {
       "type": "sse",
       "url": "https://rentumo-trials.tail40453d.ts.net/sse",
       "_comment": "Rentumo admin KPIs across all markets — new subscribers (trials) AND revenue. Self-hosted on the Hetzner box (rentumo-trials-mcp/, compose.rentumo.yaml, project madminds-rentumo). Same auth model as Thribee — shared admin bearer (RENTUMO_BEARER_TOKEN) stays server-side, no per-user OAuth. READ-ONLY (GET only — no write path, no spend-gate surface). Reads each market's /api/admin/charts .totals and surfaces five first-class fields: new_subscriptions, revenue_gross, charge_back_amount, chargeback_money_lost, chargeback_debts_paid. CURRENCY: revenue/chargeback amounts are in each market's LOCAL currency, so never sum revenue across markets — rentumo_get_all_trials sums only new_subscriptions. Tools: rentumo_list_markets, rentumo_get_trials (single market + ISO date range), rentumo_get_all_trials (all markets in parallel + per-market revenue + portfolio total new_subscriptions). See rentumo-trials-mcp/README.md."
+    },
+    "rentumo-conversions": {
+      "type": "sse",
+      "url": "https://rentumo-conversions.tail40453d.ts.net/sse",
+      "_comment": "RENTUMO ONLY (not Adsumo/Printumo/Bidumo/Monetumo/Photumo/JLA). Rentumo conversion + UTM-attribution data per market, sourced from two PUBLIC S3 feeds per market on the kuhamia bucket: (1) utm-feed-rentumo-<market>.json — first-touch/last-touch attribution, one record per conversion with the utm_source/medium/campaign/content/term (+gclid/msclkid) of each touchpoint, no PII, no money; this is where channels like Lifull-connect show up as a utm_source (NOTE: 'Thribee' is a synonym for the Lifull-connect channel — Thribee-conversion questions resolve to utm_source Lifull-connect, and conversions_get_source accepts source='thribee'); (2) google-ads-offline-conversions-feed-rentumo-<market>.csv — Google Ads offline-conversion import rows with Conversion Value (MONEY, per-market currency), Conversion Name (Subscription renewal / RevenueCat Subscription), gclid and a SHA-256-HASHED email. Self-hosted on the Hetzner box (rentumo-conversions-mcp/, compose.conversions.yaml, project madminds-conversions). AUTH = NONE (public feeds, no bearer, no OAuth). READ-ONLY (GET only — no write path, no spend-gate surface). PRIVACY: emails are hashed in the feed and are NEVER returned — every tool output is aggregated (counts, summed value, breakdowns). CURRENCY: offline value is per-market currency — never sum across markets. Tools: conversions_list_markets, conversions_get_attribution (counts by utm_* dimension, first vs last touch), conversions_get_offline_summary (counts + value by source/conversion_name), conversions_get_source (one channel e.g. Lifull-connect across both feeds). See rentumo-conversions-mcp/README.md and RENTUMO-CONVERSIONS-SELF-HOST-RUNBOOK.md."
     }
   },
   "_pending_connectors": {
-    "_comment": "NOT wired yet - do NOT ship guessed URLs. Each needs a verified OAuth MCP endpoint chosen and tested before team rollout.",
-    "google-analytics": {
-      "status": "needs-verified-oauth-mcp",
-      "purpose": "GA4 sessions, conversions, funnel data (read-only).",
-      "candidates": [
-        "Cogny managed GA4 MCP (cogny.com)",
-        "Stape hosted GA4 MCP (stape.io)",
-        "self-hosted google-analytics-mcp with Advanced-settings OAuth client ID"
-      ]
-    },
+    "_comment": "NOT wired yet - do NOT ship guessed URLs. Each needs a verified OAuth MCP endpoint chosen and tested before team rollout. (GA4 is no longer here — it is wired as the self-hosted ga4-mcp custom connector; see _custom_connectors_note.)",
     "google-tag-manager": {
       "status": "needs-verified-oauth-mcp",
       "purpose": "WRITE-CAPABLE: read containers/tags/triggers, create/edit, publish versions. Conversion-tracking changes are Tier 1 in the spend-gate.",
@@ -53,5 +45,5 @@
       "purpose": "WRITE-CAPABLE: feed health, product attributes, supplemental feeds, promotions. Only relevant for brands running Shopping/PMax with a product feed."
     }
   },
-  "_custom_connectors_note": "Google Search Console and Google Ads are NOT plugin servers — Claude desktop's plugin/in-session OAuth flow is buggy. Marketers add them as CUSTOM CONNECTORS. URLs: GSC = https://gsc.tail40453d.ts.net/mcp ; Google Ads = https://gads.tail40453d.ts.net/mcp . Both support DCR, so no Client ID/Secret to paste. Meta Ads is ALSO a custom connector, deployed to Vercel (TWO projects, one per Meta business area: https://meta-ads-onlineminds.vercel.app/mcp and https://meta-ads-rentumo.vercel.app/mcp) — Facebook login, per-user OAuth, writes gated by /ad-actions + READONLY_MODE. Token storage is Upstash Redis (shared DB, namespaced by REDIS_KEY_PREFIX). See META-SELF-HOST-RUNBOOK.md for the full setup."
+  "_custom_connectors_note": "Google Search Console, Google Ads, and GA4 are NOT plugin servers — Claude desktop's plugin/in-session OAuth flow is buggy. Marketers add them as CUSTOM CONNECTORS. URLs: GSC = https://gsc.tail40453d.ts.net/mcp ; Google Ads = https://gads.tail40453d.ts.net/mcp ; GA4 = https://ga4.tail40453d.ts.net/mcp . All support DCR, so no Client ID/Secret to paste. GA4 and GSC are read-only; Google Ads is read+write (gated). Meta Ads is ALSO a custom connector, deployed to Vercel (TWO projects, one per Meta business area: https://meta-ads-onlineminds.vercel.app/mcp and https://meta-ads-rentumo.vercel.app/mcp) — Facebook login, per-user OAuth, writes gated by /ad-actions + READONLY_MODE. Token storage is Upstash Redis (shared DB, namespaced by REDIS_KEY_PREFIX). See META-SELF-HOST-RUNBOOK.md for the full setup."
 }

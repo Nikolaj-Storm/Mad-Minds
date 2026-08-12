@@ -35,6 +35,7 @@ Pull from the connectors (or hub data) and flag spend that produced poor or no r
 - Markets with spend above CPA/ROAS threshold that have no corresponding Google/Meta conversions — signals spend leak or missing attribution.
 - Markets with MoM spend increases not matched by conversion lift — candidates for budget reallocation.
 - Use `thribee_get_all_spend` to get a cross-market spend snapshot; compare against Google/Meta conversion data to identify markets where Thribee spend is not yielding measurable returns.
+- **Currency:** Thribee spend comes in a fixed per-market currency (mostly EUR — incl. SE/PL/CH/CZ/HU/RO/MX; UK=GBP, DK=DKK, BR=BRL, AU/CA/MY=USD — see the per-market table in account-conventions). Convert each market to the house reporting currency before ranking or summing spend across markets; never compare or total raw figures that are in different currencies.
 
 For each flag: entity, spend, conversions, the metric that failed, and recommended action (pause / negative / reduce budget / refresh creative).
 

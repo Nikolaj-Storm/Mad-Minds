@@ -9,9 +9,11 @@ This is for **you** (Nikolaj / whoever maintains the marketplace). It's the one-
 > |---|---|---|
 > | **Google Drive** | Claude desktop's built-in Connectors catalog | `@onlineminds.io` Google |
 > | **Google Search Console** | Self-hosted (`gsc-mcp/` on the box via `mcp-stack/compose.google.yaml`) → **custom connector** (one URL) | per-user Google |
+> | **Google Analytics (GA4)** | Self-hosted (`ga4-mcp/` on the box via `mcp-stack/compose.google.yaml`) → **custom connector** (one URL) | per-user Google |
 > | **Google Ads** | Self-hosted (`gads-mcp/` on the box via `mcp-stack/compose.google.yaml`) → **custom connector** (one URL) | per-user Google |
-> | **Meta Ads** | Self-hosted (`meta-ads-mcp/` on the box via `mcp-stack/compose.yaml`) → **custom connector(s)** | per-user Facebook |
-> | GA4 / Tag Manager / Merchant Center | **Not wired yet** | — |
+> | **Meta Ads** | Self-hosted (`meta-ads-mcp/` on Vercel) → **custom connector(s)** | per-user Facebook |
+> | **Thribee / Rentumo Trials / Rentumo Conversions** | Pre-wired plugin MCPs (read-only) — no marketer setup | shared / none |
+> | Tag Manager / Merchant Center | **Not wired yet** | — |
 >
 > OnlineMinds runs **two Meta business areas** (onlineminds.io + Rentumo ApS), each with its own Facebook app and MCP instance, so there are **two Meta connectors**. The live URLs are in `onlineminds-marketing/CONNECTORS.md`.
 
@@ -56,15 +58,15 @@ The brand → account-ID mapping is the one to do upfront — every paid skill n
 
 ## 4. Stand up the self-hosted connectors (one-time infra)
 
-Google Drive needs nothing. All three self-hosted connectors run on the **Hetzner box** via Docker Compose + Tailscale Funnel. **GSC + Google Ads** are project `madminds-google` (`mcp-stack/compose.google.yaml`, each its own container); URLs are in `CONNECTORS.md`; runbooks are `GSC-SELF-HOST-RUNBOOK.md` / `GADS-SELF-HOST-RUNBOOK.md`.
+Google Drive needs nothing. The Google self-hosted connectors run on the **Hetzner box** via Docker Compose + Tailscale Funnel. **GSC + Google Ads + GA4** are project `madminds-google` (`mcp-stack/compose.google.yaml`, each its own container); URLs are in `CONNECTORS.md`; runbooks are `GSC-SELF-HOST-RUNBOOK.md` / `GADS-SELF-HOST-RUNBOOK.md` (GA4 follows the same pattern via `ga4-mcp/`).
 
-**Meta Ads** is project `madminds-mcp` (`mcp-stack/compose.yaml`):
+**Meta Ads** is deployed to **Vercel** (two serverless projects, one per business area):
 
 1. Create the Facebook app(s) — **`META-SELF-HOST-RUNBOOK.md`** (one app per business area; the app-Tester trick skips Meta App Review for the team).
-2. Deploy each `meta-ads-mcp` instance — **`mcp-stack/README.md`** (`docker compose up -d --build`; two instances behind Tailscale Funnel).
+2. Deploy each `meta-ads-mcp` instance — **`META-SELF-HOST-RUNBOOK.md`** (two Vercel projects; token storage in Upstash Redis namespaced per project).
 3. The two live URLs are already wired into `CONNECTORS.md` / `setup-marketing`:
-   - onlineminds.io → `https://meta-onlineminds.tail40453d.ts.net/mcp`
-   - Rentumo ApS → `https://meta-rentumo.tail40453d.ts.net/mcp`
+   - onlineminds.io → `https://meta-ads-onlineminds.vercel.app/mcp`
+   - Rentumo ApS → `https://meta-ads-rentumo.vercel.app/mcp`
 
 Writes stay **simulated** until you flip `READONLY_MODE=false` on the box (and even then every write goes through the `/ad-actions` spend-gate).
 
