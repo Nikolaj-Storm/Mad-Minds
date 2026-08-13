@@ -118,7 +118,7 @@ from meta_ads_mcp.campaigns import (  # noqa: E402
 )
 from meta_ads_mcp.adsets import get_ad_sets  # noqa: E402
 from meta_ads_mcp.ads import get_ads  # noqa: E402
-from meta_ads_mcp.insights import get_performance  # noqa: E402
+from meta_ads_mcp.insights import get_performance, get_conversion_lag  # noqa: E402
 
 
 # Meta ad-account status codes -> human labels (the common ones).
@@ -199,6 +199,7 @@ for _tool in (
     get_ad_sets,
     get_ads,
     get_performance,
+    get_conversion_lag,
     pause_entity,
     enable_entity,
     update_budget,
